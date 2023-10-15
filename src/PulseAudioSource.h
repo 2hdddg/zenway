@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include "AudioState.h"
 #include "MainLoop.h"
 #include "Source.h"
 #include "src/ScriptContext.h"

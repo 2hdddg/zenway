@@ -2,8 +2,9 @@
 
 #include <filesystem>
 
-#include "PowerState.h"
 #include "src/MainLoop.h"
+#include "src/ScriptContext.h"
+#include "src/Source.h"
 
 class PowerSource : public Source, public IoHandler {
    public:

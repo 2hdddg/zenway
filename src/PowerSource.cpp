@@ -54,7 +54,7 @@ void PowerSource::ReadState() {
     m_sourceDirtyFlag = state != m_sourceState;
     if (m_sourceDirtyFlag) {
         m_sourceState = state;
-        m_sourceState.Publish(*m_scriptContext);
+        m_scriptContext->Publish(m_sourceState);
     }
 }
 

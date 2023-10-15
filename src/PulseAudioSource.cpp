@@ -123,6 +123,6 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
     if (newState == m_sourceState) return;
     m_sourceDirtyFlag = true;
     m_sourceState = newState;
-    m_sourceState.Publish(*m_scriptContext);
+    m_scriptContext->Publish(m_sourceState);
     m_zenMainloop->WakeupFromOtherThread();
 }
