@@ -25,7 +25,6 @@ class Output {
     virtual ~Output() { wl_output_destroy(m_wloutput); }
 
     std::string name;
-    // std::vector<Workspace> workspaces;
     std::array<std::unique_ptr<ShellSurface>, 2> surfaces;
 
    private:

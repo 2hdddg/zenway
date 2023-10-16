@@ -12,20 +12,31 @@ function dump(o)
    end
 end
 
+local x = function()
+    return {
+        direction = "column",
+        items = {
+            "<span size='10pt' color='#1c1b19' background='#918175'>Testing 1</span>",
+            "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
+        },
+    }
+end
+
 -- Config
 zen.panels.left = {
   widgets = {
     {
       sources = {'time'},
-      render = function()
+      render = function(displayName)
+        local display = zen.sources.displays[displayName]
+        if not display then
+            return ""
+        end
         local s = ""
-        for displayName, display in pairs(zen.sources.displays) do
-          s = s .. displayName .. "\n"
-          for w, workspace in pairs(display.workspaces) do
-            s = s .. "  " .. workspace.name .. "\n"
-            for a, app in pairs(workspace.applications) do
-              s = s .. "    " .. app.name .. "\n"
-            end
+        for w, workspace in pairs(display.workspaces) do
+          s = s .. "  " .. workspace.name .. "\n"
+          for a, app in pairs(workspace.applications) do
+            s = s .. "    " .. app.name .. "\n"
           end
         end
         return "<span size='10pt' color='#1c1b19' background='#918175'>" .. s .. "</span>"

@@ -45,7 +45,7 @@ void Panel::Draw(Output& output) {
 
         // if (IsDirty(widget, *m_sources)) {
         //  widget.Draw(*layout);
-        sol::object renderOutput = widget.render();
+        sol::object renderOutput = widget.render(output.name);
         if (renderOutput.is<std::string>()) {
             std::string markup = renderOutput.as<std::string>();
             pango_layout_set_markup(layout, markup.c_str(), -1);
