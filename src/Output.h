@@ -9,7 +9,6 @@
 #include "Buffer.h"
 #include "Roots.h"
 #include "ShellSurface.h"
-#include "Workspaces.h"
 
 class Output;
 using OnNamedCallback = std::function<void(Output* output)>;

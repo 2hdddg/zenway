@@ -58,6 +58,9 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table table, const c
         }
         Configuration::Widget::Parse(*widgetTable, panel.widgets);
     }
+    // Get offset from screen border
+    sol::optional<int> screenOffset = (*panelTable)["screen_border_offset"];
+    panel.screenBorderOffset = screenOffset ? *screenOffset : 0;
     return panel;
 }
 

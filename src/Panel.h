@@ -14,7 +14,6 @@ class Panel {
                                          std::shared_ptr<Sources> sources);
     void Draw(Output& output);
     bool IsDirty() const;
-    // void Draw(std::map<std::string, std::shared_ptr<Source>> sources);
 
    private:
     Panel(std::shared_ptr<BufferPool> bufferPool, Configuration::Panel panelConfig,

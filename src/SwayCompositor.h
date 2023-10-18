@@ -4,11 +4,7 @@
 
 #include "Compositor.h"
 #include "MainLoop.h"
-#include "Outputs.h"
-#include "WorkspacePanel.h"
-#include "Workspaces.h"
 #include "src/Manager.h"
-#include "src/Panel.h"
 
 class SwayCompositor : public Compositor, public IoHandler {
    public:

@@ -42,8 +42,6 @@ src = files(
   'src/SwayCompositor.cpp',
   'src/SwayJson.cpp',
   'src/Theme.cpp',
-  'src/Widget.cpp',
-  'src/WorkspacePanel.cpp',
 )
 zenway_src = src
 

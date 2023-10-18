@@ -17,8 +17,6 @@
 #include "Registry.h"
 #include "Sources.h"
 #include "SwayCompositor.h"
-#include "Widget.h"
-#include "WorkspacePanel.h"
 
 int main(int argc, char* argv[]) {
     // Environment variable configurable logging
@@ -57,17 +55,6 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize buffer pool");
         return -1;
     }
-    // Load theme
-    std::shared_ptr<Theme> theme = Theme::Create();
-    // Initialize workspace panel
-    /*
-    auto workspacePanel = WorkspacePanel::Create(bufferPool, *mainLoop, theme);
-    if (!workspacePanel) {
-        spdlog::error("Failed to initialize workspace panel");
-        return -1;
-    }
-    */
-
     // Initialize sources
     auto sources = std::shared_ptr<Sources>(Sources::Create(scriptContext));
     // Audio source

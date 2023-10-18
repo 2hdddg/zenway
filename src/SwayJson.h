@@ -1,7 +1,6 @@
 #include <memory>
 
 #include "Outputs.h"
-#include "Workspaces.h"
 #include "src/ScriptContext.h"
 
 struct SwayJson {

@@ -6,17 +6,6 @@
 #include "sol/sol.hpp"
 #include "src/ScriptContext.h"
 #include "src/ShellSurface.h"
-/*
-class Renderable {
-   public:
-   private:
-};
-
-class Container {
-   private:
-    std::vector<std::variant<Renderable, Container>> m_children;
-};
-*/
 
 class Configuration {
    public:
@@ -31,6 +20,7 @@ class Configuration {
         std::vector<Widget> widgets;
         int index;
         Anchor anchor;
+        int screenBorderOffset;
     };
 
     static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext);

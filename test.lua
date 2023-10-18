@@ -43,9 +43,11 @@ zen.panels.left = {
       end,
     },
   },
+  screen_border_offset = 50,
 }
 
 zen.panels.right = {
+  screen_border_offset = 50,
   widgets = {
     {
       sources = {'time', 'date'},
