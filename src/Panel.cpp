@@ -34,14 +34,14 @@ struct Data {
     Current current;
 };
 
-struct Base {
+struct Renderable {
+    virtual ~Renderable() {}
     virtual void Compute(cairo_t* cr) {}
     virtual void Draw(cairo_t* cr) const {}
-    virtual ~Base() {}
     Computed computed;
 };
 
-struct Markup : public Base {
+struct Markup : public Renderable {
     Markup(const std::string& string) : string(string) {}
     virtual ~Markup() { g_object_unref(m_layout); }
     void Compute(cairo_t* cr) override {
@@ -62,7 +62,7 @@ struct Markup : public Base {
     PangoLayout* m_layout;
 };
 
-struct MarkupBox : public Base {
+struct MarkupBox : public Renderable {
     MarkupBox(const std::string& string) : markup(string) {}
 
    private:
@@ -71,18 +71,75 @@ struct MarkupBox : public Base {
     Border border;
 };
 
-struct Meter : public Base {
+struct Meter : public Renderable {
     Border border;
 };
 
-struct FlexContainer : public Base {
+std::unique_ptr<Renderable> FromObject(const sol::object& o);
+
+void FromChildTable(const sol::table childTable,
+                    std::vector<std::unique_ptr<Renderable>>& children) {
+    size_t size = childTable.size();
+    for (size_t i = 0; i < size; i++) {
+        const sol::object& o = childTable[i + 1];
+        auto b = FromObject(o);
+        if (b) {
+            children.push_back(std::move(b));
+        }
+    }
+}
+
+struct FlexContainer : public Renderable {
+    static std::unique_ptr<Renderable> FromTable(const sol::table& t) {
+        FlexContainer f;
+        const sol::optional<std::string> direction = t["direction"];
+        f.isColumn = direction ? *direction == "column" : true;
+        sol::optional<sol::table> children = t["items"];
+        if (children) {
+            FromChildTable(*children, f.children);
+        }
+        return std::unique_ptr<Renderable>(new FlexContainer(std::move(f)));
+    }
+    void Compute(cairo_t* cr) override {
+        computed.cx = 0;
+        computed.cy = 0;
+        for (const auto& r : children) {
+            r->Compute(cr);
+            computed.cx += r->computed.cx;
+            computed.cy += r->computed.cy;
+        }
+    }
+    void Draw(cairo_t* cr) const override {
+        // x
+        //
+        int x = 0;
+        int y = 0;
+        for (const auto& r : children) {
+            r->Draw(cr);
+            y += r->computed.cy;
+            cairo_move_to(cr, x, y);
+        }
+    }
+
+   private:
     bool isColumn;
-    std::vector<std::unique_ptr<Base>> children;
+    std::vector<std::unique_ptr<Renderable>> children;
 };
 
-std::unique_ptr<Base> FromRenderOutput(const sol::object& o) {
+std::unique_ptr<Renderable> FromObject(const sol::object& o) {
     if (o.is<std::string>()) {
         return std::make_unique<Markup>(o.as<std::string>());
+    }
+    if (!o.is<sol::table>()) {
+        return nullptr;
+    }
+    const auto& t = o.as<sol::table>();
+    const sol::optional<std::string> type = t["type"];
+    if (!type) {
+        return nullptr;
+    }
+    if (*type == "flex") {
+        return FlexContainer::FromTable(t);
     }
     return nullptr;
 }
@@ -119,7 +176,7 @@ void Panel::Draw(Output& output) {
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
         sol::object renderOutput = widgetConfig.render(output.name);
-        auto item = FromRenderOutput(renderOutput);
+        auto item = FromObject(renderOutput);
         if (!item) {
             continue;
         }

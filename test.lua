@@ -40,18 +40,13 @@ zen.panels.left = {
     {
       sources = {'time'},
       render = function(displayName)
-        local display = zen.sources.displays[displayName]
-        if not display then
-            return ""
-        end
-        local s = ""
-        for w, workspace in pairs(display.workspaces) do
-          s = s .. "  " .. workspace.name .. "\n"
-          for a, app in pairs(workspace.applications) do
-            s = s .. "    " .. app.name .. "\n"
-          end
-        end
-        return "<span size='10pt' color='#1c1b19' background='#918175'>" .. s .. "</span>"
+        return {
+          type = "flex",
+          items = {
+            "<span size='10pt' color='#1c1b19' background='#918175'>Testing 1</span>",
+            "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
+          },
+        }
       end,
     },
   },
@@ -87,3 +82,19 @@ zen.panels.right = {
     },
   },
 }
+
+local xxx = function(displayName)
+  local display = zen.sources.displays[displayName]
+  if not display then
+      return ""
+  end
+  local s = ""
+  --table.insert(s, {})
+  for w, workspace in pairs(display.workspaces) do
+    s = s .. "  " .. workspace.name .. "\n"
+    for a, app in pairs(workspace.applications) do
+      s = s .. "    " .. app.name .. "\n"
+    end
+  end
+  return "<span size='10pt' color='#1c1b19' background='#918175'>" .. s .. "</span>"
+end
