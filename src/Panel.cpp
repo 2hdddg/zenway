@@ -4,39 +4,93 @@
 #include "pango/pangocairo.h"
 #include "src/BufferPool.h"
 
-class Box {};
-
 struct Computed {
-    int cx;
-    int cy;
+    uint32_t cx;
+    uint32_t cy;
 };
 
-class Widget {
-   public:
-    Widget(const std::string& markup) : m_markupOrBox(markup) {}
-    void Compute(cairo_t* cr) {
-        m_layout = pango_cairo_create_layout(cr);
+struct Current {
+    uint32_t cx;
+    uint32_t cy;
+    uint32_t x;
+    uint32_t y;
+};
+
+struct Border {
+    uint32_t color;
+    uint8_t width;
+    uint8_t radius;
+};
+
+struct Padding {
+    uint8_t left;
+    uint8_t right;
+    uint8_t top;
+    uint8_t bottom;
+};
+
+struct Data {
+    Computed computed;
+    Current current;
+};
+
+struct Base {
+    virtual void Compute(cairo_t* cr) {}
+    virtual void Draw(cairo_t* cr) const {}
+    virtual ~Base() {}
+    Computed computed;
+};
+
+struct Markup : public Base {
+    Markup(const std::string& string) : string(string) {}
+    virtual ~Markup() { g_object_unref(m_layout); }
+    void Compute(cairo_t* cr) override {
         // pango_layout_set_width(m_layout, m_config.cx * PANGO_SCALE);
         // pango_layout_set_height(m_layout, m_config.cy * PANGO_SCALE);
-        const std::string* markup = std::get_if<std::string>(&m_markupOrBox);
-        if (!markup) {
-            return;
-        }
-        pango_layout_set_markup(m_layout, markup->c_str(), -1);
+        m_layout = pango_cairo_create_layout(cr);
+        pango_layout_set_markup(m_layout, string.c_str(), -1);
         PangoRectangle rect;
         pango_layout_get_extents(m_layout, nullptr, &rect);
         pango_extents_to_pixels(nullptr, &rect);
         computed.cx = rect.width;
         computed.cy = rect.height;
     }
-    Computed computed;
-    void Draw(cairo_t* cr) const { pango_cairo_show_layout(cr, m_layout); }
-
-    virtual ~Widget() { g_object_unref(m_layout); }
+    const std::string string;
 
    private:
-    std::variant<std::string, Box> m_markupOrBox;
+    void Draw(cairo_t* cr) const override { pango_cairo_show_layout(cr, m_layout); }
     PangoLayout* m_layout;
+};
+
+struct MarkupBox : public Base {
+    MarkupBox(const std::string& string) : markup(string) {}
+
+   private:
+    Markup markup;
+    uint32_t background_color;
+    Border border;
+};
+
+struct Meter : public Base {
+    Border border;
+};
+
+struct FlexContainer : public Base {
+    bool isColumn;
+    std::vector<std::unique_ptr<Base>> children;
+};
+
+class Widget {
+   public:
+    Widget(const std::string& markup) : m_item(new Markup(markup), {}) {}
+    void Compute(cairo_t* cr) { m_item->Compute(cr); }
+    Computed GetComputed() { return m_item->computed; }
+    void Draw(cairo_t* cr) const { m_item->Draw(cr); }
+
+    virtual ~Widget() {}
+
+   private:
+    std::unique_ptr<Base> m_item;
 };
 
 std::unique_ptr<Panel> Panel::Create(std::shared_ptr<BufferPool> bufferPool,
@@ -79,7 +133,7 @@ void Panel::Draw(Output& output) {
         }
         Widget widget(renderOutput.as<std::string>());
         widget.Compute(cr);
-        widgetCx = widget.computed.cx;
+        widgetCx = widget.GetComputed().cx;
         if (alignRight) {
             cairo_move_to(cr, bufferCx - widgetCx - m_panelConfig.screenBorderOffset, y);
         } else {
@@ -87,7 +141,7 @@ void Panel::Draw(Output& output) {
         }
         widget.Draw(cr);
         cairo_restore(cr);
-        y += widget.computed.cy;
+        y += widget.GetComputed().cy;
         y += 10;
     }
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);

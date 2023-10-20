@@ -14,10 +14,22 @@ end
 
 local x = function()
     return {
+        type = "flex",
         direction = "column",
         items = {
             "<span size='10pt' color='#1c1b19' background='#918175'>Testing 1</span>",
             "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
+            {
+              type = "markup",
+              markup = "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
+              background_color = "#111223",
+              border_color = "",
+              border_width = 2,
+              border_radius = 2,
+            },
+            {
+              type = "",
+            },
         },
     }
 end
