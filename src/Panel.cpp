@@ -80,18 +80,12 @@ struct FlexContainer : public Base {
     std::vector<std::unique_ptr<Base>> children;
 };
 
-class Widget {
-   public:
-    Widget(const std::string& markup) : m_item(new Markup(markup), {}) {}
-    void Compute(cairo_t* cr) { m_item->Compute(cr); }
-    Computed GetComputed() { return m_item->computed; }
-    void Draw(cairo_t* cr) const { m_item->Draw(cr); }
-
-    virtual ~Widget() {}
-
-   private:
-    std::unique_ptr<Base> m_item;
-};
+std::unique_ptr<Base> FromRenderOutput(const sol::object& o) {
+    if (o.is<std::string>()) {
+        return std::make_unique<Markup>(o.as<std::string>());
+    }
+    return nullptr;
+}
 
 std::unique_ptr<Panel> Panel::Create(std::shared_ptr<BufferPool> bufferPool,
                                      Configuration::Panel panelConfig,
@@ -124,24 +118,21 @@ void Panel::Draw(Output& output) {
 
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
-
-        // if (IsDirty(widget, *m_sources)) {
-        auto widgetCx = 0;
         sol::object renderOutput = widgetConfig.render(output.name);
-        if (!renderOutput.is<std::string>()) {
+        auto item = FromRenderOutput(renderOutput);
+        if (!item) {
             continue;
         }
-        Widget widget(renderOutput.as<std::string>());
-        widget.Compute(cr);
-        widgetCx = widget.GetComputed().cx;
+        item->Compute(cr);
+        auto widgetCx = item->computed.cx;
         if (alignRight) {
             cairo_move_to(cr, bufferCx - widgetCx - m_panelConfig.screenBorderOffset, y);
         } else {
             cairo_move_to(cr, m_panelConfig.screenBorderOffset, y);
         }
-        widget.Draw(cr);
+        item->Draw(cr);
         cairo_restore(cr);
-        y += widget.GetComputed().cy;
+        y += item->computed.cy;
         y += 10;
     }
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);
