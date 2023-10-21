@@ -37,7 +37,7 @@ struct Data {
 struct Renderable {
     virtual ~Renderable() {}
     virtual void Compute(cairo_t* cr) {}
-    virtual void Draw(cairo_t* cr) const {}
+    virtual void Draw(cairo_t* cr, int x, int y) const {}
     Computed computed;
 };
 
@@ -58,7 +58,10 @@ struct Markup : public Renderable {
     const std::string string;
 
    private:
-    void Draw(cairo_t* cr) const override { pango_cairo_show_layout(cr, m_layout); }
+    void Draw(cairo_t* cr, int x, int y) const override {
+        cairo_move_to(cr, x, y);
+        pango_cairo_show_layout(cr, m_layout);
+    }
     PangoLayout* m_layout;
 };
 
@@ -94,6 +97,8 @@ struct FlexContainer : public Renderable {
         FlexContainer f;
         const sol::optional<std::string> direction = t["direction"];
         f.isColumn = direction ? *direction == "column" : true;
+        // TODO: Log, report
+        if (*direction != "row") return nullptr;
         sol::optional<sol::table> children = t["items"];
         if (children) {
             FromChildTable(*children, f.children);
@@ -109,15 +114,17 @@ struct FlexContainer : public Renderable {
             computed.cy += r->computed.cy;
         }
     }
-    void Draw(cairo_t* cr) const override {
-        // x
-        //
-        int x = 0;
-        int y = 0;
-        for (const auto& r : children) {
-            r->Draw(cr);
-            y += r->computed.cy;
-            cairo_move_to(cr, x, y);
+    void Draw(cairo_t* cr, int x, int y) const override {
+        if (isColumn) {
+            for (const auto& r : children) {
+                r->Draw(cr, x, y);
+                y += r->computed.cy;
+            }
+        } else {
+            for (const auto& r : children) {
+                r->Draw(cr, x, y);
+                x += r->computed.cx;
+            }
         }
     }
 
@@ -160,7 +167,6 @@ bool Panel::IsDirty() const {
 }
 
 void Panel::Draw(Output& output) {
-    auto y = 0;
     // Get free buffer to draw in. This could fail if both buffers are locked.
     auto buffer = m_bufferPool->Get();
     if (!buffer) {
@@ -172,7 +178,7 @@ void Panel::Draw(Output& output) {
     buffer->Clear(0x00);
     auto bufferCx = buffer->Cx();
     bool alignRight = m_panelConfig.anchor == Anchor::Right;
-
+    int y = 0;
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
         sol::object renderOutput = widgetConfig.render(output.name);
@@ -182,12 +188,9 @@ void Panel::Draw(Output& output) {
         }
         item->Compute(cr);
         auto widgetCx = item->computed.cx;
-        if (alignRight) {
-            cairo_move_to(cr, bufferCx - widgetCx - m_panelConfig.screenBorderOffset, y);
-        } else {
-            cairo_move_to(cr, m_panelConfig.screenBorderOffset, y);
-        }
-        item->Draw(cr);
+        int x = alignRight ? bufferCx - widgetCx - m_panelConfig.screenBorderOffset
+                           : m_panelConfig.screenBorderOffset;
+        item->Draw(cr, x, y);
         cairo_restore(cr);
         y += item->computed.cy;
         y += 10;
