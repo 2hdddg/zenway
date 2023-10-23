@@ -40,12 +40,36 @@ zen.panels.left = {
     {
       sources = {'time'},
       render = function(displayName)
+        local display = zen.sources.displays[displayName]
+        if not display then
+            return ""
+        end
+        local workspaces = {}
+        for _, workspace in pairs(display.workspaces) do
+          local wmarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. workspace.name .. "</span>"
+          local amarkup = ""
+          for _, app in pairs(workspace.applications) do
+            if app.focus then
+              amarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. app.name .. "</span>"
+            end
+            if amarkup == "" and app.next then
+              amarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. app.name .. "</span>"
+            end
+          end
+          local workspace = {
+            type = "flex",
+            direction = "row",
+            items = {
+              wmarkup,
+              amarkup,
+            },
+          }
+          table.insert(workspaces, workspace)
+        end
         return {
           type = "flex",
-          items = {
-            "<span size='10pt' color='#1c1b19' background='#918175'>Testing 1</span>",
-            "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
-          },
+          direction = "column",
+          items = workspaces,
         }
       end,
     },

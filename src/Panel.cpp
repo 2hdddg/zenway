@@ -98,7 +98,7 @@ struct FlexContainer : public Renderable {
         const sol::optional<std::string> direction = t["direction"];
         f.isColumn = direction ? *direction == "column" : true;
         // TODO: Log, report
-        if (*direction != "row") return nullptr;
+        if (!f.isColumn && *direction != "row") return nullptr;
         sol::optional<sol::table> children = t["items"];
         if (children) {
             FromChildTable(*children, f.children);
