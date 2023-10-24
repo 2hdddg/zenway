@@ -89,6 +89,18 @@ zen.panels.right = {
         return {
           type = "box",
           markup = markup,
+          color = '#010101',
+          radius = 10,
+          border = {
+            width = 2,
+            color = '#ff0000ff',
+          },
+          padding = {
+            left = 10,
+            right = 10,
+            top = 5,
+            bottom = 5,
+          },
         }
       end,
     },

@@ -10,22 +10,50 @@ struct Computed {
 };
 
 struct RGBA {
+    static RGBA FromProperty(const sol::table& t, const char* name) {
+        const sol::optional<std::string> optionalColor = t[name];
+        return optionalColor ? RGBA::FromString(*optionalColor) : RGBA{};
+    }
+    static RGBA FromString(const std::string& s) { return RGBA{.g = 1, .a = 1}; }
     double r;
     double g;
     double b;
     double a;
 };
 
+static int GetIntProperty(const sol::table& t, const char* name, int missing) {
+    const sol::optional<int> o = t[name];
+    return o ? *o : missing;
+}
+
 struct Border {
+    static Border FromProperty(const sol::table& t, const char* name) {
+        const sol::optional<sol::table> optionalBorder = t[name];
+        return optionalBorder ? Border::FromTable(*optionalBorder) : Border{};
+    }
+    static Border FromTable(const sol::table& t) {
+        return Border{.color = RGBA::FromProperty(t, "color"),
+                      .width = GetIntProperty(t, "width", 0)};
+    }
     RGBA color;
-    uint8_t width;
+    int width;
 };
 
 struct Padding {
-    uint8_t left;
-    uint8_t right;
-    uint8_t top;
-    uint8_t bottom;
+    static Padding FromProperty(const sol::table& t, const char* name) {
+        const sol::optional<sol::table> o = t[name];
+        return o ? Padding::FromTable(*o) : Padding{};
+    }
+    static Padding FromTable(const sol::table& t) {
+        return Padding{.left = GetIntProperty(t, "left", 0),
+                       .right = GetIntProperty(t, "right", 0),
+                       .top = GetIntProperty(t, "top", 0),
+                       .bottom = GetIntProperty(t, "bottom", 0)};
+    }
+    int left;
+    int right;
+    int top;
+    int bottom;
 };
 
 struct Renderable {
@@ -64,16 +92,15 @@ struct Markup : public Renderable {
 
 struct MarkupBox : public Renderable {
     MarkupBox(const std::string& string)
-        : markup(string),
-          color({.r = 1, .a = 1}),
-          border({}),
-          radius(10),
-          padding({.left = 10, .right = 10, .top = 10, .bottom = 10}) {}
+        : markup(string), color({}), border({}), radius(0), padding({}) {}
     static std::unique_ptr<MarkupBox> FromTable(const sol::table& t) {
         const sol::optional<std::string> optionalMarkup = t["markup"];
         const std::string markup = optionalMarkup ? *optionalMarkup : "";
-
         auto box = std::make_unique<MarkupBox>(markup);
+        box->radius = GetIntProperty(t, "radius", 0);
+        box->border = Border::FromProperty(t, "border");
+        box->color = RGBA::FromProperty(t, "color");
+        box->padding = Padding::FromProperty(t, "padding");
         return box;
     }
     void Compute(cairo_t* cr) override {
