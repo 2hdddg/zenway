@@ -9,17 +9,16 @@ struct Computed {
     uint32_t cy;
 };
 
-struct Current {
-    uint32_t cx;
-    uint32_t cy;
-    uint32_t x;
-    uint32_t y;
+struct RGBA {
+    double r;
+    double g;
+    double b;
+    double a;
 };
 
 struct Border {
-    uint32_t color;
+    RGBA color;
     uint8_t width;
-    uint8_t radius;
 };
 
 struct Padding {
@@ -27,11 +26,6 @@ struct Padding {
     uint8_t right;
     uint8_t top;
     uint8_t bottom;
-};
-
-struct Data {
-    Computed computed;
-    Current current;
 };
 
 struct Renderable {
@@ -42,8 +36,10 @@ struct Renderable {
 };
 
 struct Markup : public Renderable {
-    Markup(const std::string& string) : string(string) {}
-    virtual ~Markup() { g_object_unref(m_layout); }
+    Markup(const std::string& string) : string(string), m_layout(nullptr) {}
+    virtual ~Markup() {
+        if (m_layout) g_object_unref(m_layout);
+    }
     void Compute(cairo_t* cr) override {
         // pango_layout_set_width(m_layout, m_config.cx * PANGO_SCALE);
         // pango_layout_set_height(m_layout, m_config.cy * PANGO_SCALE);
@@ -55,23 +51,62 @@ struct Markup : public Renderable {
         computed.cx = rect.width;
         computed.cy = rect.height;
     }
-    const std::string string;
 
-   private:
     void Draw(cairo_t* cr, int x, int y) const override {
         cairo_move_to(cr, x, y);
         pango_cairo_show_layout(cr, m_layout);
     }
+
+   private:
+    const std::string string;
     PangoLayout* m_layout;
 };
 
 struct MarkupBox : public Renderable {
-    MarkupBox(const std::string& string) : markup(string) {}
+    MarkupBox(const std::string& string)
+        : markup(string),
+          color({.r = 1, .a = 1}),
+          border({}),
+          radius(10),
+          padding({.left = 10, .right = 10, .top = 10, .bottom = 10}) {}
+    static std::unique_ptr<MarkupBox> FromTable(const sol::table& t) {
+        const sol::optional<std::string> optionalMarkup = t["markup"];
+        const std::string markup = optionalMarkup ? *optionalMarkup : "";
+
+        auto box = std::make_unique<MarkupBox>(markup);
+        return box;
+    }
+    void Compute(cairo_t* cr) override {
+        markup.Compute(cr);
+        computed = markup.computed;
+        computed.cx += padding.left + padding.right + border.width;
+        computed.cy += padding.top + padding.bottom + border.width;
+    }
+    void Draw(cairo_t* cr, int x, int y) const override {
+        constexpr double degrees = M_PI / 180.0;
+
+        cairo_new_sub_path(cr);
+        cairo_arc(cr, x + computed.cx - radius, y + radius, radius, -90 * degrees, 0 * degrees);
+        cairo_arc(cr, x + computed.cx - radius, y + computed.cy - radius, radius, 0 * degrees,
+                  90 * degrees);
+        cairo_arc(cr, x + radius, y + computed.cy - radius, radius, 90 * degrees, 180 * degrees);
+        cairo_arc(cr, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
+        cairo_close_path(cr);
+        cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
+        cairo_fill_preserve(cr);
+        cairo_set_source_rgba(cr, border.color.r, border.color.g, border.color.b, border.color.a);
+        cairo_set_line_width(cr, border.width);
+        cairo_stroke(cr);
+
+        markup.Draw(cr, x + padding.left + border.width, y + padding.top + border.width);
+    }
 
    private:
     Markup markup;
-    uint32_t background_color;
+    RGBA color;
     Border border;
+    uint8_t radius;
+    Padding padding;
 };
 
 struct Meter : public Renderable {
@@ -147,6 +182,9 @@ std::unique_ptr<Renderable> FromObject(const sol::object& o) {
     }
     if (*type == "flex") {
         return FlexContainer::FromTable(t);
+    }
+    if (*type == "box") {
+        return MarkupBox::FromTable(t);
     }
     return nullptr;
 }

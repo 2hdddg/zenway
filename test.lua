@@ -84,8 +84,12 @@ zen.panels.right = {
       sources = {'time', 'date'},
       render = function()
         local t = os.time()
-        return os.date(
-            "<span font='digital-7' size='40pt' color='#1c1b19' background='#918175' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19' background='#918175'>\n%Y-%m-%d</span>")
+        local markup = os.date(
+            "<span font='digital-7' size='40pt' color='#1c1b19' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19'>\n%Y-%m-%d</span>")
+        return {
+          type = "box",
+          markup = markup,
+        }
       end,
     },
     {
@@ -106,19 +110,3 @@ zen.panels.right = {
     },
   },
 }
-
-local xxx = function(displayName)
-  local display = zen.sources.displays[displayName]
-  if not display then
-      return ""
-  end
-  local s = ""
-  --table.insert(s, {})
-  for w, workspace in pairs(display.workspaces) do
-    s = s .. "  " .. workspace.name .. "\n"
-    for a, app in pairs(workspace.applications) do
-      s = s .. "    " .. app.name .. "\n"
-    end
-  end
-  return "<span size='10pt' color='#1c1b19' background='#918175'>" .. s .. "</span>"
-end
