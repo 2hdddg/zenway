@@ -208,6 +208,7 @@ struct FlexContainer : public Renderable {
         f.isColumn = direction ? *direction == "column" : true;
         // TODO: Log, report
         if (!f.isColumn && *direction != "row") return nullptr;
+        f.padding = Padding::FromProperty(t, "padding");
         sol::optional<sol::table> children = t["items"];
         if (children) {
             FromChildTable(*children, f.children);
@@ -215,8 +216,8 @@ struct FlexContainer : public Renderable {
         return std::unique_ptr<Renderable>(new FlexContainer(std::move(f)));
     }
     void Compute(cairo_t* cr) override {
-        computed.cx = 0;
-        computed.cy = 0;
+        computed.cx = padding.left + padding.right;
+        computed.cy = padding.top + padding.bottom;
         for (const auto& r : children) {
             r->Compute(cr);
             if (isColumn) {
@@ -231,19 +232,20 @@ struct FlexContainer : public Renderable {
     void Draw(cairo_t* cr, int x, int y) const override {
         if (isColumn) {
             for (const auto& r : children) {
-                r->Draw(cr, x, y);
-                y += r->computed.cy;
+                r->Draw(cr, x + padding.left, y + padding.top);
+                y += r->computed.cy + padding.top + padding.bottom;
             }
         } else {
             for (const auto& r : children) {
-                r->Draw(cr, x, y);
-                x += r->computed.cx;
+                r->Draw(cr, x + padding.left, y + padding.top);
+                x += r->computed.cx + padding.left + padding.right;
             }
         }
     }
 
    private:
     bool isColumn;
+    Padding padding;
     std::vector<std::unique_ptr<Renderable>> children;
 };
 

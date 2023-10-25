@@ -43,6 +43,9 @@ zen.panels.left = {
           local workspace = {
             type = "flex",
             direction = "row",
+            padding = {
+              right = 5,
+            },
             items = {
               {
                 type = "box",
@@ -52,7 +55,7 @@ zen.panels.left = {
                   left = 10,
                   right = 10,
                 },
-                radius = 8,
+                radius = 15,
               },
               {
                 type = "box",
@@ -62,7 +65,7 @@ zen.panels.left = {
                   left = 10,
                   right = 10,
                 },
-                radius = 8,
+                radius = 15,
               },
             },
           }
@@ -71,6 +74,9 @@ zen.panels.left = {
         return {
           type = "flex",
           direction = "column",
+          padding = {
+            bottom = 7,
+          },
           items = workspaces,
         }
       end,
