@@ -63,8 +63,7 @@ struct RGBA {
         if (!FromChar(c1, n1) || !FromChar(c2, n2)) {
             return false;
         }
-        uint8_t n = n1 | (n2 << 4);
-        c = n / 255.0;
+        c = ((n1 << 4) | n2) / 255.0;
         return true;
     }
 };
@@ -154,8 +153,8 @@ struct MarkupBox : public Renderable {
     void Compute(cairo_t* cr) override {
         markup.Compute(cr);
         computed = markup.computed;
-        computed.cx += padding.left + padding.right + border.width;
-        computed.cy += padding.top + padding.bottom + border.width;
+        computed.cx += padding.left + padding.right + (2 * border.width);
+        computed.cy += padding.top + padding.bottom + (2 * border.width);
     }
     void Draw(cairo_t* cr, int x, int y) const override {
         constexpr double degrees = M_PI / 180.0;
@@ -220,8 +219,13 @@ struct FlexContainer : public Renderable {
         computed.cy = 0;
         for (const auto& r : children) {
             r->Compute(cr);
-            computed.cx += r->computed.cx;
-            computed.cy += r->computed.cy;
+            if (isColumn) {
+                computed.cy += r->computed.cy;
+                computed.cx = std::max(computed.cx, r->computed.cx);
+            } else {
+                computed.cx += r->computed.cx;
+                computed.cy = std::max(computed.cy, r->computed.cy);
+            }
         }
     }
     void Draw(cairo_t* cr, int x, int y) const override {
@@ -306,6 +310,7 @@ void Panel::Draw(Output& output) {
         item->Draw(cr, x, y);
         cairo_restore(cr);
         y += item->computed.cy;
+        // TODO: Config
         y += 10;
     }
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);

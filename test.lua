@@ -12,27 +12,10 @@ function dump(o)
    end
 end
 
-local x = function()
-    return {
-        type = "flex",
-        direction = "column",
-        items = {
-            "<span size='10pt' color='#1c1b19' background='#918175'>Testing 1</span>",
-            "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
-            {
-              type = "markup",
-              markup = "<span size='10pt' color='#1c1b19' background='#918175'>Test 2</span>",
-              background_color = "#111223",
-              border_color = "",
-              border_width = 2,
-              border_radius = 2,
-            },
-            {
-              type = "",
-            },
-        },
-    }
-end
+local COLOR_BLACK = '#1c1b19'
+local COLOR_BLACK_BR = '#918175'
+local COLOR_RED = '#ef2f27'
+local COLOR_GREEN = '#519f50'
 
 -- Config
 zen.panels.left = {
@@ -46,22 +29,41 @@ zen.panels.left = {
         end
         local workspaces = {}
         for _, workspace in pairs(display.workspaces) do
-          local wmarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. workspace.name .. "</span>"
+          local wmarkup = "<span size='20pt' color='" .. COLOR_BLACK .. "'>" .. workspace.name .. "</span>"
           local amarkup = ""
           for _, app in pairs(workspace.applications) do
-            if app.focus then
-              amarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. app.name .. "</span>"
+            if app.focus or (amarkup == "" and app.next) then
+              amarkup = "<span size='20pt' color='" .. COLOR_BLACK .. "'>" .. app.name .. "</span>"
             end
-            if amarkup == "" and app.next then
-              amarkup = "<span size='10pt' color='#1c1b19' background='#918175'>" .. app.name .. "</span>"
-            end
+          end
+          boxcolor = COLOR_BLACK_BR
+          if workspace.focus then
+            boxcolor = COLOR_GREEN
           end
           local workspace = {
             type = "flex",
             direction = "row",
             items = {
-              wmarkup,
-              amarkup,
+              {
+                type = "box",
+                markup = wmarkup,
+                color = boxcolor,
+                padding = {
+                  left = 10,
+                  right = 10,
+                },
+                radius = 8,
+              },
+              {
+                type = "box",
+                markup = amarkup,
+                color = boxcolor,
+                padding = {
+                  left = 10,
+                  right = 10,
+                },
+                radius = 8,
+              },
             },
           }
           table.insert(workspaces, workspace)
@@ -89,11 +91,11 @@ zen.panels.right = {
         return {
           type = "box",
           markup = markup,
-          color = '#010101',
+          color = COLOR_GREEN,
           radius = 10,
           border = {
             width = 2,
-            color = '#ff0000ff',
+            color = COLOR_GREEN .. '80',
           },
           padding = {
             left = 10,
