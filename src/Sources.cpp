@@ -16,3 +16,9 @@ bool Sources::IsDirty(std::string_view name) const {
     // Unknown source..
     return false;
 }
+
+void Sources::ClearAll() const {
+    for (auto const& source : m_sources) {
+        source.second->ClearDirtySource();
+    }
+}

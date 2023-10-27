@@ -1,8 +1,10 @@
 #include "Manager.h"
 
 std::shared_ptr<Manager> Manager::Create(MainLoop& mainLoop, std::shared_ptr<Outputs> outputs,
+                                         std::unique_ptr<Sources> sources,
                                          std::vector<std::unique_ptr<Panel>>&& panels) {
-    auto manager = std::shared_ptr<Manager>(new Manager(outputs, std::move(panels)));
+    auto manager =
+        std::shared_ptr<Manager>(new Manager(outputs, std::move(sources), std::move(panels)));
     mainLoop.RegisterBatchHandler(manager);
     return manager;
 }
@@ -13,7 +15,7 @@ void Manager::DirtyWorkspace() {
 
     // Redraw dirty panels
     for (const auto& panel : m_panels) {
-        if (!panel->IsDirty()) continue;
+        if (!panel->IsDirty(*m_sources)) continue;
         auto p = panel.get();
         m_outputs->ForEach([p](std::shared_ptr<Output> output) { p->Draw(*output); });
     }

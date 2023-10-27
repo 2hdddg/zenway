@@ -11,6 +11,7 @@ class Sources {
     static std::unique_ptr<Sources> Create(std::shared_ptr<ScriptContext> scriptContext);
     void Register(std::string_view name, std::shared_ptr<Source> source);
     bool IsDirty(std::string_view name) const;
+    void ClearAll() const;
 
    private:
     Sources(std::shared_ptr<ScriptContext> scriptContext) : m_scriptContext(scriptContext) {}

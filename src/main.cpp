@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Initialize sources
-    auto sources = std::shared_ptr<Sources>(Sources::Create(scriptContext));
+    auto sources = Sources::Create(scriptContext);
     // Audio source
     auto audioSource = PulseAudioSource::Create(mainLoop, scriptContext);
     if (!audioSource) {
@@ -80,12 +80,12 @@ int main(int argc, char* argv[]) {
     sources->Register("time", timeSource);
 
     std::vector<std::unique_ptr<Panel>> panels;
-    auto panel = Panel::Create(bufferPool, config->leftPanel, sources);
+    auto panel = Panel::Create(bufferPool, config->leftPanel);
     panels.push_back(std::move(panel));
-    panel = Panel::Create(bufferPool, config->rightPanel, sources);
+    panel = Panel::Create(bufferPool, config->rightPanel);
     panels.push_back(std::move(panel));
 
-    auto manager = Manager::Create(*mainLoop, outputs, std::move(panels));
+    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources), std::move(panels));
 
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);

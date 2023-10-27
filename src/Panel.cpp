@@ -271,15 +271,14 @@ std::unique_ptr<Renderable> FromObject(const sol::object& o) {
 }
 
 std::unique_ptr<Panel> Panel::Create(std::shared_ptr<BufferPool> bufferPool,
-                                     Configuration::Panel panelConfig,
-                                     std::shared_ptr<Sources> sources) {
-    return std::unique_ptr<Panel>(new Panel(bufferPool, panelConfig, sources));
+                                     Configuration::Panel panelConfig) {
+    return std::unique_ptr<Panel>(new Panel(bufferPool, panelConfig));
 }
 
-bool Panel::IsDirty() const {
+bool Panel::IsDirty(const Sources& sources) const {
     for (auto& widget : m_panelConfig.widgets) {
         for (const auto& sourceName : widget.sources) {
-            if (m_sources->IsDirty(sourceName)) return true;
+            if (sources.IsDirty(sourceName)) return true;
         }
     }
     return false;

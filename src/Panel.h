@@ -10,16 +10,13 @@
 class Panel {
    public:
     static std::unique_ptr<Panel> Create(std::shared_ptr<BufferPool> bufferPool,
-                                         Configuration::Panel panelConfig,
-                                         std::shared_ptr<Sources> sources);
+                                         Configuration::Panel panelConfig);
     void Draw(Output& output);
-    bool IsDirty() const;
+    bool IsDirty(const Sources& sources) const;
 
    private:
-    Panel(std::shared_ptr<BufferPool> bufferPool, Configuration::Panel panelConfig,
-          std::shared_ptr<Sources> sources)
-        : m_bufferPool(bufferPool), m_panelConfig(panelConfig), m_sources(sources) {}
+    Panel(std::shared_ptr<BufferPool> bufferPool, Configuration::Panel panelConfig)
+        : m_bufferPool(bufferPool), m_panelConfig(panelConfig) {}
     const std::shared_ptr<BufferPool> m_bufferPool;
     const Configuration::Panel m_panelConfig;
-    const std::shared_ptr<Sources> m_sources;
 };
