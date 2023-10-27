@@ -21,7 +21,7 @@ local COLOR_GREEN = '#519f50'
 zen.panels.left = {
   widgets = {
     {
-      sources = {'time'},
+      sources = {'workspace'},
       render = function(displayName)
         local display = zen.sources.displays[displayName]
         if not display then

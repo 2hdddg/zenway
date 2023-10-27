@@ -6,10 +6,16 @@ std::shared_ptr<Manager> Manager::Create(MainLoop& mainLoop, std::shared_ptr<Out
     auto manager =
         std::shared_ptr<Manager>(new Manager(outputs, std::move(sources), std::move(panels)));
     mainLoop.RegisterBatchHandler(manager);
+    manager->m_sources->Register("workspace", manager);
     return manager;
 }
 
 void Manager::DirtyWorkspace() {
+    m_dirtyWorkspace = true;
+    OnBatchProcessed();
+}
+
+void Manager::OnBatchProcessed() {
     // No need to redraw when not visible
     if (!m_isVisible) return;
 
@@ -20,7 +26,6 @@ void Manager::DirtyWorkspace() {
         m_outputs->ForEach([p](std::shared_ptr<Output> output) { p->Draw(*output); });
     }
 }
-void Manager::OnBatchProcessed() { DirtyWorkspace(); }
 
 void Manager::Hide() {
     m_outputs->ForEach([](std::shared_ptr<Output> output) {
