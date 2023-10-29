@@ -137,6 +137,23 @@ struct Markup : public Renderable {
     PangoLayout* m_layout;
 };
 
+static void BeginRectangleSubPath(cairo_t* cr, int x, int y, int cx, int cy, int radius) {
+    constexpr double degrees = M_PI / 180.0;
+    cairo_new_sub_path(cr);
+    // A-----B
+    // |     |
+    // C-----D
+    // B
+    cairo_arc(cr, x + cx - radius, y + radius, radius, -90 * degrees, 0 * degrees);
+    // D
+    cairo_arc(cr, x + cx - radius, y + cy - radius, radius, 0 * degrees, 90 * degrees);
+    // C
+    cairo_arc(cr, x + radius, y + cy - radius, radius, 90 * degrees, 180 * degrees);
+    // A
+    cairo_arc(cr, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
+    cairo_close_path(cr);
+}
+
 struct MarkupBox : public Renderable {
     MarkupBox(const std::string& string)
         : markup(string), color({}), border({}), radius(0), padding({}) {}
@@ -157,21 +174,29 @@ struct MarkupBox : public Renderable {
         computed.cy += padding.top + padding.bottom + (2 * border.width);
     }
     void Draw(cairo_t* cr, int x, int y) const override {
-        constexpr double degrees = M_PI / 180.0;
-
-        cairo_new_sub_path(cr);
-        cairo_arc(cr, x + computed.cx - radius, y + radius, radius, -90 * degrees, 0 * degrees);
-        cairo_arc(cr, x + computed.cx - radius, y + computed.cy - radius, radius, 0 * degrees,
-                  90 * degrees);
-        cairo_arc(cr, x + radius, y + computed.cy - radius, radius, 90 * degrees, 180 * degrees);
-        cairo_arc(cr, x + radius, y + radius, radius, 180 * degrees, 270 * degrees);
-        cairo_close_path(cr);
+        BeginRectangleSubPath(cr, x + border.width, y + border.width, computed.cx - border.width,
+                              computed.cy - border.width, radius);
+        // Border
+        if (border.width) {
+            // Cairo draws lines with half of the line width within the edge and the
+            // other half outside. We want everything on the outside.
+            cairo_push_group_with_content(cr, CAIRO_CONTENT_ALPHA);
+            cairo_set_line_width(cr, border.width * 2.0);
+            cairo_set_source_rgba(cr, 0, 0, 0, 1);
+            cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+            cairo_stroke_preserve(cr);
+            cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
+            cairo_fill_preserve(cr);
+            auto mask = cairo_pop_group(cr);
+            cairo_set_source_rgba(cr, border.color.r, border.color.g, border.color.b,
+                                  border.color.a);
+            cairo_mask(cr, mask);
+            cairo_pattern_destroy(mask);
+        }
+        // Fill
         cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-        cairo_fill_preserve(cr);
-        cairo_set_source_rgba(cr, border.color.r, border.color.g, border.color.b, border.color.a);
-        cairo_set_line_width(cr, border.width);
-        cairo_stroke(cr);
-
+        cairo_fill(cr);
+        // Inner
         markup.Draw(cr, x + padding.left + border.width, y + padding.top + border.width);
     }
 
