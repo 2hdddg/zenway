@@ -2,6 +2,7 @@
 
 #include "pango/pango-layout.h"
 #include "pango/pangocairo.h"
+#include "spdlog/spdlog.h"
 #include "src/BufferPool.h"
 
 struct Computed {
@@ -110,6 +111,12 @@ struct Renderable {
     Computed computed;
 };
 
+static void LogComputed(const Computed& computed, const char* s) {
+    spdlog::debug("Computed {}: {}x{}", s, computed.cx, computed.cy);
+}
+
+static void LogDraw(const char* s, int x, int y) { spdlog::debug("Draw {}: {},{}", s, x, y); }
+
 struct Markup : public Renderable {
     Markup(const std::string& string) : string(string), m_layout(nullptr) {}
     virtual ~Markup() {
@@ -122,12 +129,14 @@ struct Markup : public Renderable {
         pango_layout_set_markup(m_layout, string.c_str(), -1);
         PangoRectangle rect;
         pango_layout_get_extents(m_layout, nullptr, &rect);
-        pango_extents_to_pixels(nullptr, &rect);
+        pango_extents_to_pixels(&rect, nullptr);
         computed.cx = rect.width;
         computed.cy = rect.height;
+        LogComputed(computed, ("Markup " + string).c_str());
     }
 
     void Draw(cairo_t* cr, int x, int y) const override {
+        LogDraw("Markup", x, y);
         cairo_move_to(cr, x, y);
         pango_cairo_show_layout(cr, m_layout);
     }
@@ -172,10 +181,13 @@ struct MarkupBox : public Renderable {
         computed = markup.computed;
         computed.cx += padding.left + padding.right + (2 * border.width);
         computed.cy += padding.top + padding.bottom + (2 * border.width);
+        LogComputed(computed, "MarkupBox ");
     }
     void Draw(cairo_t* cr, int x, int y) const override {
-        BeginRectangleSubPath(cr, x + border.width, y + border.width, computed.cx - border.width,
-                              computed.cy - border.width, radius);
+        LogDraw("MarkupBox", x, y);
+        BeginRectangleSubPath(cr, x + border.width, y + border.width,
+                              computed.cx - (2 * border.width), computed.cy - (2 * border.width),
+                              radius);
         // Border
         if (border.width) {
             // Cairo draws lines with half of the line width within the edge and the
@@ -253,17 +265,21 @@ struct FlexContainer : public Renderable {
                 computed.cy = std::max(computed.cy, r->computed.cy);
             }
         }
+        LogComputed(computed, "FlexContainer");
     }
     void Draw(cairo_t* cr, int x, int y) const override {
+        LogDraw("FlexBox", x, y);
         if (isColumn) {
             for (const auto& r : children) {
-                r->Draw(cr, x + padding.left, y + padding.top);
-                y += r->computed.cy + padding.top + padding.bottom;
+                y += padding.top;
+                r->Draw(cr, x + padding.left, y);
+                y += r->computed.cy + padding.bottom;
             }
         } else {
             for (const auto& r : children) {
-                r->Draw(cr, x + padding.left, y + padding.top);
-                x += r->computed.cx + padding.left + padding.right;
+                x += padding.left;
+                r->Draw(cr, x, y + padding.top);
+                x += r->computed.cx + padding.right;
             }
         }
     }
@@ -337,7 +353,7 @@ void Panel::Draw(Output& output) {
         cairo_restore(cr);
         y += item->computed.cy;
         // TODO: Config
-        y += 10;
+        // y += 10;
     }
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);
 }

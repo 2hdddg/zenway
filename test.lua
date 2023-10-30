@@ -44,7 +44,7 @@ zen.panels.left = {
             type = "flex",
             direction = "row",
             padding = {
-              right = 5,
+              right = 1,
             },
             items = {
               {
@@ -52,20 +52,32 @@ zen.panels.left = {
                 markup = wmarkup,
                 color = boxcolor,
                 padding = {
-                  left = 10,
-                  right = 10,
+                  top = 3,
+                  left = 12,
+                  right = 12,
+                  bottom = 5,
                 },
                 radius = 15,
+                border = {
+                  width = 2,
+                  color = boxcolor .. '10',
+                },
               },
               {
                 type = "box",
                 markup = amarkup,
                 color = boxcolor,
                 padding = {
+                  top = 3,
                   left = 10,
                   right = 10,
+                  bottom = 5,
                 },
                 radius = 15,
+                border = {
+                  width = 2,
+                  color = boxcolor .. '10',
+                },
               },
             },
           }
@@ -75,14 +87,15 @@ zen.panels.left = {
           type = "flex",
           direction = "column",
           padding = {
-            bottom = 7,
+            left = 10,
+            bottom = 1,
           },
           items = workspaces,
         }
       end,
     },
   },
-  screen_border_offset = 50,
+  screen_border_offset = 0,
 }
 
 zen.panels.right = {
