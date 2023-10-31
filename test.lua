@@ -111,7 +111,7 @@ zen.panels.right = {
           type = "box",
           markup = markup,
           color = COLOR_GREEN,
-          radius = 10,
+          radius = 15,
           border = {
             width = 2,
             color = COLOR_GREEN .. '80',
@@ -128,11 +128,42 @@ zen.panels.right = {
     {
         sources = {'audio'},
         render = function()
+          local markup = ""
+          local icon = ""
+          local text = ""
           if zen.sources.audio.muted then
-            return "<span size='15pt' color='#1c1b19' background='#918175'>Muted</span>"
+            icon = ""
+            text = "Muted"
           else
-            return "<span size='15pt' color='#1c1b19' background='#918175'>Volume " .. zen.sources.audio.volume .. " </span>"
+            local volume = math.floor(zen.sources.audio.volume)
+            icon = ""
+            if volume > 10 then
+              if volume < 50 then
+                icon = ""
+              else
+                icon = ""
+              end
+            end
+            text = "Volume " .. volume
           end
+          markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
+                   "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
+          return {
+            type = "box",
+            markup = markup,
+            color = COLOR_GREEN,
+            radius = 15,
+            border = {
+              width = 2,
+              color = COLOR_GREEN .. '80',
+            },
+            padding = {
+              left = 10,
+              right = 10,
+              top = 5,
+              bottom = 5,
+            },
+          }
         end,
     },
     {
