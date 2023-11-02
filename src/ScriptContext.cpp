@@ -48,6 +48,7 @@ void ScriptContext::Publish(const Displays& displays) {
 void ScriptContext::Publish(const PowerState& power) {
     auto table = m_lua["zen"]["sources"]["power"];
     table["isCharging"] = power.IsCharging;
+    table["isOnAC"] = power.IsOnAC;
     table["capacity"] = (int)power.Capacity;
 }
 void ScriptContext::Publish(const AudioState& audio) {

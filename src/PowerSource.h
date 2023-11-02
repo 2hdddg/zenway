@@ -19,6 +19,7 @@ class PowerSource : public Source, public IoHandler {
     PowerSource(int fd, std::shared_ptr<ScriptContext> scriptContext)
         : m_timerfd(fd), m_scriptContext(scriptContext) {}
     std::filesystem::path m_battery;
+    std::filesystem::path m_ac;
     int m_timerfd;
     std::shared_ptr<ScriptContext> m_scriptContext;
     PowerState m_sourceState;

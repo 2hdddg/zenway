@@ -24,6 +24,7 @@ struct Display {
 using Displays = std::vector<Display>;
 
 struct PowerState {
+    bool IsOnAC;
     bool IsCharging;
     uint8_t Capacity;
 

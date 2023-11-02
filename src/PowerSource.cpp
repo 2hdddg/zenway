@@ -26,31 +26,37 @@ std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop,
 
 bool PowerSource::Initialize() {
     // TODO: Probe that these exists
-    // m_ac = "/sys/class/power_supply/AC";
+    m_ac = "/sys/class/power_supply/AC";
     m_battery = "/sys/class/power_supply/BAT0";
     ReadState();
     return true;
 }
 
 void PowerSource::ReadState() {
+    auto state = PowerState{};
     // Read current charge
-    int capacity;
     {
         std::ifstream f(m_battery / "capacity");
+        int capacity;
         f >> capacity;
+        state.Capacity = (uint8_t)capacity;
         spdlog::info("capacity: {}", capacity);
     }
-    std::string status;
-    // Read status
+    // Read battery status
     {
         std::ifstream f(m_battery / "status");
+        std::string status;
         f >> status;
+        state.IsCharging = status == "Charging";
         spdlog::info("status: {}", status);
     }
-    auto state = PowerState{
-        .IsCharging = status == "Charging",
-        .Capacity = (uint8_t)capacity,
-    };
+    // Read AC status
+    {
+        std::ifstream f(m_ac / "online");
+        int online;
+        f >> online;
+        state.IsOnAC = online != 0;
+    }
     m_sourceDirtyFlag = state != m_sourceState;
     if (m_sourceDirtyFlag) {
         m_sourceState = state;
