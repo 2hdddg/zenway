@@ -325,8 +325,9 @@ void Panel::Draw(Output& output) {
         }
         item->Compute(cr);
         auto widgetCx = item->computed.cx;
-        int x = alignRight ? bufferCx - widgetCx : 0;
-        item->Draw(cr, x + widgetConfig.padding.left, y + widgetConfig.padding.top);
+        int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
+                           : widgetConfig.padding.left;
+        item->Draw(cr, x, y + widgetConfig.padding.top);
         cairo_restore(cr);
         y += item->computed.cy + widgetConfig.padding.top + widgetConfig.padding.bottom;
     }

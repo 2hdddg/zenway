@@ -3,12 +3,15 @@ local COLOR_BLACK = '#1c1b19'
 local COLOR_BLACK_BR = '#918175'
 local COLOR_RED = '#ef2f27'
 local COLOR_GREEN = '#519f50'
+local COLOR_BLUE = '#2c78bf'
+local COLOR_BLUE_BR = '#68a8e4'
 
 -- Config
 zen.panels.left = {
   widgets = {
     {
       sources = {'workspace'},
+      padding = {left = 10 },
       render = function(displayName)
         local display = zen.sources.displays[displayName]
         if not display then
@@ -89,6 +92,10 @@ zen.panels.right = {
   widgets = {
     {
       sources = {'time', 'date'},
+      padding = {
+        bottom = 10,
+        right = 10,
+      },
       render = function()
         local t = os.time()
         local markup = os.date(
@@ -96,11 +103,11 @@ zen.panels.right = {
         return {
           type = "box",
           markup = markup,
-          color = COLOR_GREEN,
+          color = COLOR_BLUE_BR,
           radius = 15,
           border = {
             width = 2,
-            color = COLOR_GREEN .. '80',
+            color = COLOR_BLUE_BR .. '80',
           },
           padding = {
             left = 10,
@@ -110,12 +117,13 @@ zen.panels.right = {
           },
         }
       end,
-      padding = {
-        bottom = 10,
-      },
     },
     {
       sources = {'audio'},
+      padding = {
+        bottom = 10,
+        right = 10,
+      },
       render = function()
         local markup = ""
         local icon = ""
@@ -154,12 +162,12 @@ zen.panels.right = {
           },
         }
       end,
-      padding = {
-        bottom = 10,
-      },
     },
     {
         sources = {'power'},
+        padding = {
+          right = 10,
+        },
         render = function()
           local icon = ""
           local text = ""
