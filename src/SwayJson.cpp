@@ -51,11 +51,10 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
         spdlog::error("Expected app");
         return;
     }
-    auto application = Application{.name = applicationNode["name"]};
+    auto applicationname = applicationNode["name"];
     // When name is null and there is an orientation different
     // from none there are more nodes below! Maybe name is not the correct
     // check...
-    auto applicationname = applicationNode["name"];
     if (applicationname.is_null()) {
         auto applicationNodes = applicationNode["nodes"];
         for (auto &innerApplicationNode : applicationNodes) {
@@ -64,6 +63,7 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
         return;
     }
 
+    auto application = Application{.name = applicationNode["name"]};
     int applicationId = applicationNode["id"];
     application.appId = applicationNode["app_id"];
     application.isFocused = applicationNode["focused"];

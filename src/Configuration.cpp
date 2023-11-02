@@ -7,6 +7,22 @@
 
 #include "src/Sources.h"
 
+int GetIntProperty(const sol::table& t, const char* name, int missing) {
+    const sol::optional<int> o = t[name];
+    return o ? *o : missing;
+}
+
+Padding Padding::FromProperty(const sol::table& t, const char* name) {
+    const sol::optional<sol::table> o = t[name];
+    return o ? Padding::FromTable(*o) : Padding{};
+}
+
+Padding Padding::FromTable(const sol::table& t) {
+    return Padding{.left = GetIntProperty(t, "left", 0),
+                   .right = GetIntProperty(t, "right", 0),
+                   .top = GetIntProperty(t, "top", 0),
+                   .bottom = GetIntProperty(t, "bottom", 0)};
+}
 static std::set<std::string> ParseSources(const sol::table& widgetTable) {
     std::set<std::string> sources;
     const sol::optional<sol::table> table = widgetTable["sources"];
@@ -29,6 +45,7 @@ void Configuration::Widget::Parse(const sol::table& table, std::vector<Widget>& 
         return;
     }
     widget.render = *renderFunction;
+    widget.padding = Padding::FromProperty(table, "padding");
     widgets.push_back(std::move(widget));
 }
 
@@ -58,9 +75,6 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table table, const c
         }
         Configuration::Widget::Parse(*widgetTable, panel.widgets);
     }
-    // Get offset from screen border
-    sol::optional<int> screenOffset = (*panelTable)["screen_border_offset"];
-    panel.screenBorderOffset = screenOffset ? *screenOffset : 0;
     return panel;
 }
 

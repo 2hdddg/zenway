@@ -69,11 +69,6 @@ struct RGBA {
     }
 };
 
-static int GetIntProperty(const sol::table& t, const char* name, int missing) {
-    const sol::optional<int> o = t[name];
-    return o ? *o : missing;
-}
-
 struct Border {
     static Border FromProperty(const sol::table& t, const char* name) {
         const sol::optional<sol::table> optionalBorder = t[name];
@@ -85,23 +80,6 @@ struct Border {
     }
     RGBA color;
     int width;
-};
-
-struct Padding {
-    static Padding FromProperty(const sol::table& t, const char* name) {
-        const sol::optional<sol::table> o = t[name];
-        return o ? Padding::FromTable(*o) : Padding{};
-    }
-    static Padding FromTable(const sol::table& t) {
-        return Padding{.left = GetIntProperty(t, "left", 0),
-                       .right = GetIntProperty(t, "right", 0),
-                       .top = GetIntProperty(t, "top", 0),
-                       .bottom = GetIntProperty(t, "bottom", 0)};
-    }
-    int left;
-    int right;
-    int top;
-    int bottom;
 };
 
 struct Renderable {
@@ -347,13 +325,10 @@ void Panel::Draw(Output& output) {
         }
         item->Compute(cr);
         auto widgetCx = item->computed.cx;
-        int x = alignRight ? bufferCx - widgetCx - m_panelConfig.screenBorderOffset
-                           : m_panelConfig.screenBorderOffset;
-        item->Draw(cr, x, y);
+        int x = alignRight ? bufferCx - widgetCx : 0;
+        item->Draw(cr, x + widgetConfig.padding.left, y + widgetConfig.padding.top);
         cairo_restore(cr);
-        y += item->computed.cy;
-        // TODO: Config
-        // y += 10;
+        y += item->computed.cy + widgetConfig.padding.top + widgetConfig.padding.bottom;
     }
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);
 }
