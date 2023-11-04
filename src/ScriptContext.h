@@ -24,12 +24,13 @@ struct Display {
 using Displays = std::vector<Display>;
 
 struct PowerState {
-    bool IsOnAC;
+    bool IsPluggedIn;
     bool IsCharging;
     uint8_t Capacity;
 
     bool operator==(const PowerState& other) {
-        return IsCharging == other.IsCharging && Capacity == other.Capacity;
+        return IsPluggedIn == other.IsPluggedIn && IsCharging == other.IsCharging &&
+               Capacity == other.Capacity;
     }
 };
 

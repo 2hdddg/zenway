@@ -13,7 +13,7 @@ std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop,
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
     }
-    itimerspec timer = {.it_interval = {.tv_sec = 60}, .it_value = {.tv_sec = 0}};
+    itimerspec timer = {.it_interval = {.tv_sec = 30}, .it_value = {.tv_sec = 1}};
     auto ret = timerfd_settime(fd, 0, &timer, nullptr);
     if (ret == -1) {
         spdlog::error("Failed to set timer: {}", strerror(errno));
@@ -55,7 +55,7 @@ void PowerSource::ReadState() {
         std::ifstream f(m_ac / "online");
         int online;
         f >> online;
-        state.IsOnAC = online != 0;
+        state.IsPluggedIn = online != 0;
     }
     m_sourceDirtyFlag = state != m_sourceState;
     if (m_sourceDirtyFlag) {
@@ -67,7 +67,8 @@ void PowerSource::ReadState() {
 PowerSource::~PowerSource() { close(m_timerfd); }
 
 void PowerSource::OnRead() {
+    spdlog::info("Check power");
     uint64_t ignore;
     read(m_timerfd, &ignore, sizeof(ignore));
-    m_sourceDirtyFlag = true;
+    ReadState();
 }

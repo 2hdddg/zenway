@@ -1,9 +1,14 @@
 
 local COLOR_BLACK = '#1c1b19'
-local COLOR_BLACK_BR = '#918175'
 local COLOR_RED = '#ef2f27'
 local COLOR_GREEN = '#519f50'
+local COLOR_YELLOW = '#fed06e'
 local COLOR_BLUE = '#2c78bf'
+local COLOR_MAGENTA = '#ff5c8f'
+local COLOR_CYAN = '#2be4d0'
+local COLOR_WHITE = '#fce8c3'
+
+local COLOR_BLACK_BR = '#918175'
 local COLOR_BLUE_BR = '#68a8e4'
 
 -- Config
@@ -15,7 +20,7 @@ zen.panels.left = {
       render = function(displayName)
         local display = zen.sources.displays[displayName]
         if not display then
-            return ""
+          return ""
         end
         local workspaces = {}
         for _, workspace in pairs(display.workspaces) do
@@ -99,7 +104,7 @@ zen.panels.right = {
       render = function()
         local t = os.time()
         local markup = os.date(
-            "<span font='digital-7' size='40pt' color='#1c1b19' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19'>\n%Y-%m-%d</span>")
+        "<span font='digital-7' size='40pt' color='#1c1b19' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19'>\n%Y-%m-%d</span>")
         return {
           type = "box",
           markup = markup,
@@ -144,7 +149,7 @@ zen.panels.right = {
           text = "Volume " .. volume
         end
         markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-                 "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
+        "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
         return {
           type = "box",
           markup = markup,
@@ -164,41 +169,45 @@ zen.panels.right = {
       end,
     },
     {
-        sources = {'power'},
-        padding = {
-          right = 10,
-        },
-        render = function()
-          local icon = ""
-          local text = ""
-          if zen.sources.power.isCharging then
-              icon = "󰚥"
-              text = "Charging"
+      sources = {'power'},
+      padding = {
+        right = 10,
+      },
+      render = function()
+        local color = COLOR_GREEN
+        local icon = ""
+        local text = ""
+        if zen.sources.power.isCharging then
+          icon = ""
+          text = "Charging"
+        elseif zen.sources.power.isPluggedIn then
+          icon = ""
+          text = "Fully charged"
+        else
+          local c = zen.sources.power.capacity
+          if c > 90 then
+            icon = ""
+          elseif c > 80 then
+            icon = ""
+          elseif c > 50 then
+            icon = ""
+          elseif c > 20 then
+            icon = ""
           else
-              local c = zen.sources.power.capacity
-              if c > 90 then
-                  icon = ""
-              elseif c > 80 then
-                  icon = ""
-              elseif c > 50 then
-                  icon = ""
-              elseif c > 20 then
-                  icon = ""
-              else
-                  icon = ""
-              end
-              text = "Battery " .. c .. "%"
+            icon = ""
           end
-          local markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-                         "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
+          text = "Battery " .. c .. "%"
+        end
+        local markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
+        "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
         return {
           type = "box",
           markup = markup,
-          color = COLOR_GREEN,
+          color = color,
           radius = 15,
           border = {
             width = 2,
-            color = COLOR_GREEN .. '80',
+            color = color .. '80',
           },
           padding = {
             left = 10,
@@ -207,7 +216,7 @@ zen.panels.right = {
             bottom = 5,
           },
         }
-        end,
+      end,
     },
   },
 }
