@@ -90,10 +90,10 @@ struct Renderable {
 };
 
 static void LogComputed(const Computed& computed, const char* s) {
-    spdlog::debug("Computed {}: {}x{}", s, computed.cx, computed.cy);
+    spdlog::trace("Computed {}: {}x{}", s, computed.cx, computed.cy);
 }
 
-static void LogDraw(const char* s, int x, int y) { spdlog::debug("Draw {}: {},{}", s, x, y); }
+static void LogDraw(const char* s, int x, int y) { spdlog::trace("Draw {}: {},{}", s, x, y); }
 
 struct Markup : public Renderable {
     Markup(const std::string& string) : string(string), m_layout(nullptr) {}

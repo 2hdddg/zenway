@@ -2,11 +2,10 @@
 
 #include <memory>
 
-#include "Compositor.h"
 #include "MainLoop.h"
 #include "src/Manager.h"
 
-class SwayCompositor : public Compositor, public IoHandler {
+class SwayCompositor : public IoHandler {
    public:
     static std::shared_ptr<SwayCompositor> Connect(MainLoop& mainLoop,
                                                    std::shared_ptr<Manager> manager,

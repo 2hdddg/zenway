@@ -29,6 +29,7 @@ enum class Message : uint32_t {
     EVENT_WINDOW = 0x80000003,
     EVENT_SHUTDOWN = 0x80000006,
     EVENT_BAR_STATE_UPDATE = 0x80000014,
+    EVENT_INPUT = 0x80000015,
 
 };
 
@@ -78,23 +79,6 @@ void SwayCompositor::Initialize() {
     OnRead();
 }
 
-/*
-void SwayCompositor::Show() {
-    m_outputs->ForEach([this](std::shared_ptr<Output> output) {
-        m_workspacePanel->Draw(*output);
-        m_panel->Draw(*output);
-    });
-}
-
-void SwayCompositor::Hide() {
-    m_outputs->ForEach([](std::shared_ptr<Output> output) {
-        for (const auto &surface : output->surfaces) {
-            surface->Hide();
-        }
-    });
-}
-*/
-
 void SwayCompositor::OnRead() {
     char hdr[HEADER_SIZE];
     read(m_fd, hdr, HEADER_SIZE);
@@ -120,12 +104,6 @@ void SwayCompositor::OnRead() {
             spdlog::trace("Received sway tree");
             SwayJson::ParseTree(m_payload, m_scriptContext);
             m_manager->DirtyWorkspace();
-            /*
-            if (m_isVisible) {
-                m_outputs->ForEach(
-                    [this](std::shared_ptr<Output> output) { m_workspacePanel->Draw(*output); });
-            }
-            */
             break;
         case Message::SUBSCRIBE:
             spdlog::debug("Subscription confirmed");

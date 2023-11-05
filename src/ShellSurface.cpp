@@ -65,7 +65,7 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, int x, int y, int c
         return;
     }
     if (!m_layer) Show();
-    spdlog::debug("Draw buffer: {}", buffer.name);
+    spdlog::trace("Draw buffer: {}", buffer.name);
     zwlr_layer_surface_v1_set_size(m_layer, cx, cy);
     uint32_t zanchor;
     switch (anchor) {

@@ -39,6 +39,6 @@ Buffer::~Buffer() {
 void Buffer::Clear(uint8_t v) { memset(const_cast<void *>(m_address), v, m_sizeInBytes); }
 
 void Buffer::OnRelease() {
-    spdlog::debug("Event wl_buffer::release {}", name);
+    spdlog::trace("Event wl_buffer::release {}", name);
     m_inUse = false;
 }
