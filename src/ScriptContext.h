@@ -43,6 +43,10 @@ struct AudioState {
     }
 };
 
+struct KeyboardState {
+    std::string layout;
+};
+
 class ScriptContext {
    public:
     static std::unique_ptr<ScriptContext> Create();
@@ -52,6 +56,7 @@ class ScriptContext {
     void Publish(const Displays& displays);
     void Publish(const PowerState& power);
     void Publish(const AudioState& audio);
+    void Publish(const KeyboardState& keyboard);
 
    private:
     ScriptContext(sol::state&& lua) : m_lua(std::move(lua)) {}

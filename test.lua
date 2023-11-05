@@ -124,6 +124,36 @@ zen.panels.right = {
       end,
     },
     {
+      sources = {'keyboard'},
+      padding = {
+        bottom = 10,
+        right = 10,
+      },
+      render = function()
+        icon = ""
+        text = zen.sources.keyboard.layout
+        color = COLOR_CYAN
+        markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
+        "<span size='12pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
+        return {
+          type = "box",
+          markup = markup,
+          color = color,
+          radius = 15,
+          border = {
+            width = 2,
+            color = color .. '80',
+          },
+          padding = {
+            left = 8,
+            right = 8,
+            top = 3,
+            bottom = 3,
+          },
+        }
+      end,
+    },
+    {
       sources = {'audio'},
       padding = {
         bottom = 10,

@@ -51,8 +51,14 @@ void ScriptContext::Publish(const PowerState& power) {
     table["isPluggedIn"] = power.IsPluggedIn;
     table["capacity"] = (int)power.Capacity;
 }
+
 void ScriptContext::Publish(const AudioState& audio) {
     auto table = m_lua["zen"]["sources"]["audio"];
     table["muted"] = audio.Muted;
     table["volume"] = audio.Volume;
+}
+
+void ScriptContext::Publish(const KeyboardState& keyboard) {
+    auto table = m_lua["zen"]["sources"]["keyboard"];
+    table["layout"] = keyboard.layout;
 }

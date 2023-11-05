@@ -19,7 +19,7 @@ static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t form
     munmap(map_shm, size);
     close(fd);
 
-    ((Keyboard*)data)->layout = xkb_keymap_layout_get_name(keymap, 0);
+    ((Keyboard*)data)->SetLayout(xkb_keymap_layout_get_name(keymap, 0));
 
     xkb_keymap_unref(keymap);
     xkb_context_unref(ctx);
@@ -36,7 +36,19 @@ std::unique_ptr<Keyboard> Keyboard::Create(wl_seat* seat) {
     auto wlkeyboard = wl_seat_get_keyboard(seat);
     auto keyboard = std::make_unique<Keyboard>(wlkeyboard);
     wl_keyboard_add_listener(wlkeyboard, &keyboard_listener, keyboard.get());
-    return nullptr;
+    return keyboard;
+}
+
+void Keyboard::SetLayout(const char* layout) {
+    m_sourceDirtyFlag = m_sourceState.layout != layout;
+    if (m_sourceDirtyFlag) {
+        m_sourceState.layout = layout;
+        if (m_scriptContext) m_scriptContext->Publish(m_sourceState);
+    }
+}
+void Keyboard::SetScriptContext(std::shared_ptr<ScriptContext> scriptContext) {
+    m_scriptContext = scriptContext;
+    if (m_sourceDirtyFlag) m_scriptContext->Publish(m_sourceState);
 }
 
 std::unique_ptr<Seat> Seat::Create(const Roots& roots, wl_seat* wlseat) {

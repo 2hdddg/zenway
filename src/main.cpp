@@ -77,7 +77,15 @@ int main(int argc, char* argv[]) {
     auto timeSource = TimeSource::Create(*mainLoop, dateSource);
     sources->Register("date", dateSource);
     sources->Register("time", timeSource);
+    // Seat sources
+    if (registry->seat && registry->seat->keyboard) {
+        sources->Register("keyboard", registry->seat->keyboard);
+        registry->seat->keyboard->SetScriptContext(scriptContext);
+    } else {
+        spdlog::warn("No keyboard source");
+    }
 
+    // Panels
     std::vector<std::unique_ptr<Panel>> panels;
     auto panel = Panel::Create(bufferPool, config->leftPanel);
     panels.push_back(std::move(panel));
