@@ -11,7 +11,12 @@ local COLOR_WHITE = '#fce8c3'
 local COLOR_BLACK_BR = '#918175'
 local COLOR_BLUE_BR = '#68a8e4'
 
--- Config
+zen.buffers = {
+  num = 1,
+  width = 1000,
+  height = 1000,
+}
+
 zen.panels.left = {
   widgets = {
     {

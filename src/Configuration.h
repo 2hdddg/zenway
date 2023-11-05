@@ -38,4 +38,7 @@ class Configuration {
 
     Panel leftPanel;
     Panel rightPanel;
+    int bufferWidth;
+    int bufferHeight;
+    int numBuffers;
 };

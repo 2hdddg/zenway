@@ -47,9 +47,8 @@ int main(int argc, char* argv[]) {
     }
     auto roots = registry->roots;
     // Create buffer pool
-    const auto CX = 600;
-    const auto CY = 500;
-    std::shared_ptr<BufferPool> bufferPool = BufferPool::Create(roots, 3, CX, CY);
+    std::shared_ptr<BufferPool> bufferPool =
+        BufferPool::Create(roots, config->numBuffers, config->bufferWidth, config->bufferHeight);
     if (!bufferPool) {
         spdlog::error("Failed to initialize buffer pool");
         return -1;

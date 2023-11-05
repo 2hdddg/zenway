@@ -83,9 +83,20 @@ std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext)
     // "Parse" the configuration state
     sol::table panels = scriptContext.Root()["panels"];
     auto config = std::unique_ptr<Configuration>(new Configuration());
+    // Panels
     config->leftPanel = Panel::Parse(panels, "left", 0);
     config->leftPanel.anchor = Anchor::Left;
     config->rightPanel = Panel::Parse(panels, "right", 1);
     config->rightPanel.anchor = Anchor::Right;
+    // Buffers
+    sol::optional<sol::table> buffersTable = scriptContext.Root()["buffers"];
+    config->numBuffers = 1;
+    config->bufferWidth = 1000;
+    config->bufferHeight = 1000;
+    if (buffersTable) {
+        config->numBuffers = GetIntProperty(*buffersTable, "num", config->numBuffers);
+        config->bufferWidth = GetIntProperty(*buffersTable, "width", config->bufferWidth);
+        config->bufferHeight = GetIntProperty(*buffersTable, "height", config->bufferHeight);
+    }
     return config;
 }
