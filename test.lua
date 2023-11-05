@@ -163,9 +163,11 @@ zen.panels.right = {
         local markup = ""
         local icon = ""
         local text = ""
+        color = COLOR_GREEN
         if zen.sources.audio.muted then
           icon = ""
           text = "Muted"
+          color = COLOR_RED
         else
           local volume = math.floor(zen.sources.audio.volume)
           icon = ""
@@ -183,11 +185,11 @@ zen.panels.right = {
         return {
           type = "box",
           markup = markup,
-          color = COLOR_GREEN,
+          color = color,
           radius = 15,
           border = {
             width = 2,
-            color = COLOR_GREEN .. '80',
+            color = color .. '80',
           },
           padding = {
             left = 10,
