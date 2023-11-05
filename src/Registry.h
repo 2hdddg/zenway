@@ -10,6 +10,7 @@
 #include "MainLoop.h"
 #include "Outputs.h"
 #include "Roots.h"
+#include "Seat.h"
 #include "ShellSurface.h"
 
 class Registry : public IoHandler {
@@ -24,6 +25,7 @@ class Registry : public IoHandler {
 
     std::shared_ptr<Roots> roots;
     std::shared_ptr<Outputs> outputs;
+    std::shared_ptr<Seat> seat;
 
    private:
     Registry(wl_display *display, wl_registry *registry) : m_registry(registry) {

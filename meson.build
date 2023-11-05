@@ -17,7 +17,8 @@ wayland_protocols = dependency('wayland-protocols')
 cairo = dependency('cairo')
 lua = dependency('lua')
 m_dep = meson.get_compiler('c').find_library('m')
-deps = [wayland_client, wayland_protocols, cairo, dependency('pango'), dependency('pangocairo'), dependency('libpulse'), lua, m_dep]
+xkbcommon = dependency('xkbcommon')
+deps = [wayland_client, wayland_protocols, xkbcommon, cairo, dependency('pango'), dependency('pangocairo'), dependency('libpulse'), lua, m_dep]
 deps += subproject('spdlog').get_variable('spdlog_dep')
 deps += subproject('nlohmann_json').get_variable('nlohmann_json_dep')
 
@@ -37,6 +38,7 @@ src = files(
   'src/Registry.cpp',
   'src/Roots.cpp',
   'src/ScriptContext.cpp',
+  'src/Seat.cpp',
   'src/ShellSurface.cpp',
   'src/Sources.cpp',
   'src/SwayCompositor.cpp',

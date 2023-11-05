@@ -27,10 +27,9 @@ class Output {
     std::array<std::unique_ptr<ShellSurface>, 2> surfaces;
 
    private:
-    Output(const std::shared_ptr<Roots> roots, wl_output* wloutput, OnNamedCallback onNamed)
-        : m_roots(roots), m_wloutput(wloutput), m_onNamed(onNamed) {}
+    Output(wl_output* wloutput, OnNamedCallback onNamed)
+        : m_wloutput(wloutput), m_onNamed(onNamed) {}
 
-    const std::shared_ptr<Roots> m_roots;
     wl_output* m_wloutput;
     // Temporary callback until named, registers amoung the other outputs when name received
     OnNamedCallback m_onNamed;

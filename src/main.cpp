@@ -46,7 +46,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     auto roots = registry->roots;
-    auto outputs = registry->outputs;
     // Create buffer pool
     const auto CX = 600;
     const auto CY = 500;
@@ -85,7 +84,8 @@ int main(int argc, char* argv[]) {
     panel = Panel::Create(bufferPool, config->rightPanel);
     panels.push_back(std::move(panel));
 
-    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources), std::move(panels));
+    auto manager =
+        Manager::Create(*mainLoop, registry->outputs, std::move(sources), std::move(panels));
 
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);

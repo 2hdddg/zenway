@@ -191,10 +191,13 @@ zen.panels.right = {
             icon = ""
           elseif c > 50 then
             icon = ""
+            color = COLOR_YELLOW
           elseif c > 20 then
             icon = ""
+            color = COLOR_YELLOW
           else
             icon = ""
+            color = COLOR_RED
           end
           text = "Battery " .. c .. "%"
         end

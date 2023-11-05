@@ -34,7 +34,7 @@ const struct wl_output_listener listener = {
 void Output::Create(const std::shared_ptr<Roots> roots, wl_output *wloutput,
                     OnNamedCallback onNamed) {
     // This will be in lingo until name is received
-    auto output = new Output(roots, wloutput, onNamed);
+    auto output = new Output(wloutput, onNamed);
     output->surfaces[0] = ShellSurface::Create(roots, wloutput, "workspace");
     output->surfaces[1] = ShellSurface::Create(roots, wloutput, "statuses");
     wl_output_add_listener(wloutput, &listener, output);

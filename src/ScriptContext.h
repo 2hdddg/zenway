@@ -49,8 +49,6 @@ class ScriptContext {
     void ExecuteFile(const char* file);
     void RegisterSource(std::string_view name);
     sol::table Root() { return m_lua["zen"]; }
-    // sol::table Sources() { return m_lua["zen"]["sources"]; }
-    // sol::table Source(std::string_view name) { return m_lua["zen"]["sources"][name]; }
     void Publish(const Displays& displays);
     void Publish(const PowerState& power);
     void Publish(const AudioState& audio);
