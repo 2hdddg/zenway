@@ -56,6 +56,7 @@ void ScriptContext::Publish(const AudioState& audio) {
     auto table = m_lua["zen"]["sources"]["audio"];
     table["muted"] = audio.Muted;
     table["volume"] = audio.Volume;
+    table["port"] = audio.PortType;
 }
 
 void ScriptContext::Publish(const KeyboardState& keyboard) {

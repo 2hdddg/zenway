@@ -331,5 +331,6 @@ void Panel::Draw(Output& output) {
         cairo_restore(cr);
         y += item->computed.cy + widgetConfig.padding.top + widgetConfig.padding.bottom;
     }
+    // TODO: Exact x,y and cx, cy
     output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);
 }

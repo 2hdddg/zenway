@@ -11,6 +11,20 @@ local COLOR_WHITE = '#fce8c3'
 local COLOR_BLACK_BR = '#918175'
 local COLOR_BLUE_BR = '#68a8e4'
 
+local function get_icon_for_audio_type()
+  local t = zen.sources.audio.port
+  if t == "speaker" then
+    return "󰓃"
+  end
+  if t == "headphones" then
+    return ""
+  end
+  if t == "tv" then
+    return ""
+  end
+  return ""
+end
+
 zen.buffers = {
   num = 1,
   width = 1000,
@@ -167,26 +181,31 @@ zen.panels.right = {
       render = function()
         local markup = ""
         local icon = ""
+        local icon2 = ""
         local text = ""
         color = COLOR_GREEN
         if zen.sources.audio.muted then
-          icon = ""
+          icon = icon .. ""
           text = "Muted"
           color = COLOR_RED
         else
+          icon = get_icon_for_audio_type()
           local volume = math.floor(zen.sources.audio.volume)
-          icon = ""
+          icon2 = ""
           if volume > 10 then
             if volume < 50 then
-              icon = ""
+              icon2 = ""
             else
-              icon = ""
+              icon2 = ""
             end
           end
           text = "Volume " .. volume
         end
-        markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-        "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
+        markup =
+          "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
+          "<span size='15pt'> </span>" ..
+          "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon2 .. "</span>" ..
+          "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
         return {
           type = "box",
           markup = markup,

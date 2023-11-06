@@ -117,9 +117,32 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
     auto volume = float(pa_cvolume_avg(&info->volume));
     constexpr auto NORM = PA_VOLUME_NORM;
     AudioState newState = {.Muted = info->mute == 1,
-                           .Volume = std::round((volume / NORM) * 100.0F)};
+                           .Volume = std::round((volume / NORM) * 100.0F),
+                           .PortType = "unknown"};
     spdlog::info("PulseAudio sink: {0} ({1}), mute:{2}, volume:{3}", info->name, info->description,
                  newState.Muted, newState.Volume);
+    if (info->active_port) {
+        spdlog::info("PulseAudio active port: {0} ({1})", info->active_port->name,
+                     info->active_port->description);
+        switch (info->active_port->type) {
+            case PA_DEVICE_PORT_TYPE_SPEAKER:
+                newState.PortType = "speaker";
+                break;
+            case PA_DEVICE_PORT_TYPE_HEADPHONES:
+            case PA_DEVICE_PORT_TYPE_HEADSET:
+            case PA_DEVICE_PORT_TYPE_LINE:
+            case PA_DEVICE_PORT_TYPE_USB:
+                newState.PortType = "headphones";
+                break;
+            case PA_DEVICE_PORT_TYPE_HDMI:
+            case PA_DEVICE_PORT_TYPE_TV:
+                newState.PortType = "tv";
+                break;
+            default:
+                spdlog::info("PulseAudio unknown port type: {}", info->active_port->type);
+                break;
+        }
+    }
     if (newState == m_sourceState) return;
     m_sourceDirtyFlag = true;
     m_sourceState = newState;

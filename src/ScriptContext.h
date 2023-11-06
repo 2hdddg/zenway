@@ -37,9 +37,10 @@ struct PowerState {
 struct AudioState {
     bool Muted;
     float Volume;
+    std::string PortType;
 
     bool operator==(const AudioState& other) {
-        return Muted == other.Muted && Volume == other.Volume;
+        return Muted == other.Muted && Volume == other.Volume && PortType == other.PortType;
     }
 };
 
