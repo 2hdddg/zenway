@@ -78,8 +78,8 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table table, const c
     return panel;
 }
 
-std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext) {
-    scriptContext.ExecuteFile("../test.lua");
+std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext, const char* file) {
+    scriptContext.ExecuteFile(file);
     // "Parse" the configuration state
     sol::table panels = scriptContext.Root()["panels"];
     auto config = std::unique_ptr<Configuration>(new Configuration());

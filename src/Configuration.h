@@ -34,7 +34,7 @@ class Configuration {
         Anchor anchor;
     };
 
-    static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext);
+    static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext, const char* file);
 
     Panel leftPanel;
     Panel rightPanel;

@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Read configuration
-    auto config = Configuration::Read(*scriptContext);
+    auto config = Configuration::Read(*scriptContext, argv[1]);
     if (!config) {
         spdlog::error("Failed to read configuration");
         return -1;
