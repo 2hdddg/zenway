@@ -97,4 +97,5 @@ void ShellSurface::Hide() {
     zwlr_layer_surface_v1_destroy(m_layer);
     wl_surface_attach(m_surface, NULL, 0, 0);
     m_layer = nullptr;
+    m_roots->FlushAndDispatchCommands();
 }
