@@ -25,12 +25,21 @@ const std::optional<std::filesystem::path> ProbeForConfig(int argc, char* argv[]
         return std::filesystem::path(argv[1]);
     }
     // Check user config
+    std::optional<std::filesystem::path> path;
     auto xdgConfigHome = std::getenv("XDG_CONFIG_HOME");
     if (xdgConfigHome) {
-        auto path = std::filesystem::path(xdgConfigHome);
-        path.append("zenway");
-        path.append("config.lua");
-        if (std::filesystem::exists(path)) {
+        path = std::filesystem::path(xdgConfigHome);
+    } else {
+        auto home = std::getenv("HOME");
+        if (home) {
+            path = std::filesystem::path(home);
+            path->append(".config");
+        }
+    }
+    if (path) {
+        path->append("zenway");
+        path->append("config.lua");
+        if (std::filesystem::exists(*path)) {
             return path;
         }
     }
