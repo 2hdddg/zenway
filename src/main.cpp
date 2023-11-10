@@ -5,6 +5,7 @@
 #include <wayland-client.h>
 
 #include <cstdlib>
+#include <filesystem>
 
 #include "BufferPool.h"
 #include "Configuration.h"
@@ -18,6 +19,24 @@
 #include "Sources.h"
 #include "SwayCompositor.h"
 
+const std::optional<std::filesystem::path> ProbeForConfig(int argc, char* argv[]) {
+    // Explicit config
+    if (argc > 1) {
+        return std::filesystem::path(argv[1]);
+    }
+    // Check user config
+    auto xdgConfigHome = std::getenv("XDG_CONFIG_HOME");
+    if (xdgConfigHome) {
+        auto path = std::filesystem::path(xdgConfigHome);
+        path.append("zenway");
+        path.append("config.lua");
+        if (std::filesystem::exists(path)) {
+            return path;
+        }
+    }
+    return std::optional<std::filesystem::path>();
+}
+
 int main(int argc, char* argv[]) {
     // Environment variable configurable logging
     spdlog::cfg::load_env_levels();
@@ -27,7 +46,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Read configuration
-    auto config = Configuration::Read(*scriptContext, argv[1]);
+    auto configPath = ProbeForConfig(argc, argv);
+    if (!configPath) {
+        spdlog::error("No config");
+        return -1;
+    }
+    spdlog::info("Using configuration file at: {}", configPath->c_str());
+    auto config = Configuration::Read(*scriptContext, configPath->c_str());
     if (!config) {
         spdlog::error("Failed to read configuration");
         return -1;
