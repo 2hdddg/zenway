@@ -11,6 +11,16 @@ local WHITE = '#fce8c3'
 local BLACK_BR = '#918175'
 local BLUE_BR = '#68a8e4'
 
+local DEFAULT_TEXT_COLOR = BLACK
+
+local NORMAL_TEXT_SIZE = "15pt"
+local NORMAL_TEXT_RISE = "8pt"  -- To align with icons
+local SMALL_TEXT_SIZE = "11pt"
+local SMALL_TEXT_RISE = "6pt"
+
+local NORMAL_ICON_SIZE = "30pt"
+local SMALL_ICON_SIZE = "22pt"
+
 local empty_string_meta = {
     __index = function() return "" end,
 }
@@ -46,16 +56,23 @@ local function find_level(table, level)
 end
 
 
-local function icon_markup(icon, color)
-  return "<span size='30pt' color='" .. color .. "'>" .. icon .. "</span>"
+local function icon_markup(p)
+  local color = p["color"] or DEFAULT_TEXT_COLOR
+  local icon = p["icon"]
+  local size = p["size"] or NORMAL_ICON_SIZE
+  return "<span size='" .. size .. "' color='" .. color .. "'>" .. icon .. "</span>"
 end
 
 local function space_markup()
-  return "<span size='15pt'> </span>"
+  return "<span size='".. NORMAL_TEXT_SIZE .. "'> </span>"
 end
 
-local function label_markup(label, color)
-  return "<span size='15pt' rise='8pt' color='" .. color .. "'> " .. label .. "</span>"
+local function label_markup(p)
+  local color = p["color"] or DEFAULT_TEXT_COLOR
+  local label = p["label"]
+  local size = p["size"] or NORMAL_TEXT_SIZE
+  local rise = p["rise"] or NORMAL_TEXT_RISE
+  return "<span size='" .. size .. "' rise='" .. rise .. "' color='" .. color .. "'>" .. label .. "</span>"
 end
 
 local function get_box(markup, color)
@@ -63,7 +80,7 @@ local function get_box(markup, color)
     type = "box",
     markup = markup,
     color = color,
-    padding = { top = 3, left = 10, right = 10, bottom = 5 },
+    padding = { top = 5, left = 10, right = 10, bottom = 5 },
     radius = 15,
     border = { width = 2, color = color .. '10' },
   }
@@ -76,11 +93,10 @@ local function render_workspaces(displayName)
   end
   local workspaces = {}
   for _, workspace in pairs(display.workspaces) do
-    local wmarkup = "<span size='20pt' color='" .. BLACK .. "'>" .. workspace.name .. "</span>"
-    local amarkup = ""
+    local app_name = ""
     for _, app in pairs(workspace.applications) do
-      if app.focus or (amarkup == "" and app.next) then
-        amarkup = "<span size='20pt' color='" .. BLACK .. "'>" .. app.name .. "</span>"
+      if app.focus or (app_name == "" and app.next) then
+        app_name = app.name
       end
     end
     boxcolor = BLACK_BR
@@ -92,8 +108,8 @@ local function render_workspaces(displayName)
       direction = "row",
       padding = { right = 1 },
       items = {
-        get_box(wmarkup, boxcolor),
-        get_box(amarkup, boxcolor),
+        get_box(label_markup{label=workspace.name}, boxcolor),
+        get_box(label_markup{label=app_name}, boxcolor),
       },
     }
     table.insert(workspaces, workspace)
@@ -101,7 +117,7 @@ local function render_workspaces(displayName)
   return {
     type = "flex",
     direction = "column",
-    padding = { left = 10, bottom = 1 },
+    padding = { left = 10, bottom = 10 },
     items = workspaces,
   }
 end
@@ -109,26 +125,27 @@ end
 local function render_time()
   local t = os.time()
   local markup = os.date(
-  "<span font='digital-7' size='40pt' color='#1c1b19' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19'>\n%Y-%m-%d</span>")
+  "<span font='digital-7' size='40pt' color='" .. BLACK .. "' rise='-3pt'>%H:%M</span><span size='15pt' color='" .. BLACK .. "'>\n%Y-%m-%d</span>")
   return get_box(markup, BLUE_BR)
 end
 
 local function render_keyboard()
-  local label = "<span size='12pt' rise='8pt' color='" .. BLACK .. "'> " .. zen.sources.keyboard.layout .. "</span>"
-  return get_box(icon_markup("", BLACK) .. label, CYAN)
+  return get_box(
+    icon_markup{icon="", size=SMALL_ICON_SIZE} .. label_markup{label=" " .. zen.sources.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE},
+    CYAN)
 end
 
 local function render_audio()
   if zen.sources.audio.muted then
     return get_box(
-        icon_markup(audio_port_icons["muted"], BLACK) .. label_markup("Muted", BLACK),
+        icon_markup{icon=audio_port_icons["muted"]} .. label_markup{label=" Muted"},
         RED)
   end
-  local markup = icon_markup(audio_port_icons[zen.sources.audio.port], BLACK)
+  local markup = icon_markup{icon=audio_port_icons[zen.sources.audio.port]}
   local volume = math.floor(zen.sources.audio.volume)
   local level = find_level(audio_levels, volume)
-  markup = markup .. icon_markup(level.icon, BLACK)
-  markup = markup .. label_markup("Volume " .. volume, BLACK)
+  markup = markup .. icon_markup{icon=level.icon}
+  markup = markup .. label_markup{label=" Volume " .. volume}
   return get_box(markup, GREEN)
 end
 
@@ -147,9 +164,9 @@ local function render_power()
     local level = find_level(power_levels, c)
     icon = level.icon
     color = level.color
-    text = "Battery " .. c .. "%"
+    text = " Battery " .. c .. "%"
   end
-  return get_box(icon_markup(icon, BLACK) .. label_markup(text, BLACK), color)
+  return get_box(icon_markup{icon=icon} .. label_markup{label=text}, color)
 end
 
 zen = {
