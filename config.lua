@@ -11,14 +11,12 @@ local WHITE = '#fce8c3'
 local BLACK_BR = '#918175'
 local BLUE_BR = '#68a8e4'
 
-local DEFAULT_TEXT_COLOR = BLACK
-
-local NORMAL_TEXT_SIZE = "15pt"
-local NORMAL_TEXT_RISE = "8pt"  -- To align with icons
+local TEXT_COLOR = BLACK
+local TEXT_SIZE = "15pt"
+local TEXT_RISE = "8pt"  -- To align with icons
 local SMALL_TEXT_SIZE = "11pt"
 local SMALL_TEXT_RISE = "6pt"
-
-local NORMAL_ICON_SIZE = "30pt"
+local ICON_SIZE = "30pt"
 local SMALL_ICON_SIZE = "22pt"
 
 local empty_string_meta = {
@@ -48,166 +46,113 @@ local power_levels  = {
 }
 
 local function find_level(table, level)
-  for i, v in ipairs(table) do
-      if level >= v.level then
-          return v
-      end
-  end
+    for i, v in ipairs(table) do
+        if level >= v.level then return v end
+    end
 end
 
-
-local function icon_markup(p)
-  local color = p["color"] or DEFAULT_TEXT_COLOR
-  local icon = p["icon"]
-  local size = p["size"] or NORMAL_ICON_SIZE
-  return "<span size='" .. size .. "' color='" .. color .. "'>" .. icon .. "</span>"
+local function icon(p)
+    local color = p["color"] or TEXT_COLOR
+    local icon = p["icon"]
+    local size = p["size"] or ICON_SIZE
+    return "<span size='" .. size .. "' color='" .. color .. "'>" .. icon .. "</span>"
 end
 
-local function space_markup()
-  return "<span size='".. NORMAL_TEXT_SIZE .. "'> </span>"
+local function label(p)
+    local color = p["color"] or TEXT_COLOR
+    local label = p["label"]
+    local size = p["size"] or TEXT_SIZE
+    local rise = p["rise"] or TEXT_RISE
+    return "<span size='" .. size .. "' rise='" .. rise .. "' color='" .. color .. "'>" .. label .. "</span>"
 end
 
-local function label_markup(p)
-  local color = p["color"] or DEFAULT_TEXT_COLOR
-  local label = p["label"]
-  local size = p["size"] or NORMAL_TEXT_SIZE
-  local rise = p["rise"] or NORMAL_TEXT_RISE
-  return "<span size='" .. size .. "' rise='" .. rise .. "' color='" .. color .. "'>" .. label .. "</span>"
-end
-
-local function get_box(markup, color)
-  return {
-    type = "box",
-    markup = markup,
-    color = color,
-    padding = { top = 5, left = 10, right = 10, bottom = 5 },
-    radius = 15,
-    border = { width = 2, color = color .. '10' },
-  }
+local function box(markup, color)
+    return {
+        type = "box",
+        markup = markup,
+        color = color,
+        padding = { top = 5, left = 10, right = 10, bottom = 5 },
+        radius = 15,
+        border = { width = 2, color = color .. '10' },
+    }
 end
 
 local function render_workspaces(displayName)
-  local display = zen.sources.displays[displayName]
-  if not display then
-    return ""
-  end
-  local workspaces = {}
-  for _, workspace in pairs(display.workspaces) do
-    local app_name = ""
-    for _, app in pairs(workspace.applications) do
-      if app.focus or (app_name == "" and app.next) then
-        app_name = app.name
-      end
+    local display = zen.sources.displays[displayName]
+    if not display then return "" end
+    local workspaces = {}
+    for _, workspace in pairs(display.workspaces) do
+        local app_name = ""
+        for _, app in pairs(workspace.applications) do
+            if app.focus or (app_name == "" and app.next) then app_name = app.name end
+        end
+        boxcolor = BLACK_BR
+        if workspace.focus then
+            boxcolor = GREEN
+        end
+        local workspace = {
+            type = "flex",
+            direction = "row",
+            padding = { right = 1 },
+            items = {
+                box(label{label=workspace.name}, boxcolor),
+                box(label{label=app_name}, boxcolor),
+            },
+        }
+        table.insert(workspaces, workspace)
     end
-    boxcolor = BLACK_BR
-    if workspace.focus then
-      boxcolor = GREEN
-    end
-    local workspace = {
-      type = "flex",
-      direction = "row",
-      padding = { right = 1 },
-      items = {
-        get_box(label_markup{label=workspace.name}, boxcolor),
-        get_box(label_markup{label=app_name}, boxcolor),
-      },
-    }
-    table.insert(workspaces, workspace)
-  end
-  return {
-    type = "flex",
-    direction = "column",
-    padding = { left = 10, bottom = 10 },
-    items = workspaces,
-  }
+    return { type = "flex", direction = "column", padding = { left = 10, bottom = 10 }, items = workspaces }
 end
 
 local function render_time()
-  local t = os.time()
-  local markup = os.date(
-  "<span font='digital-7' size='40pt' color='" .. BLACK .. "' rise='-3pt'>%H:%M</span><span size='15pt' color='" .. BLACK .. "'>\n%Y-%m-%d</span>")
-  return get_box(markup, BLUE_BR)
+    local t = os.time()
+    local markup = os.date("<span font='digital-7' size='40pt' color='" .. BLACK .. "' rise='-3pt'>%H:%M</span><span size='15pt' color='" .. BLACK .. "'>\n%Y-%m-%d</span>")
+    return box(markup, BLUE_BR)
 end
 
 local function render_keyboard()
-  return get_box(
-    icon_markup{icon="", size=SMALL_ICON_SIZE} .. label_markup{label=" " .. zen.sources.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE},
-    CYAN)
+    return box(icon{icon="", size=SMALL_ICON_SIZE} .. label{label=" " .. zen.sources.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE}, CYAN)
 end
 
 local function render_audio()
-  if zen.sources.audio.muted then
-    return get_box(
-        icon_markup{icon=audio_port_icons["muted"]} .. label_markup{label=" Muted"},
-        RED)
-  end
-  local markup = icon_markup{icon=audio_port_icons[zen.sources.audio.port]}
-  local volume = math.floor(zen.sources.audio.volume)
-  local level = find_level(audio_levels, volume)
-  markup = markup .. icon_markup{icon=level.icon}
-  markup = markup .. label_markup{label=" Volume " .. volume}
-  return get_box(markup, GREEN)
+    if zen.sources.audio.muted then
+        return box(icon{icon=audio_port_icons["muted"]} .. label{label=" Muted"}, RED)
+    end
+    local markup = icon{icon=audio_port_icons[zen.sources.audio.port]}
+    local volume = math.floor(zen.sources.audio.volume)
+    local level = find_level(audio_levels, volume)
+    markup = markup .. icon{icon=level.icon}
+    markup = markup .. label{label=" Volume " .. volume}
+    return box(markup, GREEN)
 end
 
 local function render_power()
-  local color = GREEN
-  local icon = ""
-  local text = ""
-  if zen.sources.power.isCharging then
-    icon = ""
-    text = "Charging"
-  elseif zen.sources.power.isPluggedIn then
-    icon = ""
-    text = "Fully charged"
-  else
+    if zen.sources.power.isCharging then return box(icon{icon = ""} .. label{label = "Charging"}, GREEN) end
+    if zen.sources.power.isPluggedIn then return box(icon{icon = ""} .. label{label = "Fully charged"}, GREEN) end
     local c = zen.sources.power.capacity
     local level = find_level(power_levels, c)
-    icon = level.icon
-    color = level.color
-    text = " Battery " .. c .. "%"
-  end
-  return get_box(icon_markup{icon=icon} .. label_markup{label=text}, color)
+    return box(icon{icon = level.icon} .. label{label = " Battery " .. c .. "%"}, level.color)
 end
 
 zen = {
-  buffers = {
-    num = 1,
-    width = 1000,
-    height = 1000,
-  },
-  panels = {
-    left = {
-      widgets = {
-        {
-          sources = {'workspace'},
-          padding = {left = 10 },
-          render = render_workspaces,
-        },
-      },
+    buffers = {
+        num = 1,
+        width = 1000,
+        height = 1000,
     },
-    right = {
-      widgets = {
-        {
-          sources = {'time', 'date'},
-          padding = { bottom = 10, right = 10 },
-          render = render_time,
+    panels = {
+        left = {
+            widgets = {
+                { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
+            },
         },
-        {
-          sources = {'keyboard'},
-          padding = { bottom = 10, right = 10 },
-          render = render_keyboard,
+        right = {
+            widgets = {
+                { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
+                { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
+                { sources = {'audio'}, padding = { bottom = 10, right = 10 }, render = render_audio },
+                { sources = {'power'}, padding = { right = 10 }, render = render_power },
+            },
         },
-        {
-          sources = {'audio'},
-          padding = { bottom = 10, right = 10 },
-          render = render_audio,
-        },
-        {
-          sources = {'power'},
-          padding = { right = 10 },
-          render = render_power,
-        },
-      },
     },
-  },
 }
