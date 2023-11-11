@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to read configuration");
         return -1;
     }
+    scriptContext->InitializeRuntime();
     std::shared_ptr<MainLoop> mainLoop = MainLoop::Create();
     if (!mainLoop) {
         spdlog::error("Failed to initialize main loop");

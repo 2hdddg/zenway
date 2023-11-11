@@ -1,28 +1,61 @@
+-- Normal
+local BLACK = '#1c1b19'
+local RED = '#ef2f27'
+local GREEN = '#519f50'
+local YELLOW = '#fed06e'
+local BLUE = '#2c78bf'
+local MAGENTA = '#ff5c8f'
+local CYAN = '#2be4d0'
+local WHITE = '#fce8c3'
+-- Bright
+local BLACK_BR = '#918175'
+local BLUE_BR = '#68a8e4'
 
-local COLOR_BLACK = '#1c1b19'
-local COLOR_RED = '#ef2f27'
-local COLOR_GREEN = '#519f50'
-local COLOR_YELLOW = '#fed06e'
-local COLOR_BLUE = '#2c78bf'
-local COLOR_MAGENTA = '#ff5c8f'
-local COLOR_CYAN = '#2be4d0'
-local COLOR_WHITE = '#fce8c3'
+local empty_string_meta = {
+    __index = function() return "" end,
+}
 
-local COLOR_BLACK_BR = '#918175'
-local COLOR_BLUE_BR = '#68a8e4'
+local audio_port_icons = {
+    speaker = "󰓃",
+    headphones = "",
+    tv = "",
+    muted = "",
+}
+setmetatable(audio_port_icons, empty_string_meta)
 
-local function get_icon_for_audio_type()
-  local t = zen.sources.audio.port
-  if t == "speaker" then
-    return "󰓃"
+local audio_levels = {
+    { level = 50, icon = "" },
+    { level = 10, icon = ""},
+    { level = 0, icon = ""},
+}
+
+local power_levels  = {
+    { level = 90, icon = "", color = GREEN },
+    { level = 80, icon = "", color = GREEN },
+    { level = 50, icon = "", color = YELLOW },
+    { level = 20, icon = "", color = YELLOW },
+    { level = 0, icon = "", color = RED },
+}
+
+local function find_level(table, level)
+  for i, v in ipairs(table) do
+      if level >= v.level then
+          return v
+      end
   end
-  if t == "headphones" then
-    return ""
-  end
-  if t == "tv" then
-    return ""
-  end
-  return ""
+end
+
+
+local function icon_markup(icon, color)
+  return "<span size='30pt' color='" .. color .. "'>" .. icon .. "</span>"
+end
+
+local function space_markup()
+  return "<span size='15pt'> </span>"
+end
+
+local function label_markup(label, color)
+  return "<span size='15pt' rise='8pt' color='" .. color .. "'> " .. label .. "</span>"
 end
 
 local function get_box(markup, color)
@@ -30,17 +63,9 @@ local function get_box(markup, color)
     type = "box",
     markup = markup,
     color = color,
-    padding = {
-      top = 3,
-      left = 10,
-      right = 10,
-      bottom = 5,
-    },
+    padding = { top = 3, left = 10, right = 10, bottom = 5 },
     radius = 15,
-    border = {
-      width = 2,
-      color = color .. '10',
-    },
+    border = { width = 2, color = color .. '10' },
   }
 end
 
@@ -51,16 +76,16 @@ local function render_workspaces(displayName)
   end
   local workspaces = {}
   for _, workspace in pairs(display.workspaces) do
-    local wmarkup = "<span size='20pt' color='" .. COLOR_BLACK .. "'>" .. workspace.name .. "</span>"
+    local wmarkup = "<span size='20pt' color='" .. BLACK .. "'>" .. workspace.name .. "</span>"
     local amarkup = ""
     for _, app in pairs(workspace.applications) do
       if app.focus or (amarkup == "" and app.next) then
-        amarkup = "<span size='20pt' color='" .. COLOR_BLACK .. "'>" .. app.name .. "</span>"
+        amarkup = "<span size='20pt' color='" .. BLACK .. "'>" .. app.name .. "</span>"
       end
     end
-    boxcolor = COLOR_BLACK_BR
+    boxcolor = BLACK_BR
     if workspace.focus then
-      boxcolor = COLOR_GREEN
+      boxcolor = GREEN
     end
     local workspace = {
       type = "flex",
@@ -85,50 +110,30 @@ local function render_time()
   local t = os.time()
   local markup = os.date(
   "<span font='digital-7' size='40pt' color='#1c1b19' rise='-3pt'>%H:%M</span><span size='15pt' color='#1c1b19'>\n%Y-%m-%d</span>")
-  return get_box(markup, COLOR_BLUE_BR)
+  return get_box(markup, BLUE_BR)
 end
 
 local function render_keyboard()
-  icon = ""
-  text = zen.sources.keyboard.layout
-  markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-  "<span size='12pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
-  return get_box(markup, COLOR_CYAN)
+  local label = "<span size='12pt' rise='8pt' color='" .. BLACK .. "'> " .. zen.sources.keyboard.layout .. "</span>"
+  return get_box(icon_markup("", BLACK) .. label, CYAN)
 end
 
 local function render_audio()
-  local markup = ""
-  local icon = ""
-  local icon2 = ""
-  local text = ""
-  color = COLOR_GREEN
   if zen.sources.audio.muted then
-    icon = icon .. ""
-    text = "Muted"
-    color = COLOR_RED
-  else
-    icon = get_icon_for_audio_type()
-    local volume = math.floor(zen.sources.audio.volume)
-    icon2 = ""
-    if volume > 10 then
-      if volume < 50 then
-        icon2 = ""
-      else
-        icon2 = ""
-      end
-    end
-    text = "Volume " .. volume
+    return get_box(
+        icon_markup(audio_port_icons["muted"], BLACK) .. label_markup("Muted", BLACK),
+        RED)
   end
-  markup =
-    "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-    "<span size='15pt'> </span>" ..
-    "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon2 .. "</span>" ..
-    "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
-  return get_box(markup, color)
+  local markup = icon_markup(audio_port_icons[zen.sources.audio.port], BLACK)
+  local volume = math.floor(zen.sources.audio.volume)
+  local level = find_level(audio_levels, volume)
+  markup = markup .. icon_markup(level.icon, BLACK)
+  markup = markup .. label_markup("Volume " .. volume, BLACK)
+  return get_box(markup, GREEN)
 end
 
 local function render_power()
-  local color = COLOR_GREEN
+  local color = GREEN
   local icon = ""
   local text = ""
   if zen.sources.power.isCharging then
@@ -139,25 +144,12 @@ local function render_power()
     text = "Fully charged"
   else
     local c = zen.sources.power.capacity
-    if c > 90 then
-      icon = ""
-    elseif c > 80 then
-      icon = ""
-    elseif c > 50 then
-      icon = ""
-      color = COLOR_YELLOW
-    elseif c > 20 then
-      icon = ""
-      color = COLOR_YELLOW
-    else
-      icon = ""
-      color = COLOR_RED
-    end
+    local level = find_level(power_levels, c)
+    icon = level.icon
+    color = level.color
     text = "Battery " .. c .. "%"
   end
-  local markup = "<span size='30pt' color='" .. COLOR_BLACK .. "'>" .. icon .. "</span>" ..
-  "<span size='15pt' rise='8pt' color='" .. COLOR_BLACK .. "'> " .. text .. "</span>"
-  return get_box(markup, color)
+  return get_box(icon_markup(icon, BLACK) .. label_markup(text, BLACK), color)
 end
 
 zen = {
@@ -166,7 +158,6 @@ zen = {
     width = 1000,
     height = 1000,
   },
-  sources = {},
   panels = {
     left = {
       widgets = {
