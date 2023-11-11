@@ -1,16 +1,25 @@
 
 #include "src/ScriptContext.h"
 
+#include "spdlog/spdlog.h"
+
 std::unique_ptr<ScriptContext> ScriptContext::Create() {
     sol::state lua;
     lua.open_libraries();
     // Expose root api for configuration to Lua
-    auto zen = lua.create_table("zen");
-    lua["zen"] = zen;
+    lua["zen"] = lua.create_table("zen");
     return std::unique_ptr<ScriptContext>(new ScriptContext(std::move(lua)));
 }
 
-void ScriptContext::ExecuteFile(const char* file) { m_lua.script_file(file); }
+bool ScriptContext::ExecuteFile(const char* file) {
+    try {
+        m_lua.script_file(file);
+        return true;
+    } catch (sol::error e) {
+        spdlog::error("Failed to execute configuration file: {}", e.what());
+        return false;
+    }
+}
 void ScriptContext::InitializeRuntime() { m_lua["zen"]["sources"] = m_lua.create_table(); }
 
 void ScriptContext::RegisterSource(std::string_view name) {

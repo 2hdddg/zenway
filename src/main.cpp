@@ -19,7 +19,7 @@
 #include "Sources.h"
 #include "SwayCompositor.h"
 
-const std::optional<std::filesystem::path> ProbeForConfig(int argc, char* argv[]) {
+static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char* argv[]) {
     // Explicit config
     if (argc > 1) {
         return std::filesystem::path(argv[1]);
@@ -54,13 +54,14 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to create script context");
         return -1;
     }
-    // Read configuration
+    // Detect location of configuration
     auto configPath = ProbeForConfig(argc, argv);
     if (!configPath) {
         spdlog::error("No config");
         return -1;
     }
     spdlog::info("Using configuration file at: {}", configPath->c_str());
+    // Read configuration
     auto config = Configuration::Read(*scriptContext, configPath->c_str());
     if (!config) {
         spdlog::error("Failed to read configuration");

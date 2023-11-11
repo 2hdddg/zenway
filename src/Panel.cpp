@@ -318,8 +318,12 @@ void Panel::Draw(Output& output) {
     int y = 0;
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
-        sol::object renderOutput = widgetConfig.render(output.name);
-        auto item = FromObject(renderOutput);
+        sol::optional<sol::object> renderOutput = widgetConfig.render(output.name);
+        if (!renderOutput) {
+            spdlog::error("Bad return from widget");
+            continue;
+        }
+        auto item = FromObject(*renderOutput);
         if (!item) {
             continue;
         }

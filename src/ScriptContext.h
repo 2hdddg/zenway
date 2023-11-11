@@ -51,7 +51,7 @@ struct KeyboardState {
 class ScriptContext {
    public:
     static std::unique_ptr<ScriptContext> Create();
-    void ExecuteFile(const char* file);
+    bool ExecuteFile(const char* file);
     void InitializeRuntime();
     void RegisterSource(std::string_view name);
     sol::table Root() { return m_lua["zen"]; }

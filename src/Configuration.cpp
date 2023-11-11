@@ -79,7 +79,9 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table table, const c
 }
 
 std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext, const char* file) {
-    scriptContext.ExecuteFile(file);
+    if (!scriptContext.ExecuteFile(file)) {
+        return nullptr;
+    }
     // "Parse" the configuration state
     sol::table panels = scriptContext.Root()["panels"];
     auto config = std::unique_ptr<Configuration>(new Configuration());
