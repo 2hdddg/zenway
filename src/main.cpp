@@ -12,6 +12,7 @@
 #include "DateTimeSources.h"
 #include "MainLoop.h"
 #include "Manager.h"
+#include "NetworkSource.h"
 #include "Panel.h"
 #include "PowerSource.h"
 #include "PulseAudioSource.h"
@@ -107,6 +108,15 @@ int main(int argc, char* argv[]) {
     sources->Register("power", powerSource);
     // Initialize after registration
     powerSource->Initialize();
+    // Network source
+    auto networkSource = NetworkSource::Create(*mainLoop, scriptContext);
+    if (!networkSource) {
+        spdlog::error("Failed to initialize network source");
+        return -1;
+    }
+    sources->Register("networks", networkSource);
+    networkSource->Initialize();
+
     //  Date time sources
     auto dateSource = DateSource::Create();
     auto timeSource = TimeSource::Create(*mainLoop, dateSource);

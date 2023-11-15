@@ -48,6 +48,15 @@ struct KeyboardState {
     std::string layout;
 };
 
+struct NetworkState {
+    bool isUp;
+    std::string interface;
+    std::string address;
+    // type (eth, wifi)
+    // wifi strength
+};
+using Networks = std::vector<NetworkState>;
+
 class ScriptContext {
    public:
     static std::unique_ptr<ScriptContext> Create();
@@ -59,6 +68,7 @@ class ScriptContext {
     void Publish(const PowerState& power);
     void Publish(const AudioState& audio);
     void Publish(const KeyboardState& keyboard);
+    void Publish(const Networks& networks);
 
    private:
     ScriptContext(sol::state&& lua) : m_lua(std::move(lua)) {}

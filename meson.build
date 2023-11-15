@@ -30,6 +30,7 @@ src = files(
   'src/main.cpp',
   'src/MainLoop.cpp',
   'src/Manager.cpp',
+  'src/NetworkSource.cpp',
   'src/Output.cpp',
   'src/Outputs.cpp',
   'src/Panel.cpp',

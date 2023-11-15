@@ -134,6 +134,20 @@ local function render_power()
     return box(icon{icon = level.icon} .. label{label = " Battery " .. c .. "%"}, level.color)
 end
 
+local function render_networks()
+    local up = nil
+    for _, network in pairs(zen.sources.networks) do
+        if up == nil and network.up then
+            up = network
+        end
+    end
+    if up then
+        return box(icon{icon = "󰣐"} .. label{label = " Network " .. up.interface .. ": " .. up.address}, GREEN)
+    else
+        return box(icon{icon = "󰋔"} .. label{label = "Network down!"}, RED)
+    end
+end
+
 zen = {
     buffers = {
         num = 1,
@@ -151,7 +165,8 @@ zen = {
                 { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
                 { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
                 { sources = {'audio'}, padding = { bottom = 10, right = 10 }, render = render_audio },
-                { sources = {'power'}, padding = { right = 10 }, render = render_power },
+                { sources = {'power'}, padding = { bottom = 10, right = 10 }, render = render_power },
+                { sources = {'networks'}, padding = { right = 10 }, render = render_networks },
             },
         },
     },

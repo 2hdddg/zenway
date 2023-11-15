@@ -71,3 +71,14 @@ void ScriptContext::Publish(const KeyboardState& keyboard) {
     auto table = m_lua["zen"]["sources"]["keyboard"];
     table["layout"] = keyboard.layout;
 }
+void ScriptContext::Publish(const Networks& networks) {
+    auto networksTable = m_lua.create_table();
+    for (const auto& network : networks) {
+        auto networkTable = m_lua.create_table();
+        networkTable["up"] = network.isUp;
+        networkTable["interface"] = network.interface;
+        networkTable["address"] = network.address;
+        networksTable.add(networkTable);
+    }
+    m_lua["zen"]["sources"]["networks"] = networksTable;
+}
