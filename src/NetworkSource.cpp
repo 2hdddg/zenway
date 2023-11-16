@@ -73,10 +73,12 @@ void NetworkSource::ReadState() {
         if (ioctl(m_socket, SIOCGIFFLAGS, item) < 0) {
             continue;
         }
-        // Ignore loopback
+        //  Ignore loopback
         if (item->ifr_flags & IFF_LOOPBACK) {
             continue;
         }
+        // extended flags SIOCGIFPFLAGS
+        // SIOCGIWSTATS
         NetworkState network = {};
         network.isUp = (item->ifr_flags & IFF_UP) != 0;
         // Get interface address
