@@ -58,10 +58,10 @@ int main(int argc, char* argv[]) {
     // Detect location of configuration
     auto configPath = ProbeForConfig(argc, argv);
     if (!configPath) {
-        spdlog::error("No config");
+        spdlog::error("No configuration found");
         return -1;
     }
-    spdlog::info("Using configuration file at: {}", configPath->c_str());
+    spdlog::info("Loading configuration at: {}", configPath->c_str());
     // Read configuration
     auto config = Configuration::Read(*scriptContext, configPath->c_str());
     if (!config) {
@@ -115,7 +115,6 @@ int main(int argc, char* argv[]) {
     }
     sources->Register("networks", networkSource);
     networkSource->Initialize();
-
     //  Date time sources
     auto dateSource = DateSource::Create();
     auto timeSource = TimeSource::Create(*mainLoop, dateSource);
@@ -128,17 +127,15 @@ int main(int argc, char* argv[]) {
     } else {
         spdlog::warn("No keyboard source");
     }
-
     // Panels
     std::vector<std::unique_ptr<Panel>> panels;
-    auto panel = Panel::Create(bufferPool, config->leftPanel);
-    panels.push_back(std::move(panel));
-    panel = Panel::Create(bufferPool, config->rightPanel);
-    panels.push_back(std::move(panel));
-
+    for (auto panelConfig : config->panels) {
+        auto panel = Panel::Create(bufferPool, panelConfig);
+        panels.push_back(std::move(panel));
+    }
+    // Manager handles displays, redrawing of panels
     auto manager =
         Manager::Create(*mainLoop, registry->outputs, std::move(sources), std::move(panels));
-
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);
     if (!sway) {

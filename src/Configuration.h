@@ -28,7 +28,7 @@ class Configuration {
     };
 
     struct Panel {
-        static Panel Parse(const sol::table panels, const char* name, int index);
+        static Panel Parse(const sol::table panelTable, int index);
         std::vector<Widget> widgets;
         int index;
         Anchor anchor;
@@ -36,8 +36,7 @@ class Configuration {
 
     static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext, const char* file);
 
-    Panel leftPanel;
-    Panel rightPanel;
+    std::vector<Panel> panels;
     int bufferWidth;
     int bufferHeight;
     int numBuffers;

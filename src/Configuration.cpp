@@ -49,16 +49,14 @@ void Configuration::Widget::Parse(const sol::table& table, std::vector<Widget>& 
     widgets.push_back(std::move(widget));
 }
 
-Configuration::Panel Configuration::Panel::Parse(const sol::table table, const char* name,
-                                                 int index) {
-    sol::optional<sol::table> panelTable = table[name];
+Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, int index) {
     Panel panel;
     panel.index = index;
 
     if (!panelTable) {
         return panel;
     }
-    sol::optional<sol::table> widgetsTable = (*panelTable)["widgets"];
+    sol::optional<sol::table> widgetsTable = panelTable["widgets"];
     if (!widgetsTable) {
         return panel;
     }
@@ -82,13 +80,23 @@ std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext,
     auto root = scriptContext.ExecuteFile(file);
     if (!root) return nullptr;
     // "Parse" the configuration state
-    sol::table panels = (*root)["panels"];
+    sol::optional<sol::table> panelsTable = (*root)["panels"];
+    if (!panelsTable) {
+        spdlog::error("No panels found");
+        return nullptr;
+    }
     auto config = std::unique_ptr<Configuration>(new Configuration());
     // Panels
-    config->leftPanel = Panel::Parse(panels, "left", 0);
-    config->leftPanel.anchor = Anchor::Left;
-    config->rightPanel = Panel::Parse(panels, "right", 1);
-    config->rightPanel.anchor = Anchor::Right;
+    for (int i = 0; i < panelsTable->size(); i++) {
+        sol::optional<sol::table> panelTable = (*panelsTable)[i + 1];
+        if (!panelTable) {
+            spdlog::error("Expected panel table");
+            continue;
+        }
+        auto panel = Panel::Parse(*panelTable, i);
+        panel.anchor = i == 0 ? Anchor::Left : Anchor::Right;
+        config->panels.push_back(panel);
+    }
     // Buffers
     sol::optional<sol::table> buffersTable = (*root)["buffers"];
     config->numBuffers = 1;

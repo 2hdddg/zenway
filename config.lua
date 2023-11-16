@@ -155,12 +155,12 @@ return {
         height = 1000,
     },
     panels = {
-        left = {
+        {
             widgets = {
                 { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
             },
         },
-        right = {
+        {
             widgets = {
                 { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
                 { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
