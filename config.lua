@@ -78,7 +78,7 @@ local function box(markup, color)
 end
 
 local function render_workspaces(displayName)
-    local display = zen.sources.displays[displayName]
+    local display = zen.displays[displayName]
     if not display then return "" end
     local workspaces = {}
     for _, workspace in pairs(display.workspaces) do
@@ -111,15 +111,15 @@ local function render_time()
 end
 
 local function render_keyboard()
-    return box(icon{icon="", size=SMALL_ICON_SIZE} .. label{label=" " .. zen.sources.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE}, CYAN)
+    return box(icon{icon="", size=SMALL_ICON_SIZE} .. label{label=" " .. zen.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE}, CYAN)
 end
 
 local function render_audio()
-    if zen.sources.audio.muted then
+    if zen.audio.muted then
         return box(icon{icon=audio_port_icons["muted"]} .. label{label=" Muted"}, RED)
     end
-    local markup = icon{icon=audio_port_icons[zen.sources.audio.port]}
-    local volume = math.floor(zen.sources.audio.volume)
+    local markup = icon{icon=audio_port_icons[zen.audio.port]}
+    local volume = math.floor(zen.audio.volume)
     local level = find_level(audio_levels, volume)
     markup = markup .. icon{icon=level.icon}
     markup = markup .. label{label=" Volume " .. volume}
@@ -127,16 +127,16 @@ local function render_audio()
 end
 
 local function render_power()
-    if zen.sources.power.isCharging then return box(icon{icon = ""} .. label{label = "Charging"}, GREEN) end
-    if zen.sources.power.isPluggedIn then return box(icon{icon = ""} .. label{label = "Fully charged"}, GREEN) end
-    local c = zen.sources.power.capacity
+    if zen.power.isCharging then return box(icon{icon = ""} .. label{label = " Charging"}, GREEN) end
+    if zen.power.isPluggedIn then return box(icon{icon = ""} .. label{label = " Fully charged"}, GREEN) end
+    local c = zen.power.capacity
     local level = find_level(power_levels, c)
     return box(icon{icon = level.icon} .. label{label = " Battery " .. c .. "%"}, level.color)
 end
 
 local function render_networks()
     local up = nil
-    for _, network in pairs(zen.sources.networks) do
+    for _, network in pairs(zen.networks) do
         if up == nil and network.up then
             up = network
         end
@@ -148,7 +148,7 @@ local function render_networks()
     end
 end
 
-zen = {
+return {
     buffers = {
         num = 1,
         width = 1000,

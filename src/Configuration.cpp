@@ -79,11 +79,10 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table table, const c
 }
 
 std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext, const char* file) {
-    if (!scriptContext.ExecuteFile(file)) {
-        return nullptr;
-    }
+    auto root = scriptContext.ExecuteFile(file);
+    if (!root) return nullptr;
     // "Parse" the configuration state
-    sol::table panels = scriptContext.Root()["panels"];
+    sol::table panels = (*root)["panels"];
     auto config = std::unique_ptr<Configuration>(new Configuration());
     // Panels
     config->leftPanel = Panel::Parse(panels, "left", 0);
@@ -91,7 +90,7 @@ std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext,
     config->rightPanel = Panel::Parse(panels, "right", 1);
     config->rightPanel.anchor = Anchor::Right;
     // Buffers
-    sol::optional<sol::table> buffersTable = scriptContext.Root()["buffers"];
+    sol::optional<sol::table> buffersTable = (*root)["buffers"];
     config->numBuffers = 1;
     config->bufferWidth = 1000;
     config->bufferHeight = 1000;

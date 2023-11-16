@@ -60,10 +60,8 @@ using Networks = std::vector<NetworkState>;
 class ScriptContext {
    public:
     static std::unique_ptr<ScriptContext> Create();
-    bool ExecuteFile(const char* file);
-    void InitializeRuntime();
+    sol::optional<sol::table> ExecuteFile(const char* file);
     void RegisterSource(std::string_view name);
-    sol::table Root() { return m_lua["zen"]; }
     void Publish(const Displays& displays);
     void Publish(const PowerState& power);
     void Publish(const AudioState& audio);
