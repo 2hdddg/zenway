@@ -6,10 +6,10 @@ std::unique_ptr<Sources> Sources::Create(std::shared_ptr<ScriptContext> scriptCo
 
 void Sources::Register(std::string_view name, std::shared_ptr<Source> source) {
     m_scriptContext->RegisterSource(name);
-    m_sources[name] = source;
+    m_sources[std::string(name)] = source;
 }
 
-bool Sources::IsDirty(std::string_view name) const {
+bool Sources::IsDirty(const std::string& name) const {
     if (m_sources.contains(name)) {
         return m_sources.at(name)->IsSourceDirty();
     }

@@ -156,6 +156,7 @@ return {
     },
     panels = {
         {
+            anchor = "left", -- todo
             widgets = {
                 { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
             },

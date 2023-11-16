@@ -47,6 +47,33 @@ static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char*
     return std::optional<std::filesystem::path>();
 }
 
+static void InitializeSource(const std::string& source, Sources& sources, MainLoop& mainLoop,
+                             std::shared_ptr<ScriptContext> scriptContext) {
+    if (source == "date" || source == "time") {
+        //  Date time sources
+        auto dateSource = DateSource::Create();
+        auto timeSource = TimeSource::Create(mainLoop, dateSource);
+        sources.Register("date", dateSource);
+        sources.Register("time", timeSource);
+        return;
+    }
+    if (source == "workspace") {
+        // Initialized by manager later..
+        return;
+    }
+    if (source == "networks") {
+        auto networkSource = NetworkSource::Create(mainLoop, scriptContext);
+        if (!networkSource) {
+            spdlog::error("Failed to initialize network source");
+            return;
+        }
+        sources.Register("networks", networkSource);
+        networkSource->Initialize();
+        return;
+    }
+    spdlog::error("Unknown source: {}", source);
+}
+
 int main(int argc, char* argv[]) {
     // Environment variable configurable logging
     spdlog::cfg::load_env_levels();
@@ -107,20 +134,6 @@ int main(int argc, char* argv[]) {
     sources->Register("power", powerSource);
     // Initialize after registration
     powerSource->Initialize();
-    // Network source
-    auto networkSource = NetworkSource::Create(*mainLoop, scriptContext);
-    if (!networkSource) {
-        spdlog::error("Failed to initialize network source");
-        return -1;
-    }
-    sources->Register("networks", networkSource);
-    networkSource->Initialize();
-    //  Date time sources
-    auto dateSource = DateSource::Create();
-    auto timeSource = TimeSource::Create(*mainLoop, dateSource);
-    sources->Register("date", dateSource);
-    sources->Register("time", timeSource);
-    // Seat sources
     if (registry->seat && registry->seat->keyboard) {
         sources->Register("keyboard", registry->seat->keyboard);
         registry->seat->keyboard->SetScriptContext(scriptContext);
@@ -132,6 +145,15 @@ int main(int argc, char* argv[]) {
     for (auto panelConfig : config->panels) {
         auto panel = Panel::Create(bufferPool, panelConfig);
         panels.push_back(std::move(panel));
+        // Check what sources are needed for the widgets in the panel
+        for (const auto& widgetConfig : panelConfig.widgets) {
+            for (const auto& source : widgetConfig.sources) {
+                // Initialize source if not already done
+                if (!sources->IsRegistered(source)) {
+                    InitializeSource(source, *sources, *mainLoop, scriptContext);
+                }
+            }
+        }
     }
     // Manager handles displays, redrawing of panels
     auto manager =

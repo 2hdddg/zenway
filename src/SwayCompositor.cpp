@@ -137,12 +137,3 @@ void SwayCompositor::OnRead() {
             break;
     }
 }
-
-/*
-void SwayCompositor::OnBatchProcessed() {
-    if (m_isVisible && m_panel->IsDirty()) {
-        spdlog::info("Redraw statuses");
-        m_outputs->ForEach([this](std::shared_ptr<Output> output) { m_panel->Draw(*output); });
-    }
-}
-*/
