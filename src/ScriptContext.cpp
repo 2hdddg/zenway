@@ -37,7 +37,6 @@ void ScriptContext::Publish(const Displays& displays) {
                 applicationTable["name"] = application.name;
                 applicationTable["focus"] = application.isFocused;
                 applicationTable["appid"] = application.appId;
-                applicationTable["next"] = application.isNextFocused;
                 applicationsTable.add(applicationTable);
             }
             workspaceTable["name"] = workspace.name;

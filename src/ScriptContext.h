@@ -7,7 +7,6 @@ struct Application {
     std::string name;
     std::string appId;
     bool isFocused;
-    bool isNextFocused;
 };
 
 struct Workspace {

@@ -66,10 +66,14 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
     auto application = Application{.name = applicationNode["name"]};
     int applicationId = applicationNode["id"];
     application.appId = applicationNode["app_id"];
+    // In sway the only focused app is the one in the focused workspace. When that app is focused
+    // the workspace is not. To simplify usage this considers the focused app in a non focused
+    // workspace to be the next in line.
     application.isFocused = applicationNode["focused"];
-    application.isNextFocused = applicationId == nextFocusId;
     if (application.isFocused) {
         workspace.isFocused = true;
+    } else {
+        application.isFocused = applicationId == nextFocusId;
     }
     workspace.applications.push_back(std::move(application));
 }
@@ -88,14 +92,6 @@ void SwayJson::ParseTree(const std::string &payload, std::shared_ptr<ScriptConte
             continue;
         }
         auto display = Display{.name = outputNode["name"]};  // workspaces->AddDisplay();
-        /*
-        auto output = outputs->Get(outputNode["name"]);
-        if (!output) {
-            // spdlog::info("Output not found: {}", outputNode["type"]);
-            continue;
-        }
-        output->workspaces.clear();
-        */
         auto workspaceNodes = outputNode["nodes"];
         for (auto workspaceNode : workspaceNodes) {
             if (workspaceNode["type"] != "workspace") {
@@ -110,6 +106,7 @@ void SwayJson::ParseTree(const std::string &payload, std::shared_ptr<ScriptConte
                 nextFocusId = i;
                 break;
             }
+            workspace.isFocused = workspaceNode["focused"];
             auto applicationNodes = workspaceNode["nodes"];
             for (auto applicationNode : applicationNodes) {
                 ParseApplication(workspace, applicationNode, nextFocusId);

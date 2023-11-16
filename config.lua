@@ -84,7 +84,7 @@ local function render_workspaces(displayName)
     for _, workspace in pairs(display.workspaces) do
         local app_name = ""
         for _, app in pairs(workspace.applications) do
-            if app.focus or (app_name == "" and app.next) then app_name = app.name end
+            if app.focus then app_name = app.name end
         end
         boxcolor = BLACK_BR
         if workspace.focus then
