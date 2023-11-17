@@ -47,12 +47,14 @@ static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char*
     return std::optional<std::filesystem::path>();
 }
 
-static void InitializeSource(const std::string& source, Sources& sources, MainLoop& mainLoop,
-                             std::shared_ptr<ScriptContext> scriptContext) {
+static void InitializeSource(const std::string& source, Sources& sources,
+                             std::shared_ptr<MainLoop> mainLoop,
+                             std::shared_ptr<ScriptContext> scriptContext,
+                             const Registry& registry) {
     if (source == "date" || source == "time") {
         //  Date time sources
         auto dateSource = DateSource::Create();
-        auto timeSource = TimeSource::Create(mainLoop, dateSource);
+        auto timeSource = TimeSource::Create(*mainLoop, dateSource);
         sources.Register("date", dateSource);
         sources.Register("time", timeSource);
         return;
@@ -62,13 +64,42 @@ static void InitializeSource(const std::string& source, Sources& sources, MainLo
         return;
     }
     if (source == "networks") {
-        auto networkSource = NetworkSource::Create(mainLoop, scriptContext);
+        auto networkSource = NetworkSource::Create(*mainLoop, scriptContext);
         if (!networkSource) {
             spdlog::error("Failed to initialize network source");
             return;
         }
-        sources.Register("networks", networkSource);
+        sources.Register(source, networkSource);
         networkSource->Initialize();
+        return;
+    }
+    if (source == "audio") {
+        auto audioSource = PulseAudioSource::Create(mainLoop, scriptContext);
+        if (!audioSource) {
+            spdlog::error("Failed to initialize PulseAudio source");
+            return;
+        }
+        sources.Register(source, std::move(audioSource));
+        return;
+    }
+    if (source == "power") {
+        auto powerSource = PowerSource::Create(*mainLoop, scriptContext);
+        if (!powerSource) {
+            spdlog::error("Failed to initialize battery source");
+            return;
+        }
+        sources.Register(source, powerSource);
+        // Initialize after registration
+        powerSource->Initialize();
+        return;
+    }
+    if (source == "keyboard") {
+        if (registry.seat && registry.seat->keyboard) {
+            sources.Register("keyboard", registry.seat->keyboard);
+            registry.seat->keyboard->SetScriptContext(scriptContext);
+        } else {
+            spdlog::warn("No keyboard source");
+        }
         return;
     }
     spdlog::error("Unknown source: {}", source);
@@ -116,30 +147,7 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize buffer pool");
         return -1;
     }
-    // Initialize sources
     auto sources = Sources::Create(scriptContext);
-    // Audio source
-    auto audioSource = PulseAudioSource::Create(mainLoop, scriptContext);
-    if (!audioSource) {
-        spdlog::error("Failed to initialize PulseAudio source");
-        return -1;
-    }
-    sources->Register("audio", std::move(audioSource));
-    // Battery source
-    auto powerSource = PowerSource::Create(*mainLoop, scriptContext);
-    if (!powerSource) {
-        spdlog::error("Failed to initialize battery source");
-        return -1;
-    }
-    sources->Register("power", powerSource);
-    // Initialize after registration
-    powerSource->Initialize();
-    if (registry->seat && registry->seat->keyboard) {
-        sources->Register("keyboard", registry->seat->keyboard);
-        registry->seat->keyboard->SetScriptContext(scriptContext);
-    } else {
-        spdlog::warn("No keyboard source");
-    }
     // Panels
     std::vector<std::unique_ptr<Panel>> panels;
     for (auto panelConfig : config->panels) {
@@ -150,7 +158,7 @@ int main(int argc, char* argv[]) {
             for (const auto& source : widgetConfig.sources) {
                 // Initialize source if not already done
                 if (!sources->IsRegistered(source)) {
-                    InitializeSource(source, *sources, *mainLoop, scriptContext);
+                    InitializeSource(source, *sources, mainLoop, scriptContext, *registry);
                 }
             }
         }

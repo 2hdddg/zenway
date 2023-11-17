@@ -77,6 +77,17 @@ local function box(markup, color)
     }
 end
 
+local function wsbox(markup, color)
+    return {
+        type = "box",
+        markup = markup,
+        color = color,
+        padding = { top = 17, left = 10, right = 10, bottom = 17 },
+        radius = 15,
+        border = { width = 2, color = color .. '10' },
+    }
+end
+
 local function render_workspaces(displayName)
     local display = zen.displays[displayName]
     if not display then return "" end
@@ -95,8 +106,8 @@ local function render_workspaces(displayName)
             direction = "row",
             padding = { right = 1 },
             items = {
-                box(label{label=workspace.name}, boxcolor),
-                box(label{label=app_name}, boxcolor),
+                wsbox(label{label=" " .. workspace.name .. " "}, boxcolor),
+                wsbox(label{label=app_name}, boxcolor),
             },
         }
         table.insert(workspaces, workspace)
