@@ -11,11 +11,23 @@
 
 enum class Anchor { Left, Right, Top, Bottom };
 
+struct Size {
+    uint32_t cx;
+    uint32_t cy;
+};
+
+struct Rect {
+    int x;
+    int y;
+    uint32_t cx;
+    uint32_t cy;
+};
+
 class ShellSurface {
    public:
     static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
                                                 wl_output *output, const std::string &name);
-    void Draw(const Anchor anchor, Buffer &buffer, int x, int y, int cx, int cy);
+    void Draw(const Anchor anchor, Buffer &buffer, const Size &size, const Rect &damage);
     void Hide();
 
     void OnShellConfigure(uint32_t cx, uint32_t cy);

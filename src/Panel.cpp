@@ -5,11 +5,6 @@
 #include "spdlog/spdlog.h"
 #include "src/BufferPool.h"
 
-struct Computed {
-    uint32_t cx;
-    uint32_t cy;
-};
-
 struct RGBA {
     static RGBA FromProperty(const sol::table& t, const char* name) {
         const sol::optional<std::string> optionalColor = t[name];
@@ -86,10 +81,10 @@ struct Renderable {
     virtual ~Renderable() {}
     virtual void Compute(cairo_t* cr) {}
     virtual void Draw(cairo_t* cr, int x, int y) const {}
-    Computed computed;
+    Size computed;
 };
 
-static void LogComputed(const Computed& computed, const char* s) {
+static void LogComputed(const Size& computed, const char* s) {
     spdlog::trace("Computed {}: {}x{}", s, computed.cx, computed.cy);
 }
 
@@ -254,11 +249,13 @@ struct FlexContainer : public Renderable {
                 y += r->computed.cy + padding.bottom;
             }
         } else {
+            y += padding.top;
             for (const auto& r : children) {
                 x += padding.left;
-                r->Draw(cr, x, y + padding.top);
+                r->Draw(cr, x, y);
                 x += r->computed.cx + padding.right;
             }
+            y += padding.bottom;
         }
     }
 
@@ -329,12 +326,20 @@ void Panel::Draw(Output& output) {
         }
         item->Compute(cr);
         auto widgetCx = item->computed.cx;
+        y += widgetConfig.padding.top;
         int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
                            : widgetConfig.padding.left;
-        item->Draw(cr, x, y + widgetConfig.padding.top);
+        item->Draw(cr, x, y);
         cairo_restore(cr);
-        y += item->computed.cy + widgetConfig.padding.top + widgetConfig.padding.bottom;
+        y += item->computed.cy + widgetConfig.padding.bottom;
     }
     // TODO: Exact x,y and cx, cy
-    output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, 0, 0, bufferCx, y);
+    auto size = Size{(uint32_t)bufferCx, (uint32_t)y};
+    Rect damage;
+    damage.x = 0;
+    damage.y = 0;
+    damage.cx = std::max(size.cx, m_previousDamage.cx);
+    damage.cy = std::max(size.cy, m_previousDamage.cy);
+    output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, size, damage);
+    m_previousDamage = {0, 0, size.cx, size.cy};
 }

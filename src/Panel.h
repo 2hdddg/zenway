@@ -16,7 +16,8 @@ class Panel {
 
    private:
     Panel(std::shared_ptr<BufferPool> bufferPool, Configuration::Panel panelConfig)
-        : m_bufferPool(bufferPool), m_panelConfig(panelConfig) {}
+        : m_bufferPool(bufferPool), m_panelConfig(panelConfig), m_previousDamage(0, 0, 0, 0) {}
     const std::shared_ptr<BufferPool> m_bufferPool;
     const Configuration::Panel m_panelConfig;
+    Rect m_previousDamage;
 };

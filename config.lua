@@ -97,6 +97,7 @@ local function render_workspaces(displayName)
         for _, app in pairs(workspace.applications) do
             if app.focus then app_name = app.name end
         end
+        if #workspace.applications == 0 then app_name = "&lt;desktop&gt;" end
         boxcolor = BLACK_BR
         if workspace.focus then
             boxcolor = GREEN
