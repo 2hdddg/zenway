@@ -16,6 +16,10 @@
 class Registry : public IoHandler {
    public:
     static std::shared_ptr<Registry> Create(MainLoop &mainLoop);
+    virtual ~Registry() {
+        wl_registry_destroy(m_registry);
+        m_registry = nullptr;
+    }
 
     void Register(struct wl_registry *registry, uint32_t name, const char *interface,
                   uint32_t version);
@@ -23,6 +27,7 @@ class Registry : public IoHandler {
 
     virtual void OnRead() override;
 
+    // These are maintained by the registry
     std::shared_ptr<Roots> roots;
     std::shared_ptr<Outputs> outputs;
     std::shared_ptr<Seat> seat;

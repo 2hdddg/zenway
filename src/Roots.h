@@ -13,10 +13,14 @@ struct Roots {
 
     virtual ~Roots() {
         zwlr_layer_shell_v1_destroy(shell);
+        shell = nullptr;
         wl_shm_destroy(shm);
+        shm = nullptr;
         wl_compositor_destroy(compositor);
+        compositor = nullptr;
         // Should be last!
         wl_display_disconnect(display);
+        display = nullptr;
     }
 
     void FlushAndDispatchCommands() const;
