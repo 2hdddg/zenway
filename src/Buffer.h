@@ -4,7 +4,11 @@
 #include <wayland-client-protocol.h>
 
 #include <memory>
+#include <vector>
 
+#include "Roots.h"
+
+// Represents a single buffer used for rendering
 class Buffer {
    public:
     static std::unique_ptr<Buffer> Create(wl_buffer *buffer, void *address, int cx, int cy,
@@ -17,7 +21,6 @@ class Buffer {
     }
 
     const std::string name;
-
     cairo_t *GetCairoCtx() { return m_cr; }
     void Clear(uint8_t v);
     bool InUse() { return m_inUse; }
@@ -35,4 +38,18 @@ class Buffer {
     const size_t m_sizeInBytes;
     const cairo_surface_t *m_cr_surface;
     cairo_t *m_cr;
+};
+
+// Represents a memory map with one or more buffers in it
+class BufferPool {
+   public:
+    static std::unique_ptr<BufferPool> Create(const std::shared_ptr<Roots>, const int n,
+                                              const int cx, const int cy);
+    std::shared_ptr<Buffer> Get();
+
+   private:
+    using Buffers = std::vector<std::shared_ptr<Buffer>>;
+
+    BufferPool(Buffers &&buffers) : m_buffers(buffers) {}
+    Buffers m_buffers;
 };

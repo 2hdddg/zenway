@@ -3,7 +3,7 @@
 #include "Configuration.h"
 #include "cairo.h"
 #include "pango/pango-layout.h"
-#include "src/BufferPool.h"
+#include "src/Buffer.h"
 #include "src/Output.h"
 #include "src/Sources.h"
 

@@ -24,7 +24,6 @@ deps += subproject('nlohmann_json').get_variable('nlohmann_json_dep')
 
 src = files(
   'src/Buffer.cpp',
-  'src/BufferPool.cpp',
   'src/Configuration.cpp',
   'src/DateTimeSources.cpp',
   'src/main.cpp',

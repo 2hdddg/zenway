@@ -3,7 +3,6 @@
 #include "pango/pango-layout.h"
 #include "pango/pangocairo.h"
 #include "spdlog/spdlog.h"
-#include "src/BufferPool.h"
 
 struct RGBA {
     static RGBA FromProperty(const sol::table& t, const char* name) {

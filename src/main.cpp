@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <filesystem>
 
-#include "BufferPool.h"
+#include "Buffer.h"
 #include "Configuration.h"
 #include "DateTimeSources.h"
 #include "MainLoop.h"
