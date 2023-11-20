@@ -21,7 +21,10 @@ class Output {
     void OnName(const char* name);
     void OnDescription(const char* description);
 
-    virtual ~Output() { wl_output_destroy(m_wloutput); }
+    virtual ~Output() {
+        wl_output_destroy(m_wloutput);
+        m_wloutput = nullptr;
+    }
 
     std::string name;
     std::array<std::unique_ptr<ShellSurface>, 2> surfaces;
