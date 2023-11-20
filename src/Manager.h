@@ -1,7 +1,7 @@
 #pragma once
 
 #include "src/MainLoop.h"
-#include "src/Outputs.h"
+#include "src/Output.h"
 #include "src/Panel.h"
 
 class Manager : public IoBatchHandler, public Source {

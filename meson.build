@@ -31,7 +31,6 @@ src = files(
   'src/Manager.cpp',
   'src/NetworkSource.cpp',
   'src/Output.cpp',
-  'src/Outputs.cpp',
   'src/Panel.cpp',
   'src/PowerSource.cpp',
   'src/PulseAudioSource.cpp',

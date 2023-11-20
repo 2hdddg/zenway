@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "MainLoop.h"
-#include "Outputs.h"
+#include "Output.h"
 #include "Roots.h"
 #include "Seat.h"
 #include "ShellSurface.h"
