@@ -41,7 +41,6 @@ src = files(
   'src/ShellSurface.cpp',
   'src/Sources.cpp',
   'src/SwayCompositor.cpp',
-  'src/Theme.cpp',
 )
 zenway_src = src
 
