@@ -29,7 +29,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
     if (interface == std::string_view(wl_output_interface.name)) {
         auto output = (wl_output *)wl_registry_bind(registry, name, &wl_output_interface,
                                                     wl_output_interface.version);
-        outputs->Add(output);
+        m_outputs->Add(roots, output);
         return;
     }
     if (interface == std::string_view(wl_seat_interface.name)) {
@@ -62,7 +62,7 @@ static void on_unregister(void *data, struct wl_registry *wlregistry, uint32_t n
 static const wl_registry_listener listener = {.global = on_register,
                                               .global_remove = on_unregister};
 
-std::shared_ptr<Registry> Registry::Create(MainLoop &mainLoop) {
+std::shared_ptr<Registry> Registry::Create(MainLoop &mainLoop, std::shared_ptr<Outputs> outputs) {
     // Connect
     auto display = wl_display_connect(std::getenv("WAYLAND_DISPLAY"));
     if (display == nullptr) {
@@ -70,7 +70,7 @@ std::shared_ptr<Registry> Registry::Create(MainLoop &mainLoop) {
         return nullptr;
     }
     auto wlregistry = wl_display_get_registry(display);
-    auto registry = std::shared_ptr<Registry>(new Registry(display, wlregistry));
+    auto registry = std::shared_ptr<Registry>(new Registry(outputs, display, wlregistry));
     // Will fill in roots and this instance with needed interfaces
     wl_registry_add_listener(wlregistry, &listener, registry.get());
     // Two roundtrips, first to trigger registration, second to process binding requests.
@@ -81,14 +81,8 @@ std::shared_ptr<Registry> Registry::Create(MainLoop &mainLoop) {
 }
 
 void Registry::OnRead() {
-    /*
-      while (wl_display_prepare_read(roots->display) != 0) {
-          wl_display_dispatch(roots->display);
-      }
-      */
     wl_display_prepare_read(roots->display);
     wl_display_read_events(roots->display);
     wl_display_dispatch_pending(roots->display);
     wl_display_flush(roots->display);
-    // roots->FlushAndDispatchCommands();
 }

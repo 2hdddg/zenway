@@ -44,15 +44,14 @@ class Output {
 
 class Outputs {
    public:
-    static std::unique_ptr<Outputs> Create(const std::shared_ptr<Roots> roots);
+    static std::unique_ptr<Outputs> Create();
 
-    void Add(wl_output* output);
+    void Add(const std::shared_ptr<Roots> roots, wl_output* output);
 
     void ForEach(std::function<void(std::shared_ptr<Output>)> callback);
     std::shared_ptr<Output> Get(const std::string& name) const;
 
    private:
-    Outputs(const std::shared_ptr<Roots> roots) : m_roots(roots) {}
-    const std::shared_ptr<Roots> m_roots;
+    Outputs() {}
     std::map<std::string, std::shared_ptr<Output>> m_map;
 };

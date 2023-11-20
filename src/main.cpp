@@ -131,10 +131,11 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize main loop");
         return -1;
     }
+    auto outputs = std::shared_ptr<Outputs>(Outputs::Create());
     // Initialize registry.
     // The registry initializes roots that contains elementary interfaces needed for the system
     // to work. The registry also maintains the list of active outputs (monitors).
-    auto registry = Registry::Create(*mainLoop);
+    auto registry = Registry::Create(*mainLoop, outputs);
     if (!registry) {
         spdlog::error("Failed to initialize registry");
         return -1;
@@ -164,8 +165,7 @@ int main(int argc, char* argv[]) {
         }
     }
     // Manager handles displays, redrawing of panels
-    auto manager =
-        Manager::Create(*mainLoop, registry->outputs, std::move(sources), std::move(panels));
+    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources), std::move(panels));
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);
     if (!sway) {

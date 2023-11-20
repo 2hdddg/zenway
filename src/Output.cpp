@@ -63,12 +63,10 @@ void Output::Hide() {
     }
 }
 
-std::unique_ptr<Outputs> Outputs::Create(const std::shared_ptr<Roots> roots) {
-    return std::unique_ptr<Outputs>(new Outputs(roots));
-}
+std::unique_ptr<Outputs> Outputs::Create() { return std::unique_ptr<Outputs>(new Outputs()); }
 
-void Outputs::Add(wl_output *wloutput) {
-    Output::Create(m_roots, wloutput, [this](Output *output) {
+void Outputs::Add(const std::shared_ptr<Roots> roots, wl_output *wloutput) {
+    Output::Create(roots, wloutput, [this](Output *output) {
         spdlog::debug("Found output {}", output->name);
         m_map[output->name] = std::shared_ptr<Output>(output);
     });
