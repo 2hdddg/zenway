@@ -30,7 +30,7 @@ static std::set<std::string> ParseSources(const sol::table& widgetTable) {
         return sources;
     }
     auto numSources = table->size();
-    for (int i = 0; i < numSources; i++) {
+    for (size_t i = 0; i < numSources; i++) {
         sources.insert(table->get<std::string>(i + 1));
     }
     return sources;
@@ -65,7 +65,7 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, in
         return panel;
     }
     // Parse each widget
-    for (int i = 0; i < numWidgets; i++) {
+    for (size_t i = 0; i < numWidgets; i++) {
         sol::optional<sol::table> widgetTable = (*widgetsTable)[i + 1];
         if (!widgetTable) {
             // TODO: Log!
@@ -87,7 +87,7 @@ std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext,
     }
     auto config = std::unique_ptr<Configuration>(new Configuration());
     // Panels
-    for (int i = 0; i < panelsTable->size(); i++) {
+    for (size_t i = 0; i < panelsTable->size(); i++) {
         sol::optional<sol::table> panelTable = (*panelsTable)[i + 1];
         if (!panelTable) {
             spdlog::error("Expected panel table");

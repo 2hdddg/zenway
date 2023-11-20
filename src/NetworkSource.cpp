@@ -66,7 +66,7 @@ void NetworkSource::ReadState() {
     auto ifr = ifc.ifc_req;
     auto nInterfaces = ifc.ifc_len / sizeof(struct ifreq);
     Networks networks;
-    for (int i = 0; i < nInterfaces; i++) {
+    for (unsigned long i = 0; i < nInterfaces; i++) {
         auto item = &ifr[i];
         auto addr = &item->ifr_addr;
         // Get interface flags

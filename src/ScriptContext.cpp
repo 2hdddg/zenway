@@ -14,7 +14,7 @@ std::unique_ptr<ScriptContext> ScriptContext::Create() {
 sol::optional<sol::table> ScriptContext::ExecuteFile(const char* file) {
     try {
         return m_lua.script_file(file);
-    } catch (sol::error e) {
+    } catch (const sol::error& e) {
         spdlog::error("Failed to execute configuration file: {}", e.what());
         return sol::optional<sol::table>();
     }

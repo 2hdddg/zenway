@@ -27,10 +27,7 @@ struct PowerState {
     bool IsCharging;
     uint8_t Capacity;
 
-    bool operator==(const PowerState& other) {
-        return IsPluggedIn == other.IsPluggedIn && IsCharging == other.IsCharging &&
-               Capacity == other.Capacity;
-    }
+    auto operator<=>(const PowerState& other) const = default;
 };
 
 struct AudioState {
@@ -38,13 +35,13 @@ struct AudioState {
     float Volume;
     std::string PortType;
 
-    bool operator==(const AudioState& other) {
-        return Muted == other.Muted && Volume == other.Volume && PortType == other.PortType;
-    }
+    auto operator<=>(const AudioState& other) const = default;
 };
 
 struct KeyboardState {
     std::string layout;
+
+    auto operator<=>(const KeyboardState& other) const = default;
 };
 
 struct NetworkState {
@@ -53,6 +50,8 @@ struct NetworkState {
     std::string address;
     // type (eth, wifi)
     // wifi strength
+
+    auto operator<=>(const NetworkState& other) const = default;
 };
 using Networks = std::vector<NetworkState>;
 
