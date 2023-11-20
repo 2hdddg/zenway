@@ -35,8 +35,8 @@ void Output::Create(const std::shared_ptr<Roots> roots, wl_output *wloutput,
                     OnNamedCallback onNamed) {
     // This will be in lingo until name is received
     auto output = new Output(wloutput, onNamed);
-    output->surfaces[0] = ShellSurface::Create(roots, wloutput, "workspace");
-    output->surfaces[1] = ShellSurface::Create(roots, wloutput, "statuses");
+    output->m_surfaces[0] = ShellSurface::Create(roots, wloutput);
+    output->m_surfaces[1] = ShellSurface::Create(roots, wloutput);
     wl_output_add_listener(wloutput, &listener, output);
 }
 
@@ -51,6 +51,16 @@ void Output::OnName(const char *name_) {
 void Output::OnDescription(const char *description) {
     // Might change over lifetime
     spdlog::trace("Event wl_output::description {}", description);
+}
+
+void Output::Draw(int panelId, Anchor anchor, Buffer &buffer, const Size &size) {
+    m_surfaces[panelId]->Draw(anchor, buffer, size);
+}
+
+void Output::Hide() {
+    for (const auto &surface : m_surfaces) {
+        surface->Hide();
+    }
 }
 
 std::unique_ptr<Outputs> Outputs::Create(const std::shared_ptr<Roots> roots) {

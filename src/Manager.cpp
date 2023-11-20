@@ -18,7 +18,6 @@ void Manager::DirtyWorkspace() {
 void Manager::OnBatchProcessed() {
     // No need to redraw when not visible
     if (!m_isVisible) return;
-
     // Redraw dirty panels
     for (const auto& panel : m_panels) {
         if (!panel->IsDirty(*m_sources)) continue;
@@ -28,11 +27,7 @@ void Manager::OnBatchProcessed() {
 }
 
 void Manager::Hide() {
-    m_outputs->ForEach([](std::shared_ptr<Output> output) {
-        for (const auto& surface : output->surfaces) {
-            surface->Hide();
-        }
-    });
+    m_outputs->ForEach([](std::shared_ptr<Output> output) { output->Hide(); });
     m_isVisible = false;
 }
 

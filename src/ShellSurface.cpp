@@ -28,17 +28,16 @@ static const wl_surface_listener surface_listener = {
 };
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const std::shared_ptr<Roots> roots,
-                                                   wl_output *output, const std::string &name) {
+                                                   wl_output *output) {
     auto surface = wl_compositor_create_surface(roots->compositor);
-    auto shellSurface =
-        std::unique_ptr<ShellSurface>(new ShellSurface(roots, output, surface, name));
+    auto shellSurface = std::unique_ptr<ShellSurface>(new ShellSurface(roots, output, surface));
     wl_surface_add_listener(surface, &surface_listener, shellSurface.get());
     wl_surface_commit(surface);
     return shellSurface;
 }
 
 void ShellSurface::OnShellConfigure(uint32_t cx, uint32_t cy) {
-    spdlog::trace("Event zwlr_layer_surface::configure {0} size {1:d}x{2:d}", m_name, cx, cy);
+    spdlog::trace("Event zwlr_layer_surface::configure size {}x{}", cx, cy);
 };
 
 void ShellSurface::OnClosed() {
@@ -59,12 +58,17 @@ void ShellSurface::Show() {
     m_roots->FlushAndDispatchCommands();
 }
 
-void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size, const Rect &damage) {
+void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
     if (m_isClosed) {
         spdlog::info("Draw when closed");
         return;
     }
     if (!m_layer) Show();
+    Rect damage;
+    damage.x = 0;
+    damage.y = 0;
+    damage.cx = std::max(size.cx, m_previousDamage.cx);
+    damage.cy = std::max(size.cy, m_previousDamage.cy);
     spdlog::trace("Draw buffer: {}", buffer.name);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
     uint32_t zanchor;
@@ -90,6 +94,7 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size, c
     wl_surface_commit(m_surface);
     // TODO: Here?
     m_roots->FlushAndDispatchCommands();
+    m_previousDamage = {0, 0, size.cx, size.cy};
 }
 
 void ShellSurface::Hide() {

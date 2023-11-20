@@ -334,11 +334,5 @@ void Panel::Draw(Output& output) {
     }
     // TODO: Exact x,y and cx, cy
     auto size = Size{(uint32_t)bufferCx, (uint32_t)y};
-    Rect damage;
-    damage.x = 0;
-    damage.y = 0;
-    damage.cx = std::max(size.cx, m_previousDamage.cx);
-    damage.cy = std::max(size.cy, m_previousDamage.cy);
-    output.surfaces[m_panelConfig.index]->Draw(m_panelConfig.anchor, *buffer, size, damage);
-    m_previousDamage = {0, 0, size.cx, size.cy};
+    output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, size);
 }

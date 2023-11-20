@@ -27,13 +27,16 @@ class Output {
         m_wloutput = nullptr;
     }
 
+    void Draw(int panelId, Anchor anchor, Buffer& buffer, const Size& size);
+    void Hide();
+
     std::string name;
-    std::array<std::unique_ptr<ShellSurface>, 2> surfaces;
 
    private:
     Output(wl_output* wloutput, OnNamedCallback onNamed)
         : m_wloutput(wloutput), m_onNamed(onNamed) {}
 
+    std::array<std::unique_ptr<ShellSurface>, 2> m_surfaces;
     wl_output* m_wloutput;
     // Temporary callback until named, registers amoung the other outputs when name received
     OnNamedCallback m_onNamed;
