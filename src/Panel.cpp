@@ -312,6 +312,7 @@ void Panel::Draw(Output& output) {
     auto bufferCx = buffer->Cx();
     bool alignRight = m_panelConfig.anchor == Anchor::Right;
     int y = 0;
+    uint32_t cx = 0;
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
         sol::optional<sol::object> renderOutput = widgetConfig.render(output.name);
@@ -328,11 +329,14 @@ void Panel::Draw(Output& output) {
         y += widgetConfig.padding.top;
         int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
                            : widgetConfig.padding.left;
+        cx = alignRight
+                 ? bufferCx
+                 : std::max(widgetCx + widgetConfig.padding.right + widgetConfig.padding.left, cx);
         item->Draw(cr, x, y);
         cairo_restore(cr);
         y += item->computed.cy + widgetConfig.padding.bottom;
     }
     // TODO: Exact x,y and cx, cy
-    auto size = Size{(uint32_t)bufferCx, (uint32_t)y};
+    auto size = Size{(uint32_t)cx, (uint32_t)y};
     output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, size);
 }

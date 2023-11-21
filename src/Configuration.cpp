@@ -56,6 +56,21 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, in
     if (!panelTable) {
         return panel;
     }
+    const sol::optional<std::string> anchorString = panelTable["anchor"];
+    panel.anchor = Anchor::Left;
+    if (anchorString) {
+        if (*anchorString == "left") {
+        } else if (*anchorString == "right") {
+            panel.anchor = Anchor::Right;
+        } else if (*anchorString == "top") {
+            panel.anchor = Anchor::Top;
+        } else if (*anchorString == "bottom") {
+            panel.anchor = Anchor::Bottom;
+        } else {
+            spdlog::error("Invalid anchor: {}", *anchorString);
+        }
+    }
+
     sol::optional<sol::table> widgetsTable = panelTable["widgets"];
     if (!widgetsTable) {
         return panel;
@@ -94,7 +109,6 @@ std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext,
             continue;
         }
         auto panel = Panel::Parse(*panelTable, i);
-        panel.anchor = i == 0 ? Anchor::Left : Anchor::Right;
         config->panels.push_back(panel);
     }
     // Buffers

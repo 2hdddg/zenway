@@ -168,12 +168,13 @@ return {
     },
     panels = {
         {
-            anchor = "left", -- todo
+            anchor = "left",
             widgets = {
                 { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
             },
         },
         {
+            anchor = "top",
             widgets = {
                 { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
                 { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
@@ -181,6 +182,7 @@ return {
                 { sources = {'power'}, padding = { bottom = 10, right = 10 }, render = render_power },
                 { sources = {'networks'}, padding = { right = 10 }, render = render_networks },
             },
+            direction = "column" -- todo
         },
     },
 }
