@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize main loop");
         return -1;
     }
-    auto outputs = std::shared_ptr<Outputs>(Outputs::Create());
+    auto outputs = std::shared_ptr<Outputs>(Outputs::Create(config->panels.size()));
     // Initialize registry.
     // The registry initializes roots that contains elementary interfaces needed for the system
     // to work. The registry also maintains the list of active outputs (monitors).

@@ -31,12 +31,13 @@ const struct wl_output_listener listener = {
     .description = on_description,
 };
 
-void Output::Create(const std::shared_ptr<Roots> roots, wl_output *wloutput,
+void Output::Create(const std::shared_ptr<Roots> roots, wl_output *wloutput, int numberOfPanels,
                     OnNamedCallback onNamed) {
     // This will be in lingo until name is received
     auto output = new Output(wloutput, onNamed);
-    output->m_surfaces[0] = ShellSurface::Create(roots, wloutput);
-    output->m_surfaces[1] = ShellSurface::Create(roots, wloutput);
+    while (numberOfPanels-- > 0) {
+        output->m_surfaces.push_back(ShellSurface::Create(roots, wloutput));
+    }
     wl_output_add_listener(wloutput, &listener, output);
 }
 
@@ -63,10 +64,12 @@ void Output::Hide() {
     }
 }
 
-std::unique_ptr<Outputs> Outputs::Create() { return std::unique_ptr<Outputs>(new Outputs()); }
+std::unique_ptr<Outputs> Outputs::Create(int numberOfPanels) {
+    return std::unique_ptr<Outputs>(new Outputs(numberOfPanels));
+}
 
 void Outputs::Add(const std::shared_ptr<Roots> roots, wl_output *wloutput) {
-    Output::Create(roots, wloutput, [this](Output *output) {
+    Output::Create(roots, wloutput, m_numberOfPanels, [this](Output *output) {
         spdlog::debug("Found output {}", output->name);
         m_map[output->name] = std::shared_ptr<Output>(output);
     });

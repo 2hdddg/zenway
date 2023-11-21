@@ -17,7 +17,7 @@ using OnNamedCallback = std::function<void(Output* output)>;
 class Output {
    public:
     Output(const Output&) = delete;
-    static void Create(const std::shared_ptr<Roots> roots, wl_output* wloutput,
+    static void Create(const std::shared_ptr<Roots> roots, wl_output* wloutput, int numberOfPanels,
                        OnNamedCallback onNamed);
     void OnName(const char* name);
     void OnDescription(const char* description);
@@ -36,7 +36,7 @@ class Output {
     Output(wl_output* wloutput, OnNamedCallback onNamed)
         : m_wloutput(wloutput), m_onNamed(onNamed) {}
 
-    std::array<std::unique_ptr<ShellSurface>, 2> m_surfaces;
+    std::vector<std::unique_ptr<ShellSurface>> m_surfaces;
     wl_output* m_wloutput;
     // Temporary callback until named, registers amoung the other outputs when name received
     OnNamedCallback m_onNamed;
@@ -44,7 +44,7 @@ class Output {
 
 class Outputs {
    public:
-    static std::unique_ptr<Outputs> Create();
+    static std::unique_ptr<Outputs> Create(int numberOfPanels);
 
     void Add(const std::shared_ptr<Roots> roots, wl_output* output);
 
@@ -52,6 +52,7 @@ class Outputs {
     std::shared_ptr<Output> Get(const std::string& name) const;
 
    private:
-    Outputs() {}
+    Outputs(int numberOfPanels) : m_numberOfPanels(numberOfPanels) {}
     std::map<std::string, std::shared_ptr<Output>> m_map;
+    const int m_numberOfPanels;
 };
