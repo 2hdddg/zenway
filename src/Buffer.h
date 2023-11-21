@@ -25,6 +25,7 @@ class Buffer {
     void Clear(uint8_t v);
     bool InUse() { return m_inUse; }
     int Cx() { return m_cx; }
+    int Cy() { return m_cy; }
 
    private:
     Buffer(wl_buffer *buffer, void *address, int cx, int cy, size_t sizeInBytes,

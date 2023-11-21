@@ -70,6 +70,8 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, in
             spdlog::error("Invalid anchor: {}", *anchorString);
         }
     }
+    const sol::optional<std::string> directionString = panelTable["direction"];
+    panel.isColumn = !directionString || *directionString != "row";
 
     sol::optional<sol::table> widgetsTable = panelTable["widgets"];
     if (!widgetsTable) {

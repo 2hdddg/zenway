@@ -310,9 +310,13 @@ void Panel::Draw(Output& output) {
     auto cr = buffer->GetCairoCtx();
     buffer->Clear(0x00);
     auto bufferCx = buffer->Cx();
+    auto bufferCy = buffer->Cy();
     bool alignRight = m_panelConfig.anchor == Anchor::Right;
+    bool alignBottom = m_panelConfig.anchor == Anchor::Bottom;
     int y = 0;
-    uint32_t cx = 0;
+    int x = 0;
+    uint32_t panelCx = 0;
+    uint32_t panelCy = 0;
     for (auto& widgetConfig : m_panelConfig.widgets) {
         cairo_save(cr);
         sol::optional<sol::object> renderOutput = widgetConfig.render(output.name);
@@ -326,17 +330,31 @@ void Panel::Draw(Output& output) {
         }
         item->Compute(cr);
         auto widgetCx = item->computed.cx;
-        y += widgetConfig.padding.top;
-        int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
-                           : widgetConfig.padding.left;
-        cx = alignRight
-                 ? bufferCx
-                 : std::max(widgetCx + widgetConfig.padding.right + widgetConfig.padding.left, cx);
-        item->Draw(cr, x, y);
-        cairo_restore(cr);
-        y += item->computed.cy + widgetConfig.padding.bottom;
+        auto widgetCy = item->computed.cy;
+
+        if (m_panelConfig.isColumn) {
+            y += widgetConfig.padding.top;
+            int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
+                               : widgetConfig.padding.left;
+            panelCx = std::max(widgetCx + widgetConfig.padding.right + widgetConfig.padding.left,
+                               panelCx);
+            item->Draw(cr, x, y);
+            cairo_restore(cr);
+            y += widgetCy + widgetConfig.padding.bottom;
+            panelCy = y;
+        } else {
+            x += widgetConfig.padding.left;
+            int y = alignBottom ? bufferCy - widgetCy - widgetConfig.padding.bottom
+                                : widgetConfig.padding.top;
+            panelCy = std::max(widgetCy + widgetConfig.padding.top + widgetConfig.padding.bottom,
+                               panelCy);
+            item->Draw(cr, x, y);
+            cairo_restore(cr);
+            x += widgetCx + widgetConfig.padding.right;
+            panelCx = x;
+        }
     }
     // TODO: Exact x,y and cx, cy
-    auto size = Size{(uint32_t)cx, (uint32_t)y};
+    auto size = Size{alignRight ? bufferCx : panelCx, alignBottom ? bufferCy : panelCy};
     output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, size);
 }

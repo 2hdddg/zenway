@@ -163,7 +163,7 @@ end
 return {
     buffers = {
         num = 1,
-        width = 1000,
+        width = 2000,
         height = 1000,
     },
     panels = {
@@ -172,9 +172,10 @@ return {
             widgets = {
                 { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
             },
+            direction = "column"
         },
         {
-            anchor = "top",
+            anchor = "right",
             widgets = {
                 { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
                 { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
@@ -182,7 +183,7 @@ return {
                 { sources = {'power'}, padding = { bottom = 10, right = 10 }, render = render_power },
                 { sources = {'networks'}, padding = { right = 10 }, render = render_networks },
             },
-            direction = "column" -- todo
+            direction = "column"
         },
     },
 }

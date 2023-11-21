@@ -32,6 +32,7 @@ class Configuration {
         std::vector<Widget> widgets;
         int index;
         Anchor anchor;
+        bool isColumn;
     };
 
     static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext, const char* file);
