@@ -175,13 +175,19 @@ return {
             direction = "column"
         },
         {
+            anchor = "top",
+            widgets = {
+                { sources = {'time', 'date'}, padding = { top = 10 }, render = render_time },
+            },
+            direction = "column"
+        },
+        {
             anchor = "right",
             widgets = {
-                { sources = {'time', 'date'}, padding = { bottom = 10, right = 10 }, render = render_time },
-                { sources = {'keyboard'}, padding = { bottom = 10, right = 10 }, render = render_keyboard },
-                { sources = {'audio'}, padding = { bottom = 10, right = 10 }, render = render_audio },
-                { sources = {'power'}, padding = { bottom = 10, right = 10 }, render = render_power },
-                { sources = {'networks'}, padding = { right = 10 }, render = render_networks },
+                { sources = {'keyboard'}, padding = { right = 10 }, render = render_keyboard },
+                { sources = {'audio'}, padding = { top = 10, right = 10 }, render = render_audio },
+                { sources = {'power'}, padding = { top = 10, right = 10 }, render = render_power },
+                { sources = {'networks'}, padding = { top = 10 }, render = render_networks },
             },
             direction = "column"
         },

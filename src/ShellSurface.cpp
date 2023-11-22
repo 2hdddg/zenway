@@ -69,7 +69,7 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
     damage.y = 0;
     damage.cx = std::max(size.cx, m_previousDamage.cx);
     damage.cy = std::max(size.cy, m_previousDamage.cy);
-    spdlog::trace("Draw buffer: {}", buffer.name);
+    spdlog::trace("Draw buffer: {}x{}", size.cx, size.cy);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
     uint32_t zanchor;
     switch (anchor) {
@@ -87,12 +87,10 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
             break;
             break;
     }
-
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
     wl_surface_attach(m_surface, buffer.Lock(), 0, 0);
     wl_surface_damage(m_surface, damage.x, damage.y, damage.cx, damage.cy);
     wl_surface_commit(m_surface);
-    // TODO: Here?
     m_roots->FlushAndDispatchCommands();
     m_previousDamage = {0, 0, size.cx, size.cy};
 }

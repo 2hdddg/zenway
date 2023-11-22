@@ -76,13 +76,6 @@ struct Border {
     int width;
 };
 
-struct Renderable {
-    virtual ~Renderable() {}
-    virtual void Compute(cairo_t* cr) {}
-    virtual void Draw(cairo_t* cr, int x, int y) const {}
-    Size computed;
-};
-
 static void LogComputed(const Size& computed, const char* s) {
     spdlog::trace("Computed {}: {}x{}", s, computed.cx, computed.cy);
 }
@@ -299,6 +292,33 @@ bool Panel::IsDirty(const Sources& sources) const {
     return false;
 }
 
+void Widget::Compute(const Configuration::Widget& config, const Output& output, cairo_t* cr) {
+    sol::optional<sol::object> renderOutput = config.render(output.name);
+    if (!renderOutput) {
+        spdlog::error("Bad return from widget");
+        return;
+    }
+    auto item = FromObject(*renderOutput);
+    if (!item) {
+        spdlog::error("Unparsable widget");
+        return;
+    }
+    item->Compute(cr);
+    computed.cx = item->computed.cx + config.padding.left + config.padding.right;
+    computed.cy = item->computed.cy + config.padding.top + config.padding.bottom;
+    m_paddingX = config.padding.left;
+    m_paddingY = config.padding.top;
+    m_item = std::move(item);
+}
+
+void Widget::Draw(cairo_t* cr, int x, int y) const {
+    cairo_save(cr);
+    m_item->Draw(cr, x + m_paddingX, y + m_paddingY);
+    cairo_restore(cr);
+}
+
+enum class Align { Left, Right, Top, Bottom, CenterX, CenterY };
+
 void Panel::Draw(Output& output) {
     // Get free buffer to draw in. This could fail if both buffers are locked.
     auto buffer = m_bufferPool->Get();
@@ -306,55 +326,80 @@ void Panel::Draw(Output& output) {
         perror("No buffer to draw in");
         return;
     }
-    // Draw to buffer
+    // Clear buffer
+    // TODO: Could delay this to only clear part that will be used when drawing
     auto cr = buffer->GetCairoCtx();
     buffer->Clear(0x00);
-    auto bufferCx = buffer->Cx();
-    auto bufferCy = buffer->Cy();
-    bool alignRight = m_panelConfig.anchor == Anchor::Right;
-    bool alignBottom = m_panelConfig.anchor == Anchor::Bottom;
-    int y = 0;
-    int x = 0;
-    uint32_t panelCx = 0;
-    uint32_t panelCy = 0;
-    for (auto& widgetConfig : m_panelConfig.widgets) {
-        cairo_save(cr);
-        sol::optional<sol::object> renderOutput = widgetConfig.render(output.name);
-        if (!renderOutput) {
-            spdlog::error("Bad return from widget");
-            continue;
+    // Calculate size of all widgets and track max width and height
+    int maxCx = 0, maxCy = 0;
+    int cx = 0, cy = 0;
+    for (size_t i = 0; i < m_widgets.size(); i++) {
+        auto& widget = m_widgets[i];
+        auto& config = m_panelConfig.widgets[i];
+        widget.Compute(config, output, cr);
+        maxCx = std::max(maxCx, widget.computed.cx);
+        maxCy = std::max(maxCy, widget.computed.cy);
+        cx += widget.computed.cx;
+        cy += widget.computed.cy;
+    }
+    Align align;
+    int xfac = 0, yfac = 0;
+    if (m_panelConfig.isColumn) {
+        yfac = 1;
+        cx = maxCx;
+        switch (m_panelConfig.anchor) {
+            case Anchor::Top:
+            case Anchor::Bottom:
+                align = Align::CenterX;
+                break;
+            case Anchor::Left:
+                align = Align::Left;
+                break;
+            case Anchor::Right:
+                align = Align::Right;
+                break;
         }
-        auto item = FromObject(*renderOutput);
-        if (!item) {
-            continue;
-        }
-        item->Compute(cr);
-        auto widgetCx = item->computed.cx;
-        auto widgetCy = item->computed.cy;
-
-        if (m_panelConfig.isColumn) {
-            y += widgetConfig.padding.top;
-            int x = alignRight ? bufferCx - widgetCx - widgetConfig.padding.right
-                               : widgetConfig.padding.left;
-            panelCx = std::max(widgetCx + widgetConfig.padding.right + widgetConfig.padding.left,
-                               panelCx);
-            item->Draw(cr, x, y);
-            cairo_restore(cr);
-            y += widgetCy + widgetConfig.padding.bottom;
-            panelCy = y;
-        } else {
-            x += widgetConfig.padding.left;
-            int y = alignBottom ? bufferCy - widgetCy - widgetConfig.padding.bottom
-                                : widgetConfig.padding.top;
-            panelCy = std::max(widgetCy + widgetConfig.padding.top + widgetConfig.padding.bottom,
-                               panelCy);
-            item->Draw(cr, x, y);
-            cairo_restore(cr);
-            x += widgetCx + widgetConfig.padding.right;
-            panelCx = x;
+    } else {
+        xfac = 1;
+        cy = maxCy;
+        switch (m_panelConfig.anchor) {
+            case Anchor::Top:
+                align = Align::Top;
+                break;
+            case Anchor::Bottom:
+                align = Align::Bottom;
+                break;
+            case Anchor::Left:
+            case Anchor::Right:
+                align = Align::CenterY;
+                break;
         }
     }
-    // TODO: Exact x,y and cx, cy
-    auto size = Size{alignRight ? bufferCx : panelCx, alignBottom ? bufferCy : panelCy};
+    // Draw to buffer
+    int x = 0, y = 0;
+    for (const auto& widget : m_widgets) {
+        switch (align) {
+            case Align::Left:
+                break;
+            case Align::Top:
+                break;
+            case Align::Right:
+                x = std::max((maxCx - widget.computed.cx), 0);
+                break;
+            case Align::Bottom:
+                y = std::max((maxCy - widget.computed.cy), 0);
+                break;
+            case Align::CenterX:
+                x = (maxCx - widget.computed.cx) / 2;
+                break;
+            case Align::CenterY:
+                y = (maxCy - widget.computed.cy) / 2;
+                break;
+        }
+        widget.Draw(cr, x, y);
+        x += widget.computed.cx * xfac;
+        y += widget.computed.cy * yfac;
+    }
+    auto size = Size{cx, cy};
     output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, size);
 }

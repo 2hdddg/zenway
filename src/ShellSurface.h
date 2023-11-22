@@ -12,15 +12,15 @@
 enum class Anchor { Left, Right, Top, Bottom };
 
 struct Size {
-    uint32_t cx;
-    uint32_t cy;
+    int cx;
+    int cy;
 };
 
 struct Rect {
     int x;
     int y;
-    uint32_t cx;
-    uint32_t cy;
+    int cx;
+    int cy;
 };
 
 class ShellSurface {
