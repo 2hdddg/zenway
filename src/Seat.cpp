@@ -1,9 +1,44 @@
 #include "Seat.h"
 
 #include <sys/mman.h>
+#include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "spdlog/spdlog.h"
+
+static void on_pointer_enter(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
+                             struct wl_surface* surface, wl_fixed_t surface_x,
+                             wl_fixed_t surface_y) {
+    spdlog::info("ptr enter {}: {},{}", (uint64_t)surface, surface_x, surface_y);
+}
+static void on_pointer_leave(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
+                             struct wl_surface* surface) {
+    spdlog::info("ptr leave");
+}
+static void on_pointer_motion(void* data, struct wl_pointer* wl_pointer, uint32_t time,
+                              wl_fixed_t surface_x, wl_fixed_t surface_y) {
+    // spdlog::info("ptr motion {},{}", wl_fixed_to_int(surface_x), wl_fixed_to_int(surface_y));
+}
+static void on_pointer_button(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
+                              uint32_t time, uint32_t button, uint32_t state) {
+    spdlog::info("ptr button");
+}
+void on_pointer_frame(void* data, struct wl_pointer* wl_pointer) {}
+
+static const wl_pointer_listener pointer_listener = {
+    .enter = on_pointer_enter,
+    .leave = on_pointer_leave,
+    .motion = on_pointer_motion,
+    .button = on_pointer_button,
+    .frame = on_pointer_frame,
+};
+
+std::unique_ptr<Pointer> Pointer::Create(wl_seat* seat) {
+    auto wlpointer = wl_seat_get_pointer(seat);
+    auto pointer = std::make_unique<Pointer>(wlpointer);
+    wl_pointer_add_listener(wlpointer, &pointer_listener, pointer.get());
+    return pointer;
+}
 
 static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd,
                       uint32_t size) {
@@ -53,7 +88,8 @@ void Keyboard::SetScriptContext(std::shared_ptr<ScriptContext> scriptContext) {
 
 std::unique_ptr<Seat> Seat::Create(const Roots& roots, wl_seat* wlseat) {
     auto keyboard = Keyboard::Create(wlseat);
-    auto seat = std::make_unique<Seat>();
+    auto seat = std::make_unique<Seat>(wlseat);
     seat->keyboard = std::move(keyboard);
+    seat->m_pointer = Pointer::Create(wlseat);
     return seat;
 }

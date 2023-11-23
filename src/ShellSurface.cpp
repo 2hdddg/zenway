@@ -89,7 +89,15 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
     wl_surface_attach(m_surface, buffer.Lock(), 0, 0);
-    wl_surface_damage(m_surface, damage.x, damage.y, damage.cx, damage.cy);
+    wl_surface_damage_buffer(m_surface, damage.x, damage.y, damage.cx, damage.cy);
+    // Maintain input region
+    if (m_inputRegion) {
+        wl_region_destroy(m_inputRegion);
+    }
+    m_inputRegion = wl_compositor_create_region(m_roots->compositor);
+    wl_region_add(m_inputRegion, 0, 0, size.cx, size.cy);
+    wl_surface_set_input_region(m_surface, m_inputRegion);
+    // Commit changes
     wl_surface_commit(m_surface);
     m_roots->FlushAndDispatchCommands();
     m_previousDamage = {0, 0, size.cx, size.cy};
@@ -100,5 +108,7 @@ void ShellSurface::Hide() {
     zwlr_layer_surface_v1_destroy(m_layer);
     wl_surface_attach(m_surface, NULL, 0, 0);
     m_layer = nullptr;
+    wl_region_destroy(m_inputRegion);
+    m_inputRegion = nullptr;
     m_roots->FlushAndDispatchCommands();
 }

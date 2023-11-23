@@ -400,6 +400,5 @@ void Panel::Draw(Output& output) {
         x += widget.computed.cx * xfac;
         y += widget.computed.cy * yfac;
     }
-    auto size = Size{cx, cy};
-    output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, size);
+    output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, Size{cx, cy});
 }

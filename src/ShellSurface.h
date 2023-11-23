@@ -39,6 +39,7 @@ class ShellSurface {
           m_output(output),
           m_surface(surface),
           m_layer(nullptr),
+          m_inputRegion(nullptr),
           m_isClosed(false) {}
     void Show();
 
@@ -46,6 +47,7 @@ class ShellSurface {
     wl_output *m_output;
     wl_surface *m_surface;
     zwlr_layer_surface_v1 *m_layer;
+    wl_region *m_inputRegion;
     bool m_isClosed;
     Rect m_previousDamage;
 };
