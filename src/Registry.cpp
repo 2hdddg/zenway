@@ -29,7 +29,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
     if (interface == std::string_view(wl_output_interface.name)) {
         auto output = (wl_output *)wl_registry_bind(registry, name, &wl_output_interface,
                                                     wl_output_interface.version);
-        m_outputs->Add(roots, output);
+        m_outputs->Add(output);
         return;
     }
     if (interface == std::string_view(wl_seat_interface.name)) {

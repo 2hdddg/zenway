@@ -7,37 +7,18 @@
 #include "src/Output.h"
 #include "src/Sources.h"
 
-struct Renderable {
-    virtual ~Renderable() {}
-    virtual void Compute(cairo_t* cr) {}
-    virtual void Draw(cairo_t* cr, int x, int y) const {}
-    Size computed;
+struct DrawnWidget {
+    Rect position;
 };
 
-struct Widget {
-    void Compute(const Configuration::Widget& config, const Output& output, cairo_t* cr);
-    void Draw(cairo_t* cr, int x, int y) const;
-    Size computed;
-
-   private:
-    std::unique_ptr<Renderable> m_item;
-    int m_paddingX;
-    int m_paddingY;
+struct DrawnPanel {
+    // nullptr if not drawn
+    std::shared_ptr<Buffer> buffer;
+    Size size;
+    std::vector<DrawnWidget> widgets;
 };
 
-class Panel {
-   public:
-    static std::unique_ptr<Panel> Create(std::shared_ptr<BufferPool> bufferPool,
-                                         Configuration::Panel panelConfig);
-    void Draw(Output& output);
-    bool IsDirty(const Sources& sources) const;
-
-   private:
-    Panel(std::shared_ptr<BufferPool> bufferPool, Configuration::Panel panelConfig)
-        : m_bufferPool(bufferPool),
-          m_panelConfig(panelConfig),
-          m_widgets(panelConfig.widgets.size()) {}
-    const std::shared_ptr<BufferPool> m_bufferPool;
-    const Configuration::Panel m_panelConfig;
-    std::vector<Widget> m_widgets;
+struct Panel {
+    static DrawnPanel Draw(const Configuration::Panel& panelConfig, const std::string& outputName,
+                           BufferPool& bufferPool);
 };

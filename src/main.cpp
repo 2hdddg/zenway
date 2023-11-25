@@ -131,7 +131,8 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize main loop");
         return -1;
     }
-    auto outputs = std::shared_ptr<Outputs>(Outputs::Create(config->panels.size()));
+    // Registry fills the outputs with output instances
+    auto outputs = std::shared_ptr<Outputs>(Outputs::Create(config));
     // Initialize registry.
     // The registry initializes roots that contains elementary interfaces needed for the system
     // to work. The registry also maintains the list of active outputs (monitors).
@@ -140,21 +141,14 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to initialize registry");
         return -1;
     }
-    auto roots = registry->roots;
-    // Create buffer pool
-    std::shared_ptr<BufferPool> bufferPool =
-        BufferPool::Create(roots, config->numBuffers, config->bufferWidth, config->bufferHeight);
-    if (!bufferPool) {
-        spdlog::error("Failed to initialize buffer pool");
+    // Outputs needs roots initialized by the registry
+    if (!outputs->Initialize(registry->roots)) {
         return -1;
     }
+    // Initialize sources
     auto sources = Sources::Create(scriptContext);
-    // Panels
-    std::vector<std::unique_ptr<Panel>> panels;
     for (auto panelConfig : config->panels) {
-        auto panel = Panel::Create(bufferPool, panelConfig);
-        panels.push_back(std::move(panel));
-        // Check what sources are needed for the widgets in the panel
+        //  Check what sources are needed for the widgets in the panel
         for (const auto& widgetConfig : panelConfig.widgets) {
             for (const auto& source : widgetConfig.sources) {
                 // Initialize source if not already done
@@ -164,8 +158,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    // Manager handles displays, redrawing of panels
-    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources), std::move(panels));
+    // Manager handles displays and redrawing
+    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources));
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);
     if (!sway) {

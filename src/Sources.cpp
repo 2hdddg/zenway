@@ -9,16 +9,23 @@ void Sources::Register(std::string_view name, std::shared_ptr<Source> source) {
     m_sources[std::string(name)] = source;
 }
 
-bool Sources::IsDirty(const std::string& name) const {
-    if (m_sources.contains(name)) {
-        return m_sources.at(name)->IsSourceDirty();
+bool Sources::IsDirty(const std::set<std::string> sources) const {
+    for (const auto& name : sources) {
+        if (m_sources.contains(name) && m_sources.at(name)->IsSourceDirty()) {
+            return true;
+        }
     }
-    // Unknown source..
     return false;
 }
 
-void Sources::ClearAll() const {
+void Sources::CleanAll() {
     for (auto const& source : m_sources) {
-        source.second->ClearDirtySource();
+        source.second->CleanDirtySource();
+    }
+}
+
+void Sources::DirtyAll() {
+    for (auto const& source : m_sources) {
+        source.second->ForceDirtySource();
     }
 }

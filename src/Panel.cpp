@@ -4,6 +4,13 @@
 #include "pango/pangocairo.h"
 #include "spdlog/spdlog.h"
 
+struct Renderable {
+    virtual ~Renderable() {}
+    virtual void Compute(cairo_t* cr) {}
+    virtual void Draw(cairo_t* cr, int x, int y) const {}
+    Size computed;
+};
+
 struct RGBA {
     static RGBA FromProperty(const sol::table& t, const char* name) {
         const sol::optional<std::string> optionalColor = t[name];
@@ -278,65 +285,62 @@ std::unique_ptr<Renderable> FromObject(const sol::object& o) {
     return nullptr;
 }
 
-std::unique_ptr<Panel> Panel::Create(std::shared_ptr<BufferPool> bufferPool,
-                                     Configuration::Panel panelConfig) {
-    return std::unique_ptr<Panel>(new Panel(bufferPool, panelConfig));
-}
-
-bool Panel::IsDirty(const Sources& sources) const {
-    for (auto& widget : m_panelConfig.widgets) {
-        for (const auto& sourceName : widget.sources) {
-            if (sources.IsDirty(sourceName)) return true;
+struct Widget {
+    void Compute(const Configuration::Widget& config, const std::string& outputName, cairo_t* cr) {
+        sol::optional<sol::object> renderOutput = config.render(outputName);
+        if (!renderOutput) {
+            spdlog::error("Bad return from widget");
+            return;
         }
+        auto item = FromObject(*renderOutput);
+        if (!item) {
+            spdlog::error("Unparsable widget");
+            return;
+        }
+        item->Compute(cr);
+        computed.cx = item->computed.cx + config.padding.left + config.padding.right;
+        computed.cy = item->computed.cy + config.padding.top + config.padding.bottom;
+        m_paddingX = config.padding.left;
+        m_paddingY = config.padding.top;
+        m_item = std::move(item);
     }
-    return false;
-}
 
-void Widget::Compute(const Configuration::Widget& config, const Output& output, cairo_t* cr) {
-    sol::optional<sol::object> renderOutput = config.render(output.name);
-    if (!renderOutput) {
-        spdlog::error("Bad return from widget");
-        return;
+    void Draw(cairo_t* cr, int x, int y) const {
+        cairo_save(cr);
+        m_item->Draw(cr, x + m_paddingX, y + m_paddingY);
+        cairo_restore(cr);
     }
-    auto item = FromObject(*renderOutput);
-    if (!item) {
-        spdlog::error("Unparsable widget");
-        return;
-    }
-    item->Compute(cr);
-    computed.cx = item->computed.cx + config.padding.left + config.padding.right;
-    computed.cy = item->computed.cy + config.padding.top + config.padding.bottom;
-    m_paddingX = config.padding.left;
-    m_paddingY = config.padding.top;
-    m_item = std::move(item);
-}
+    Size computed;
 
-void Widget::Draw(cairo_t* cr, int x, int y) const {
-    cairo_save(cr);
-    m_item->Draw(cr, x + m_paddingX, y + m_paddingY);
-    cairo_restore(cr);
-}
+   private:
+    std::unique_ptr<Renderable> m_item;
+    int m_paddingX;
+    int m_paddingY;
+};
 
 enum class Align { Left, Right, Top, Bottom, CenterX, CenterY };
 
-void Panel::Draw(Output& output) {
+DrawnPanel Panel::Draw(const Configuration::Panel& panelConfig, const std::string& outputName,
+                       BufferPool& bufferPool) {
+    DrawnPanel drawn = {};
     // Get free buffer to draw in. This could fail if both buffers are locked.
-    auto buffer = m_bufferPool->Get();
+    auto buffer = bufferPool.Get();
     if (!buffer) {
         perror("No buffer to draw in");
-        return;
+        return drawn;
     }
     // Clear buffer
     // TODO: Could delay this to only clear part that will be used when drawing
     auto cr = buffer->GetCairoCtx();
     buffer->Clear(0x00);
     // Calculate size of all widgets and track max width and height
+    auto widgets = std::vector<Widget>(panelConfig.widgets.size());
     int maxCx = 0, maxCy = 0;
     int cx = 0, cy = 0;
-    for (size_t i = 0; i < m_widgets.size(); i++) {
-        auto& widget = m_widgets[i];
-        auto& config = m_panelConfig.widgets[i];
-        widget.Compute(config, output, cr);
+    for (size_t i = 0; i < widgets.size(); i++) {
+        auto& widget = widgets[i];
+        auto& config = panelConfig.widgets[i];
+        widget.Compute(config, outputName, cr);
         maxCx = std::max(maxCx, widget.computed.cx);
         maxCy = std::max(maxCy, widget.computed.cy);
         cx += widget.computed.cx;
@@ -344,10 +348,10 @@ void Panel::Draw(Output& output) {
     }
     Align align;
     int xfac = 0, yfac = 0;
-    if (m_panelConfig.isColumn) {
+    if (panelConfig.isColumn) {
         yfac = 1;
         cx = maxCx;
-        switch (m_panelConfig.anchor) {
+        switch (panelConfig.anchor) {
             case Anchor::Top:
             case Anchor::Bottom:
                 align = Align::CenterX;
@@ -362,7 +366,7 @@ void Panel::Draw(Output& output) {
     } else {
         xfac = 1;
         cy = maxCy;
-        switch (m_panelConfig.anchor) {
+        switch (panelConfig.anchor) {
             case Anchor::Top:
                 align = Align::Top;
                 break;
@@ -377,7 +381,7 @@ void Panel::Draw(Output& output) {
     }
     // Draw to buffer
     int x = 0, y = 0;
-    for (const auto& widget : m_widgets) {
+    for (const auto& widget : widgets) {
         switch (align) {
             case Align::Left:
                 break;
@@ -397,8 +401,12 @@ void Panel::Draw(Output& output) {
                 break;
         }
         widget.Draw(cr, x, y);
+        drawn.widgets.push_back(
+            DrawnWidget{.position = {x, y, widget.computed.cx, widget.computed.cy}});
         x += widget.computed.cx * xfac;
         y += widget.computed.cy * yfac;
     }
-    output.Draw(m_panelConfig.index, m_panelConfig.anchor, *buffer, Size{cx, cy});
+    drawn.size = Size{cx, cy};
+    drawn.buffer = buffer;
+    return drawn;
 }

@@ -39,7 +39,7 @@ static std::set<std::string> ParseSources(const sol::table& widgetTable) {
 void Configuration::Widget::Parse(const sol::table& table, std::vector<Widget>& widgets) {
     Widget widget;
     widget.sources = ParseSources(table);
-    sol::optional<sol::function> renderFunction = table["render"];
+    sol::optional<sol::function> renderFunction = table["on_render"];
     if (!renderFunction) {
         // TODO: Log
         return;

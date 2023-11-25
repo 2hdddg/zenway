@@ -10,49 +10,27 @@
 #include "Buffer.h"
 #include "Roots.h"
 #include "ShellSurface.h"
+#include "src/Configuration.h"
+#include "src/Sources.h"
 
 class Output;
-using OnNamedCallback = std::function<void(Output* output)>;
-
-class Output {
-   public:
-    Output(const Output&) = delete;
-    static void Create(const std::shared_ptr<Roots> roots, wl_output* wloutput, int numberOfPanels,
-                       OnNamedCallback onNamed);
-    void OnName(const char* name);
-    void OnDescription(const char* description);
-
-    virtual ~Output() {
-        wl_output_destroy(m_wloutput);
-        m_wloutput = nullptr;
-    }
-
-    void Draw(int panelId, Anchor anchor, Buffer& buffer, const Size& size);
-    void Hide();
-
-    std::string name;
-
-   private:
-    Output(wl_output* wloutput, OnNamedCallback onNamed)
-        : m_wloutput(wloutput), m_onNamed(onNamed) {}
-
-    std::vector<std::unique_ptr<ShellSurface>> m_surfaces;
-    wl_output* m_wloutput;
-    // Temporary callback until named, registers amoung the other outputs when name received
-    OnNamedCallback m_onNamed;
-};
 
 class Outputs {
    public:
-    static std::unique_ptr<Outputs> Create(int numberOfPanels);
+    static std::unique_ptr<Outputs> Create(std::shared_ptr<Configuration> config);
+    bool Initialize(const std::shared_ptr<Roots> roots);
+    void Add(wl_output* output);
 
-    void Add(const std::shared_ptr<Roots> roots, wl_output* output);
+    void Draw(const Sources& sources);
+    void Hide();
 
     void ForEach(std::function<void(std::shared_ptr<Output>)> callback);
     std::shared_ptr<Output> Get(const std::string& name) const;
 
    private:
-    Outputs(int numberOfPanels) : m_numberOfPanels(numberOfPanels) {}
+    Outputs(std::shared_ptr<Configuration> config) : m_config(config) {}
     std::map<std::string, std::shared_ptr<Output>> m_map;
-    const int m_numberOfPanels;
+    std::shared_ptr<Roots> m_roots;
+    const std::shared_ptr<Configuration> m_config;
+    std::unique_ptr<BufferPool> m_bufferPool;
 };

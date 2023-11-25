@@ -72,7 +72,7 @@ local function box(markup, color)
         markup = markup,
         color = color,
         padding = { top = 5, left = 10, right = 10, bottom = 5 },
-        radius = 15,
+        radius = 5,
         border = { width = 2, color = color .. '10' },
     }
 end
@@ -85,8 +85,7 @@ local function wsbox(markup, color)
         padding = { top = 17, left = 10, right = 10, bottom = 17 },
         radius = 15,
         border = { width = 2, color = color .. '10' },
-    }
-end
+    } end
 
 local function render_workspaces(displayName)
     local display = zen.displays[displayName]
@@ -138,6 +137,10 @@ local function render_audio()
     return box(markup, GREEN)
 end
 
+local function click_audio()
+  print("Click")
+end
+
 local function render_power()
     if zen.power.isCharging then return box(icon{icon = ""} .. label{label = " Charging"}, GREEN) end
     if zen.power.isPluggedIn then return box(icon{icon = ""} .. label{label = " Fully charged"}, GREEN) end
@@ -170,24 +173,24 @@ return {
         {
             anchor = "left",
             widgets = {
-                { sources = {'workspace'}, padding = {left = 10 }, render = render_workspaces },
+                { sources = {'workspace'}, padding = {left = 10 }, on_render = render_workspaces },
             },
             direction = "column"
         },
         {
             anchor = "top",
             widgets = {
-                { sources = {'time', 'date'}, padding = { top = 10 }, render = render_time },
+                { sources = {'time', 'date'}, padding = { top = 10 }, on_render = render_time },
             },
             direction = "column"
         },
         {
             anchor = "right",
             widgets = {
-                { sources = {'keyboard'}, padding = { right = 10 }, render = render_keyboard },
-                { sources = {'audio'}, padding = { top = 10, right = 10 }, render = render_audio },
-                { sources = {'power'}, padding = { top = 10, right = 10 }, render = render_power },
-                { sources = {'networks'}, padding = { top = 10 }, render = render_networks },
+                { sources = {'keyboard'}, padding = { right = 10 }, on_render = render_keyboard },
+                { sources = {'audio'}, padding = { top = 10, right = 10 }, on_render = render_audio, on_click = click_audio },
+                { sources = {'power'}, padding = { top = 10, right = 10 }, on_render = render_power },
+                { sources = {'networks'}, padding = { top = 10, right = 10 }, on_render = render_networks },
             },
             direction = "column"
         },
