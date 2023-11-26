@@ -1,15 +1,3 @@
-function dump(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k,v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dump(v) .. ','
-      end
-      return s .. '} '
-   else
-      return tostring(o)
-   end
-end
 -- Normal
 local BLACK = '#1c1b19'
 local RED = '#ef2f27'
@@ -175,7 +163,7 @@ local function render_networks()
     end
 end
 
-local function check_status_display(displayName)
+local function is_focused_display(displayName)
     local display = zen.displays[displayName]
     if not display then return true end
     return display.focus
@@ -200,7 +188,8 @@ return {
             widgets = {
                 { sources = {'time', 'date'}, padding = { top = 10 }, on_render = render_time },
             },
-            direction = "column"
+            direction = "column",
+            on_display = is_focused_display,
         },
         {
             anchor = "right",
@@ -211,7 +200,7 @@ return {
                 { sources = {'networks'}, padding = { top = 10, right = 10 }, on_render = render_networks },
             },
             direction = "column",
-            on_display = check_status_display,
+            on_display = is_focused_display,
         },
     },
 }
