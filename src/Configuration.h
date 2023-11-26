@@ -33,6 +33,9 @@ class Configuration {
         int index;
         Anchor anchor;
         bool isColumn;
+        sol::optional<sol::function> check_display;
+
+        bool CheckOutput(const std::string outputName) const;
     };
 
     static std::shared_ptr<Configuration> Read(ScriptContext& ScriptContext, const char* file);

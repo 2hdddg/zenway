@@ -108,6 +108,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
 int main(int argc, char* argv[]) {
     // Environment variable configurable logging
     spdlog::cfg::load_env_levels();
+    // Initialize Lua context
     auto scriptContext = std::shared_ptr<ScriptContext>(ScriptContext::Create());
     if (!scriptContext) {
         spdlog::error("Failed to create script context");

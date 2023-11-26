@@ -9,20 +9,22 @@
 static void on_pointer_enter(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                              struct wl_surface* surface, wl_fixed_t surface_x,
                              wl_fixed_t surface_y) {
-    spdlog::info("ptr enter {}: {},{}", (uint64_t)surface, surface_x, surface_y);
+    spdlog::trace("Pointer enter {}: {},{}", (uint64_t)surface, surface_x, surface_y);
 }
+
 static void on_pointer_leave(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                              struct wl_surface* surface) {
-    spdlog::info("ptr leave");
+    spdlog::info("Pointer leave");
 }
+
 static void on_pointer_motion(void* data, struct wl_pointer* wl_pointer, uint32_t time,
-                              wl_fixed_t surface_x, wl_fixed_t surface_y) {
-    // spdlog::info("ptr motion {},{}", wl_fixed_to_int(surface_x), wl_fixed_to_int(surface_y));
-}
+                              wl_fixed_t surface_x, wl_fixed_t surface_y) {}
+
 static void on_pointer_button(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                               uint32_t time, uint32_t button, uint32_t state) {
-    spdlog::info("ptr button");
+    spdlog::info("Pointer click button {} state {}", button, state);
 }
+
 void on_pointer_frame(void* data, struct wl_pointer* wl_pointer) {}
 
 static const wl_pointer_listener pointer_listener = {
@@ -46,7 +48,6 @@ static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t form
         spdlog::error("Keyboard: Invalid keymap format");
         return;
     }
-    spdlog::info("Keyboard: keymap received");
     auto ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     char* map_shm = (char*)mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
     auto keymap = xkb_keymap_new_from_string(ctx, map_shm, XKB_KEYMAP_FORMAT_TEXT_V1,
@@ -54,7 +55,9 @@ static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t form
     munmap(map_shm, size);
     close(fd);
 
-    ((Keyboard*)data)->SetLayout(xkb_keymap_layout_get_name(keymap, 0));
+    auto layout = xkb_keymap_layout_get_name(keymap, 0);
+    ((Keyboard*)data)->SetLayout(layout);
+    spdlog::info("Keyboard layout received: {}", layout);
 
     xkb_keymap_unref(keymap);
     xkb_context_unref(ctx);
@@ -68,6 +71,7 @@ static const wl_keyboard_listener keyboard_listener = {
 };
 
 std::unique_ptr<Keyboard> Keyboard::Create(wl_seat* seat) {
+    spdlog::info("Creating keyboard");
     auto wlkeyboard = wl_seat_get_keyboard(seat);
     auto keyboard = std::make_unique<Keyboard>(wlkeyboard);
     wl_keyboard_add_listener(wlkeyboard, &keyboard_listener, keyboard.get());

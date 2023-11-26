@@ -21,6 +21,7 @@ class Manager : public IoBatchHandler, public Source {
         : m_outputs(outputs), m_sources(std::move(sources)) {}
 
     bool m_isVisible;
+    bool m_visibilityChanged;
     std::shared_ptr<Outputs> m_outputs;
     std::unique_ptr<Sources> m_sources;
 };

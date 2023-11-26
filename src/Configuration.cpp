@@ -73,6 +73,8 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, in
     const sol::optional<std::string> directionString = panelTable["direction"];
     panel.isColumn = !directionString || *directionString != "row";
 
+    panel.check_display = panelTable["on_display"];
+
     sol::optional<sol::table> widgetsTable = panelTable["widgets"];
     if (!widgetsTable) {
         return panel;
@@ -91,6 +93,14 @@ Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, in
         Configuration::Widget::Parse(*widgetTable, panel.widgets);
     }
     return panel;
+}
+
+bool Configuration::Panel::CheckOutput(const std::string outputName) const {
+    if (!check_display) {
+        return true;
+    }
+    sol::optional<bool> display = (*check_display)(outputName);
+    return display ? *display : true;
 }
 
 std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext, const char* file) {

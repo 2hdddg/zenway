@@ -118,6 +118,7 @@ static void ParseTree(const std::string &payload, std::shared_ptr<ScriptContext>
             for (auto applicationNode : applicationNodes) {
                 ParseApplication(workspace, applicationNode, nextFocusId);
             }
+            display.isFocused = display.isFocused || workspace.isFocused;
             display.workspaces.push_back(std::move(workspace));
         }
         displays.push_back(std::move(display));
@@ -162,8 +163,7 @@ std::shared_ptr<SwayCompositor> SwayCompositor::Connect(
         return nullptr;
     }
     auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, manager, scriptContext));
-    mainLoop.Register(fd, "sway", t);
-    // mainLoop.RegisterBatchHandler(t);
+    mainLoop.Register(fd, "Sway", t);
     t->Initialize();
     return t;
 }
@@ -216,22 +216,22 @@ void SwayCompositor::OnRead() {
             m_manager->DirtyWorkspace();
             break;
         case Message::SUBSCRIBE:
-            spdlog::debug("Subscription confirmed");
+            spdlog::debug("Sway subscriptions confirmed");
             break;
         case Message::EVENT_WORKSPACE:
-            spdlog::trace("Workspace event");
+            spdlog::trace("Sway workspace event");
             ParseEvent(m_payload);
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_WINDOW:
-            spdlog::trace("Window event");
+            spdlog::trace("Sway window event");
             ParseEvent(m_payload);
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_BAR_STATE_UPDATE:
             bool visible;
             ParseBarStateUpdateEvent(m_payload, visible);
-            spdlog::debug("Bar update, visible: {}", visible);
+            spdlog::debug("Sway bar state event, visible: {}", visible);
             if (visible) {
                 m_manager->Show();
             } else {
@@ -239,7 +239,7 @@ void SwayCompositor::OnRead() {
             }
             break;
         case Message::EVENT_SHUTDOWN:
-            spdlog::trace("Shutdown event");
+            spdlog::trace("Sway shutdown event");
             ParseEvent(m_payload);
             break;
         default:

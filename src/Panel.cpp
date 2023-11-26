@@ -323,10 +323,14 @@ enum class Align { Left, Right, Top, Bottom, CenterX, CenterY };
 DrawnPanel Panel::Draw(const Configuration::Panel& panelConfig, const std::string& outputName,
                        BufferPool& bufferPool) {
     DrawnPanel drawn = {};
+    // Query panel if it wants to be drawn on this display
+    if (!panelConfig.CheckOutput(outputName)) {
+        return drawn;
+    }
     // Get free buffer to draw in. This could fail if both buffers are locked.
     auto buffer = bufferPool.Get();
     if (!buffer) {
-        perror("No buffer to draw in");
+        spdlog::error("No buffer to draw in");
         return drawn;
     }
     // Clear buffer

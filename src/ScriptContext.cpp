@@ -45,6 +45,8 @@ void ScriptContext::Publish(const Displays& displays) {
             workspacesTable.add(workspaceTable);
         }
         displayTable["workspaces"] = workspacesTable;
+        spdlog::debug("Display {} focus: {}", display.name, display.isFocused);
+        displayTable["focus"] = display.isFocused;
         displaysTable[display.name] = displayTable;
     }
     m_lua["zen"]["displays"] = displaysTable;

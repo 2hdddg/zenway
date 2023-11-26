@@ -30,7 +30,6 @@ std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
     // Set initial timer
     auto now = Now();
     auto initial = 60 - now.tm_sec;
-    spdlog::debug("Setting initial timer to {}", initial);
     itimerspec timer = {.it_interval = {.tv_sec = 60}, .it_value = {.tv_sec = initial}};
     auto ret = timerfd_settime(fd, 0, &timer, nullptr);
     if (ret == -1) {
@@ -46,7 +45,7 @@ std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
 TimeSource::~TimeSource() { close(m_fd); }
 
 void TimeSource::OnRead() {
-    spdlog::info("Timer");
+    spdlog::debug("Time source set to dirty");
     uint64_t ignore;
     read(m_fd, &ignore, sizeof(ignore));
     m_sourceDirtyFlag = true;

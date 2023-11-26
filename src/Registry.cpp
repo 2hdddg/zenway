@@ -41,7 +41,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
         seat = Seat::Create(*roots, wlseat);
         return;
     }
-    spdlog::info("Event wl_registry::register {} {}", interface, version);
+    spdlog::trace("Event wl_registry::register {} {}", interface, version);
 }
 
 void Registry::Unregister(struct wl_registry *registry, uint32_t name) {

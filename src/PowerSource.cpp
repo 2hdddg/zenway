@@ -40,7 +40,6 @@ void PowerSource::ReadState() {
         int capacity;
         f >> capacity;
         state.Capacity = (uint8_t)capacity;
-        spdlog::info("capacity: {}", capacity);
     }
     // Read battery status
     {
@@ -48,7 +47,6 @@ void PowerSource::ReadState() {
         std::string status;
         f >> status;
         state.IsCharging = status == "Charging";
-        spdlog::info("status: {}", status);
     }
     // Read AC status
     {
@@ -61,13 +59,15 @@ void PowerSource::ReadState() {
     if (m_sourceDirtyFlag) {
         m_sourceState = state;
         m_scriptContext->Publish(m_sourceState);
+        spdlog::info("Power status changed, capacity {}, charging {}, plugged in {}",
+                     state.Capacity, state.IsCharging, state.IsPluggedIn);
     }
 }
 
 PowerSource::~PowerSource() { close(m_timerfd); }
 
 void PowerSource::OnRead() {
-    spdlog::info("Check power");
+    spdlog::debug("Polling power status");
     uint64_t ignore;
     read(m_timerfd, &ignore, sizeof(ignore));
     ReadState();

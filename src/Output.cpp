@@ -19,14 +19,12 @@ class Output {
     void OnName(const char *name) {
         // This will only be invoked once per lifetime of output
         m_name = name;
-        spdlog::trace("Event wl_output::name {}", name);
         m_onNamed(this, m_name);
         m_onNamed = nullptr;
     }
 
     void OnDescription(const char *description) {
         // Might change over lifetime
-        spdlog::trace("Event wl_output::description {}", description);
     }
 
     virtual ~Output() {
@@ -41,6 +39,7 @@ class Output {
             // Nothing drawn for this output
             return;
         }
+        spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
         // Ensure that there is a surface for this panel
         if (!m_surfaces.contains(panelConfig.index)) {
             auto surface = ShellSurface::Create(roots, m_wloutput);
@@ -52,6 +51,7 @@ class Output {
         }
         m_surfaces[panelConfig.index]->Draw(panelConfig.anchor, *drawn.buffer, drawn.size);
     }
+
     void Hide() {
         for (const auto &kv : m_surfaces) {
             kv.second->Hide();
@@ -115,20 +115,25 @@ bool Outputs::Initialize(const std::shared_ptr<Roots> roots) {
 
 void Outputs::Add(wl_output *wloutput) {
     Output::Create(m_roots, wloutput, &listener, m_config, [this](auto output, auto name) {
-        spdlog::debug("Found output {}", name);
+        spdlog::info("Adding output {}", name);
         m_map[name] = std::shared_ptr<Output>(output);
     });
 }
 
 void Outputs::Draw(const Sources &sources) {
+    spdlog::info("Draw outputs");
     for (const auto &panelConfig : m_config->panels) {
+        bool dirty = false;
         for (const auto &widgetConfig : panelConfig.widgets) {
             if (sources.IsDirty(widgetConfig.sources)) {
-                // This panel is dirty, redraw it on every output
-                for (const auto &keyValue : m_map) {
-                    keyValue.second->Draw(panelConfig, m_roots, *m_bufferPool);
-                }
-                continue;
+                dirty = true;
+                break;
+            }
+        }
+        // This panel is dirty, redraw it on every output
+        if (dirty) {
+            for (const auto &keyValue : m_map) {
+                keyValue.second->Draw(panelConfig, m_roots, *m_bufferPool);
             }
         }
     }

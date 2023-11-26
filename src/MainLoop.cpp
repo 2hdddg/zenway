@@ -21,16 +21,16 @@ void MainLoop::Run() {
         int num = poll(m_polls.data(), m_polls.size(), -1);
         if (num < 0) {
             // Error!
-            spdlog::info("Poll error in main loop");
+            spdlog::error("Poll error in main loop");
             break;
         }
         if (num == 0) {
             // Timeout
-            spdlog::info("Timeout in main loop");
+            spdlog::error("Timeout in main loop");
             continue;
         }
         // Process
-        spdlog::trace("Got {} polls", num);
+        spdlog::trace("{} events in main loop", num);
         while (num--) {
             for (auto& poll : m_polls) {
                 if ((poll.events & poll.revents) != 0) {
@@ -42,9 +42,8 @@ void MainLoop::Run() {
                         continue;
                     }
                     auto& handler = m_handlers[poll.fd];
-                    // spdlog::trace("Ready to read: {}", poll.fd);
+                    spdlog::trace("Invoking io handler for fd {}", poll.fd);
                     handler->OnRead();
-                    // spdlog::trace("Done read: {}", poll.fd);
                 }
             }
         }
@@ -52,13 +51,12 @@ void MainLoop::Run() {
             handler->OnBatchProcessed();
         }
     } while (m_polls.size() > 0);
-    spdlog::info("Exiting main loop");
 }
 
 void MainLoop::Register(int fd, const std::string& name, std::shared_ptr<IoHandler> ioHandler) {
     m_handlers[fd] = ioHandler;
     m_polls.push_back(pollfd{.fd = fd, .events = POLLIN});
-    spdlog::debug("Registering {} to {}", fd, name);
+    spdlog::debug("Registering {} in main loop for fd {}", name, fd);
 }
 
 void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandler) {

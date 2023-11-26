@@ -1,5 +1,7 @@
 #include "Manager.h"
 
+#include "spdlog/spdlog.h"
+
 std::shared_ptr<Manager> Manager::Create(MainLoop& mainLoop, std::shared_ptr<Outputs> outputs,
                                          std::unique_ptr<Sources> sources) {
     auto manager = std::shared_ptr<Manager>(new Manager(outputs, std::move(sources)));
@@ -14,19 +16,33 @@ void Manager::DirtyWorkspace() {
 }
 
 void Manager::OnBatchProcessed() {
-    // No need to redraw when not visible
-    if (!m_isVisible) return;
+    // No need to redraw when not visible and not in transition
+    if (!m_visibilityChanged && !m_isVisible) return;
+
+    spdlog::debug("Processing batch of dirty sources");
+    if (m_visibilityChanged) {
+        m_visibilityChanged = false;
+        if (m_isVisible) {
+            m_sources->DirtyAll();
+        } else {
+            m_outputs->Hide();
+            return;
+        }
+    }
     m_outputs->Draw(*m_sources);
     m_sources->CleanAll();
 }
 
 void Manager::Hide() {
-    m_outputs->Hide();
     m_isVisible = false;
+    m_visibilityChanged = true;
+    // OnBatchProcessed will be invoked by main loop
+    // This could be problematic on other compositors. Maybe let each compositor be the source
+    // instead
 }
 
 void Manager::Show() {
     m_isVisible = true;
-    m_sources->DirtyAll();
-    m_outputs->Draw(*m_sources);
+    m_visibilityChanged = true;
+    // OnBatchProcessed will be invoked by main loop
 }
