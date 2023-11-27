@@ -27,7 +27,7 @@ class ShellSurface {
     static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
                                                 wl_output *output,
                                                 Configuration::Panel panelConfiguration);
-    void Draw(const Anchor anchor, Buffer &buffer, const Size &size);
+    void Draw(BufferPool &bufferPool, const std::string &outputName);
     void Hide();
 
     void OnShellConfigure(uint32_t cx, uint32_t cy);

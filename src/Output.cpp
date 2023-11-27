@@ -1,6 +1,5 @@
 #include "Output.h"
 
-#include "Panel.h"
 #include "Roots.h"
 #include "spdlog/spdlog.h"
 
@@ -34,9 +33,8 @@ class Output {
 
     void Draw(const Configuration::Panel &panelConfig, std::shared_ptr<Roots> roots,
               BufferPool &bufferPool) {
-        auto drawn = Panel::Draw(panelConfig, m_name, bufferPool);
-        if (!drawn.buffer) {
-            // Nothing drawn for this output
+        // Query panel if it wants to be drawn on this display
+        if (!panelConfig.CheckOutput(m_name)) {
             return;
         }
         spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
@@ -49,7 +47,7 @@ class Output {
             }
             m_surfaces[panelConfig.index] = std::move(surface);
         }
-        m_surfaces[panelConfig.index]->Draw(panelConfig.anchor, *drawn.buffer, drawn.size);
+        m_surfaces[panelConfig.index]->Draw(bufferPool, m_name);
     }
 
     void Hide() {

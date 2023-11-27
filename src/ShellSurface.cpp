@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <wayland-client-protocol.h>
 
+#include "Panel.h"
 #include "wlr-layer-shell-unstable-v1.h"
 
 static void on_configure(void *data, struct zwlr_layer_surface_v1 *layer, uint32_t serial,
@@ -65,12 +66,19 @@ void ShellSurface::Show() {
     m_roots->FlushAndDispatchCommands();
 }
 
-void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
+void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     if (m_isClosed) {
-        spdlog::info("Draw when closed");
         return;
     }
-    if (!m_layer) Show();
+    if (!m_layer) {
+        Show();
+    }
+    auto drawn = Panel::Draw(m_panelConfig, outputName, bufferPool);
+    if (!drawn.buffer) {
+        // Nothing drawn for this output
+        return;
+    }
+    const auto &size = drawn.size;
     Rect damage;
     damage.x = 0;
     damage.y = 0;
@@ -78,6 +86,7 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
     damage.cy = std::max(size.cy, m_previousDamage.cy);
     spdlog::trace("Draw buffer: {}x{}", size.cx, size.cy);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
+    auto anchor = m_panelConfig.anchor;
     uint32_t zanchor;
     switch (anchor) {
         case Anchor::Left:
@@ -94,7 +103,7 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
             break;
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
-    wl_surface_attach(m_surface, buffer.Lock(), 0, 0);
+    wl_surface_attach(m_surface, drawn.buffer->Lock(), 0, 0);
     wl_surface_damage_buffer(m_surface, damage.x, damage.y, damage.cx, damage.cy);
     // Maintain input region
     if (m_inputRegion) {
