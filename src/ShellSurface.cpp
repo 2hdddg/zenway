@@ -28,9 +28,11 @@ static const wl_surface_listener surface_listener = {
 };
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const std::shared_ptr<Roots> roots,
-                                                   wl_output *output) {
+                                                   wl_output *output,
+                                                   Configuration::Panel panelConfig) {
     auto surface = wl_compositor_create_surface(roots->compositor);
-    auto shellSurface = std::unique_ptr<ShellSurface>(new ShellSurface(roots, output, surface));
+    auto shellSurface = std::unique_ptr<ShellSurface>(
+        new ShellSurface(roots, output, surface, std::move(panelConfig)));
     wl_surface_add_listener(surface, &surface_listener, shellSurface.get());
     wl_surface_commit(surface);
     return shellSurface;
@@ -44,6 +46,11 @@ void ShellSurface::OnClosed() {
     Hide();
     // Should destroy this!
     m_isClosed = true;
+}
+
+bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
+    bool isThis = surface == m_surface;
+    return isThis;
 }
 
 void ShellSurface::Show() {
@@ -84,7 +91,6 @@ void ShellSurface::Draw(const Anchor anchor, Buffer &buffer, const Size &size) {
             break;
         case Anchor::Bottom:
             zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-            break;
             break;
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);

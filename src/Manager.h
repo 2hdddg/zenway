@@ -16,6 +16,8 @@ class Manager : public IoBatchHandler, public Source {
     void Hide();
     void DirtyWorkspace();
 
+    void ClickSurface(wl_surface* surface, int x, int y);
+
    private:
     Manager(std::shared_ptr<Outputs> outputs, std::unique_ptr<Sources> sources)
         : m_outputs(outputs), m_sources(std::move(sources)) {}

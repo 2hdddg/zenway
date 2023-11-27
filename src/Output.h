@@ -24,8 +24,7 @@ class Outputs {
     void Draw(const Sources& sources);
     void Hide();
 
-    void ForEach(std::function<void(std::shared_ptr<Output>)> callback);
-    std::shared_ptr<Output> Get(const std::string& name) const;
+    void ClickSurface(wl_surface* surface, int x, int y);
 
    private:
     Outputs(std::shared_ptr<Configuration> config) : m_config(config) {}

@@ -9,20 +9,26 @@
 static void on_pointer_enter(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                              struct wl_surface* surface, wl_fixed_t surface_x,
                              wl_fixed_t surface_y) {
+    ((Pointer*)data)->Enter(surface);
+    ((Pointer*)data)->Track(surface_x, surface_y);
     spdlog::trace("Pointer enter {}: {},{}", (uint64_t)surface, surface_x, surface_y);
 }
 
 static void on_pointer_leave(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                              struct wl_surface* surface) {
     spdlog::info("Pointer leave");
+    ((Pointer*)data)->Leave();
 }
 
 static void on_pointer_motion(void* data, struct wl_pointer* wl_pointer, uint32_t time,
-                              wl_fixed_t surface_x, wl_fixed_t surface_y) {}
+                              wl_fixed_t surface_x, wl_fixed_t surface_y) {
+    ((Pointer*)data)->Track(surface_x, surface_y);
+}
 
 static void on_pointer_button(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                               uint32_t time, uint32_t button, uint32_t state) {
     spdlog::info("Pointer click button {} state {}", button, state);
+    ((Pointer*)data)->Click();
 }
 
 void on_pointer_frame(void* data, struct wl_pointer* wl_pointer) {}
@@ -40,6 +46,12 @@ std::unique_ptr<Pointer> Pointer::Create(wl_seat* seat) {
     auto pointer = std::make_unique<Pointer>(wlpointer);
     wl_pointer_add_listener(wlpointer, &pointer_listener, pointer.get());
     return pointer;
+}
+
+void Pointer::Click() {
+    if (!m_current) return;
+    if (!m_clickHandler) return;
+    m_clickHandler(m_current, wl_fixed_to_int(m_x), wl_fixed_to_int(m_y));
 }
 
 static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd,

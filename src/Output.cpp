@@ -42,7 +42,7 @@ class Output {
         spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
         // Ensure that there is a surface for this panel
         if (!m_surfaces.contains(panelConfig.index)) {
-            auto surface = ShellSurface::Create(roots, m_wloutput);
+            auto surface = ShellSurface::Create(roots, m_wloutput, panelConfig /* copies */);
             if (!surface) {
                 spdlog::error("Failed to create surface");
                 return;
@@ -56,6 +56,17 @@ class Output {
         for (const auto &kv : m_surfaces) {
             kv.second->Hide();
         }
+    }
+
+    bool ClickSurface(wl_surface *surface, int x, int y) {
+        for (auto &kv : m_surfaces) {
+            if (kv.second->ClickSurface(surface, x, y)) {
+                spdlog::debug("Clicked in surface");
+                return true;
+            }
+        }
+        spdlog::debug("No surface found for click");
+        return false;
     }
 
    private:
@@ -121,7 +132,7 @@ void Outputs::Add(wl_output *wloutput) {
 }
 
 void Outputs::Draw(const Sources &sources) {
-    spdlog::info("Draw outputs");
+    spdlog::trace("Draw outputs");
     for (const auto &panelConfig : m_config->panels) {
         bool dirty = false;
         for (const auto &widgetConfig : panelConfig.widgets) {
@@ -145,8 +156,10 @@ void Outputs::Hide() {
     }
 }
 
-std::shared_ptr<Output> Outputs::Get(const std::string &name) const {
-    auto keyValue = m_map.find(name);
-    if (keyValue == m_map.end()) return nullptr;
-    return keyValue->second;
+void Outputs::ClickSurface(wl_surface *surface, int x, int y) {
+    for (auto &kv : m_map) {
+        if (kv.second->ClickSurface(surface, x, y)) {
+            return;
+        }
+    }
 }

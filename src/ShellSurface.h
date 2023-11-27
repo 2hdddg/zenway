@@ -7,9 +7,8 @@
 #include <memory>
 
 #include "Buffer.h"
+#include "Configuration.h"
 #include "Roots.h"
-
-enum class Anchor { Left, Right, Top, Bottom };
 
 struct Size {
     int cx;
@@ -26,21 +25,26 @@ struct Rect {
 class ShellSurface {
    public:
     static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
-                                                wl_output *output);
+                                                wl_output *output,
+                                                Configuration::Panel panelConfiguration);
     void Draw(const Anchor anchor, Buffer &buffer, const Size &size);
     void Hide();
 
     void OnShellConfigure(uint32_t cx, uint32_t cy);
     void OnClosed();
 
+    bool ClickSurface(wl_surface *surface, int x, int y);
+
    private:
-    ShellSurface(const std::shared_ptr<Roots> roots, wl_output *output, wl_surface *surface)
+    ShellSurface(const std::shared_ptr<Roots> roots, wl_output *output, wl_surface *surface,
+                 Configuration::Panel panelConfiguration)
         : m_roots(roots),
           m_output(output),
           m_surface(surface),
           m_layer(nullptr),
           m_inputRegion(nullptr),
-          m_isClosed(false) {}
+          m_isClosed(false),
+          m_panelConfig(std::move(panelConfiguration)) {}
     void Show();
 
     const std::shared_ptr<Roots> m_roots;
@@ -50,4 +54,5 @@ class ShellSurface {
     wl_region *m_inputRegion;
     bool m_isClosed;
     Rect m_previousDamage;
+    Configuration::Panel m_panelConfig;
 };

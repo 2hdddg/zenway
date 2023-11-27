@@ -15,6 +15,11 @@ void Manager::DirtyWorkspace() {
     OnBatchProcessed();
 }
 
+void Manager::ClickSurface(wl_surface* surface, int x, int y) {
+    spdlog::debug("Click in surface {} at {},{}", (void*)surface, x, y);
+    m_outputs->ClickSurface(surface, x, y);
+}
+
 void Manager::OnBatchProcessed() {
     // No need to redraw when not visible and not in transition
     if (!m_visibilityChanged && !m_isVisible) return;

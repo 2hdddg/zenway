@@ -9,6 +9,8 @@
 #include "src/ScriptContext.h"
 #include "src/Source.h"
 
+using ClickHandler = std::function<void(wl_surface*, int, int)>;
+
 class Keyboard : public Source {
    public:
     Keyboard(wl_keyboard* wlkeyboard) : m_wlkeyboard(wlkeyboard) {}
@@ -34,9 +36,21 @@ class Pointer {
         wl_pointer_destroy(m_wlpointer);
         m_wlpointer = nullptr;
     }
+    void RegisterClickHandler(ClickHandler handler) { m_clickHandler = handler; }
+    void Enter(wl_surface* surface) { m_current = surface; }
+    void Leave() { m_current = nullptr; }
+    void Track(wl_fixed_t x, wl_fixed_t y) {
+        m_x = x;
+        m_y = y;
+    }
+    void Click();
 
    private:
     wl_pointer* m_wlpointer;
+    wl_surface* m_current;
+    wl_fixed_t m_x;
+    wl_fixed_t m_y;
+    ClickHandler m_clickHandler;
 };
 
 class Seat {
@@ -46,6 +60,13 @@ class Seat {
     virtual ~Seat() {
         wl_seat_destroy(m_wlseat);
         m_wlseat = nullptr;
+    }
+
+    void RegisterClickHandler(ClickHandler handler) {
+        // TODO: Log error
+        if (!m_pointer) return;
+
+        m_pointer->RegisterClickHandler(handler);
     }
 
     std::shared_ptr<Keyboard> keyboard;

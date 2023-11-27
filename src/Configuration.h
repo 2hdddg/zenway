@@ -5,7 +5,6 @@
 
 #include "sol/sol.hpp"
 #include "src/ScriptContext.h"
-#include "src/ShellSurface.h"
 
 int GetIntProperty(const sol::table& t, const char* name, int missing);
 
@@ -17,6 +16,8 @@ struct Padding {
     int top;
     int bottom;
 };
+
+enum class Anchor { Left, Right, Top, Bottom };
 
 class Configuration {
    public:

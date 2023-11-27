@@ -167,6 +167,10 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to connect to Sway");
         return -1;
     }
+    // Register manager click handler with seat
+    registry->seat->RegisterClickHandler(
+        [manager](auto surface, int x, int y) { manager->ClickSurface(surface, x, y); });
+
     // Leave the rest to main loop
     mainLoop->Run();
     return 0;
