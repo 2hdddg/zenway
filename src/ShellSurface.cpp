@@ -3,7 +3,6 @@
 #include <spdlog/spdlog.h>
 #include <wayland-client-protocol.h>
 
-#include "Panel.h"
 #include "wlr-layer-shell-unstable-v1.h"
 
 static void on_configure(void *data, struct zwlr_layer_surface_v1 *layer, uint32_t serial,
@@ -51,7 +50,25 @@ void ShellSurface::OnClosed() {
 
 bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
     bool isThis = surface == m_surface;
-    return isThis;
+    if (!isThis) {
+        return false;
+    }
+
+    // Check what widget
+    int i = 0;
+    for (const auto w : m_drawn.widgets) {
+        if (w.position.Contains(x, y)) {
+            spdlog::trace("Found widget click target");
+            auto &widget = m_panelConfig.widgets.at(i);
+            if (widget.click) {
+                (*widget.click)();
+            }
+            break;
+        }
+        i++;
+    }
+    // Return true even if no widget was found to stop trying other surfaces
+    return true;
 }
 
 void ShellSurface::Show() {
@@ -73,12 +90,12 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     if (!m_layer) {
         Show();
     }
-    auto drawn = Panel::Draw(m_panelConfig, outputName, bufferPool);
-    if (!drawn.buffer) {
+    m_drawn.widgets.clear();
+    if (!Panel::Draw(m_panelConfig, outputName, bufferPool, m_drawn)) {
         // Nothing drawn for this output
         return;
     }
-    const auto &size = drawn.size;
+    const auto &size = m_drawn.size;
     Rect damage;
     damage.x = 0;
     damage.y = 0;
@@ -103,7 +120,7 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
             break;
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
-    wl_surface_attach(m_surface, drawn.buffer->Lock(), 0, 0);
+    wl_surface_attach(m_surface, m_drawn.buffer->Lock(), 0, 0);
     wl_surface_damage_buffer(m_surface, damage.x, damage.y, damage.cx, damage.cy);
     // Maintain input region
     if (m_inputRegion) {

@@ -27,8 +27,10 @@ static void on_pointer_motion(void* data, struct wl_pointer* wl_pointer, uint32_
 
 static void on_pointer_button(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
                               uint32_t time, uint32_t button, uint32_t state) {
-    spdlog::info("Pointer click button {} state {}", button, state);
-    ((Pointer*)data)->Click();
+    spdlog::trace("Pointer click button {} state {}", button, state);
+    if (state == 0 /*release*/) {
+        ((Pointer*)data)->Click();
+    }
 }
 
 void on_pointer_frame(void* data, struct wl_pointer* wl_pointer) {}

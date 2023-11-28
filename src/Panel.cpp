@@ -320,14 +320,13 @@ struct Widget {
 
 enum class Align { Left, Right, Top, Bottom, CenterX, CenterY };
 
-DrawnPanel Panel::Draw(const Configuration::Panel& panelConfig, const std::string& outputName,
-                       BufferPool& bufferPool) {
-    DrawnPanel drawn = {};
+bool Panel::Draw(const Configuration::Panel& panelConfig, const std::string& outputName,
+                 BufferPool& bufferPool, DrawnPanel& drawn) {
     // Get free buffer to draw in. This could fail if both buffers are locked.
     auto buffer = bufferPool.Get();
     if (!buffer) {
         spdlog::error("No buffer to draw in");
-        return drawn;
+        return false;
     }
     // Clear buffer
     // TODO: Could delay this to only clear part that will be used when drawing
@@ -408,5 +407,5 @@ DrawnPanel Panel::Draw(const Configuration::Panel& panelConfig, const std::strin
     }
     drawn.size = Size{cx, cy};
     drawn.buffer = buffer;
-    return drawn;
+    return true;
 }

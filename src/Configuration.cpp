@@ -45,6 +45,7 @@ void Configuration::Widget::Parse(const sol::table& table, std::vector<Widget>& 
         return;
     }
     widget.render = *renderFunction;
+    widget.click = table["on_click"];
     widget.padding = Padding::FromProperty(table, "padding");
     widgets.push_back(std::move(widget));
 }

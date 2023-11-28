@@ -24,6 +24,7 @@ class Configuration {
     struct Widget {
         static void Parse(const sol::table& table, std::vector<Widget>& widgets);
         sol::function render;
+        sol::optional<sol::function> click;
         std::set<std::string> sources;
         Padding padding;
     };

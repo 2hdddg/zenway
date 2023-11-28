@@ -8,19 +8,8 @@
 
 #include "Buffer.h"
 #include "Configuration.h"
+#include "Panel.h"
 #include "Roots.h"
-
-struct Size {
-    int cx;
-    int cy;
-};
-
-struct Rect {
-    int x;
-    int y;
-    int cx;
-    int cy;
-};
 
 class ShellSurface {
    public:
@@ -55,4 +44,5 @@ class ShellSurface {
     bool m_isClosed;
     Rect m_previousDamage;
     Configuration::Panel m_panelConfig;
+    DrawnPanel m_drawn;
 };
