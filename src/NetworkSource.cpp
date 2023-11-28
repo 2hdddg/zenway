@@ -96,9 +96,10 @@ void NetworkSource::ReadState() {
     }
 }
 
-void NetworkSource::OnRead() {
+bool NetworkSource::OnRead() {
     spdlog::info("Check power");
     uint64_t ignore;
     read(m_timerfd, &ignore, sizeof(ignore));
     ReadState();
+    return m_sourceDirtyFlag;
 }

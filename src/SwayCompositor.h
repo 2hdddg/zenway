@@ -12,7 +12,7 @@ class SwayCompositor : public IoHandler {
                                                    std::shared_ptr<ScriptContext> scriptContext);
     virtual ~SwayCompositor();
 
-    virtual void OnRead() override;
+    virtual bool OnRead() override;
 
    private:
     void Initialize();

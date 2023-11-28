@@ -17,7 +17,7 @@ class TimeSource : public Source, public IoHandler {
     static std::shared_ptr<TimeSource> Create(MainLoop& mainLoop,
                                               std::shared_ptr<DateSource> dateSource);
     virtual ~TimeSource();
-    virtual void OnRead() override;
+    virtual bool OnRead() override;
 
    private:
     TimeSource(int fd, std::shared_ptr<DateSource> dateSource)

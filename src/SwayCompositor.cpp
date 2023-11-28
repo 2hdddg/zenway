@@ -189,7 +189,7 @@ void SwayCompositor::Initialize() {
     OnRead();
 }
 
-void SwayCompositor::OnRead() {
+bool SwayCompositor::OnRead() {
     char hdr[HEADER_SIZE];
     read(m_fd, hdr, HEADER_SIZE);
     if (memcmp(hdr, MAGIC, MAGIC_LENGTH) != 0) {
@@ -246,4 +246,5 @@ void SwayCompositor::OnRead() {
             spdlog::error("Received unhandled sway message: {}", (uint32_t)msg);
             break;
     }
+    return true;
 }

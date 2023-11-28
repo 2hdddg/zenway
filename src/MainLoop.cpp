@@ -31,6 +31,7 @@ void MainLoop::Run() {
         }
         // Process
         spdlog::trace("{} events in main loop", num);
+        bool anyDirty = false;
         while (num--) {
             for (auto& poll : m_polls) {
                 if ((poll.events & poll.revents) != 0) {
@@ -43,12 +44,14 @@ void MainLoop::Run() {
                     }
                     auto& handler = m_handlers[poll.fd];
                     spdlog::trace("Invoking io handler for fd {}", poll.fd);
-                    handler->OnRead();
+                    anyDirty = handler->OnRead() || anyDirty;
                 }
             }
         }
-        for (auto& handler : m_batchHandlers) {
-            handler->OnBatchProcessed();
+        if (anyDirty) {
+            for (auto& handler : m_batchHandlers) {
+                handler->OnBatchProcessed();
+            }
         }
     } while (m_polls.size() > 0);
 }

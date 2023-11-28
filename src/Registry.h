@@ -25,7 +25,7 @@ class Registry : public IoHandler {
                   uint32_t version);
     void Unregister(struct wl_registry *registry, uint32_t name);
 
-    virtual void OnRead() override;
+    virtual bool OnRead() override;
 
     // These are maintained by the registry
     std::shared_ptr<Roots> roots;

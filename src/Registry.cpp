@@ -80,9 +80,10 @@ std::shared_ptr<Registry> Registry::Create(MainLoop &mainLoop, std::shared_ptr<O
     return registry;
 }
 
-void Registry::OnRead() {
+bool Registry::OnRead() {
     wl_display_prepare_read(roots->display);
     wl_display_read_events(roots->display);
     wl_display_dispatch_pending(roots->display);
     wl_display_flush(roots->display);
+    return false;
 }

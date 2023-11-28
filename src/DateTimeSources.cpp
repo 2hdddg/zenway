@@ -44,10 +44,11 @@ std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
 
 TimeSource::~TimeSource() { close(m_fd); }
 
-void TimeSource::OnRead() {
+bool TimeSource::OnRead() {
     spdlog::debug("Time source set to dirty");
     uint64_t ignore;
     read(m_fd, &ignore, sizeof(ignore));
     m_sourceDirtyFlag = true;
     m_dateSource->Evaluate();
+    return m_sourceDirtyFlag;
 }

@@ -11,7 +11,7 @@ class NetworkSource : public Source, public IoHandler {
                                                  std::shared_ptr<ScriptContext> scriptContext);
     void Initialize();
     void ReadState();
-    virtual void OnRead() override;
+    virtual bool OnRead() override;
 
    private:
     NetworkSource(int socket, int timerfd, std::shared_ptr<ScriptContext> scriptContext)

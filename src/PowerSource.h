@@ -12,7 +12,7 @@ class PowerSource : public Source, public IoHandler {
                                                std::shared_ptr<ScriptContext> scriptContext);
     bool Initialize();
     void ReadState();
-    virtual void OnRead() override;
+    virtual bool OnRead() override;
     virtual ~PowerSource();
 
    private:

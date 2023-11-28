@@ -9,7 +9,8 @@
 
 class IoHandler {
    public:
-    virtual void OnRead() = 0;
+    // Return true if read cases handler to be dirty
+    virtual bool OnRead() = 0;
 };
 
 class IoBatchHandler {
