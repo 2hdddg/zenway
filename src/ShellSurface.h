@@ -15,7 +15,7 @@ class ShellSurface {
    public:
     static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
                                                 wl_output *output,
-                                                Configuration::Panel panelConfiguration);
+                                                PanelConfig panelConfiguration);
     void Draw(BufferPool &bufferPool, const std::string &outputName);
     void Hide();
 
@@ -26,7 +26,7 @@ class ShellSurface {
 
    private:
     ShellSurface(const std::shared_ptr<Roots> roots, wl_output *output, wl_surface *surface,
-                 Configuration::Panel panelConfiguration)
+                 PanelConfig panelConfiguration)
         : m_roots(roots),
           m_output(output),
           m_surface(surface),
@@ -43,6 +43,6 @@ class ShellSurface {
     wl_region *m_inputRegion;
     bool m_isClosed;
     Rect m_previousDamage;
-    Configuration::Panel m_panelConfig;
+    PanelConfig m_panelConfig;
     DrawnPanel m_drawn;
 };

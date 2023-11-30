@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
     }
     spdlog::info("Loading configuration at: {}", configPath->c_str());
     // Read configuration
-    auto config = Configuration::Read(*scriptContext, configPath->c_str());
+    auto config = scriptContext->Execute(configPath->c_str());
     if (!config) {
         spdlog::error("Failed to read configuration");
         return -1;

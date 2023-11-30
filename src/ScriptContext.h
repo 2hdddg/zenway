@@ -1,7 +1,16 @@
 #pragma once
 
 #include <memory>
-#include <sol/sol.hpp>
+
+#include "src/Configuration.h"
+
+// DO NOT expose sol2 types here, they should be kept in .cpp file
+// Reason for above is that sol2 sometimes messes with code formatter/LSP in
+// a real bad way causing file corruption. Also, sol2 is quite big to
+// include in multiple places.
+//
+// This file handles all parsing from Lua into native types as well
+// as converting from native types to Lua.
 
 struct Application {
     std::string name;
@@ -58,16 +67,14 @@ using Networks = std::vector<NetworkState>;
 
 class ScriptContext {
    public:
+     ScriptContext(){}
+    virtual ~ScriptContext() {}
     static std::unique_ptr<ScriptContext> Create();
-    sol::optional<sol::table> ExecuteFile(const char* file);
-    void RegisterSource(std::string_view name);
-    void Publish(const Displays& displays);
-    void Publish(const PowerState& power);
-    void Publish(const AudioState& audio);
-    void Publish(const KeyboardState& keyboard);
-    void Publish(const Networks& networks);
-
-   private:
-    ScriptContext(sol::state&& lua) : m_lua(std::move(lua)) {}
-    sol::state m_lua;
+    virtual std::shared_ptr<Configuration> Execute(const char* path) = 0;
+    virtual void RegisterSource(std::string_view name)  = 0;
+    virtual void Publish(const Displays& displays) = 0;
+    virtual void Publish(const PowerState& power) = 0;
+    virtual void Publish(const AudioState& audio) = 0;
+    virtual void Publish(const KeyboardState& keyboard) = 0;
+    virtual void Publish(const Networks& networks) = 0;
 };

@@ -1,138 +1,50 @@
 #include "Configuration.h"
 
-#include <spdlog/spdlog.h>
-
-#include <set>
-#include <sol/sol.hpp>
-
-#include "src/Sources.h"
-
-int GetIntProperty(const sol::table& t, const char* name, int missing) {
-    const sol::optional<int> o = t[name];
-    return o ? *o : missing;
-}
-
-Padding Padding::FromProperty(const sol::table& t, const char* name) {
-    const sol::optional<sol::table> o = t[name];
-    return o ? Padding::FromTable(*o) : Padding{};
-}
-
-Padding Padding::FromTable(const sol::table& t) {
-    return Padding{.left = GetIntProperty(t, "left", 0),
-                   .right = GetIntProperty(t, "right", 0),
-                   .top = GetIntProperty(t, "top", 0),
-                   .bottom = GetIntProperty(t, "bottom", 0)};
-}
-static std::set<std::string> ParseSources(const sol::table& widgetTable) {
-    std::set<std::string> sources;
-    const sol::optional<sol::table> table = widgetTable["sources"];
-    if (!table) {
-        return sources;
-    }
-    auto numSources = table->size();
-    for (size_t i = 0; i < numSources; i++) {
-        sources.insert(table->get<std::string>(i + 1));
-    }
-    return sources;
-}
-
-void Configuration::Widget::Parse(const sol::table& table, std::vector<Widget>& widgets) {
-    Widget widget;
-    widget.sources = ParseSources(table);
-    sol::optional<sol::function> renderFunction = table["on_render"];
-    if (!renderFunction) {
-        // TODO: Log
-        return;
-    }
-    widget.render = *renderFunction;
-    widget.click = table["on_click"];
-    widget.padding = Padding::FromProperty(table, "padding");
-    widgets.push_back(std::move(widget));
-}
-
-Configuration::Panel Configuration::Panel::Parse(const sol::table panelTable, int index) {
-    Panel panel;
-    panel.index = index;
-
-    if (!panelTable) {
-        return panel;
-    }
-    const sol::optional<std::string> anchorString = panelTable["anchor"];
-    panel.anchor = Anchor::Left;
-    if (anchorString) {
-        if (*anchorString == "left") {
-        } else if (*anchorString == "right") {
-            panel.anchor = Anchor::Right;
-        } else if (*anchorString == "top") {
-            panel.anchor = Anchor::Top;
-        } else if (*anchorString == "bottom") {
-            panel.anchor = Anchor::Bottom;
-        } else {
-            spdlog::error("Invalid anchor: {}", *anchorString);
-        }
-    }
-    const sol::optional<std::string> directionString = panelTable["direction"];
-    panel.isColumn = !directionString || *directionString != "row";
-
-    panel.check_display = panelTable["on_display"];
-
-    sol::optional<sol::table> widgetsTable = panelTable["widgets"];
-    if (!widgetsTable) {
-        return panel;
-    }
-    auto numWidgets = widgetsTable->size();
-    if (numWidgets == 0) {
-        return panel;
-    }
-    // Parse each widget
-    for (size_t i = 0; i < numWidgets; i++) {
-        sol::optional<sol::table> widgetTable = (*widgetsTable)[i + 1];
-        if (!widgetTable) {
-            // TODO: Log!
-            continue;
-        }
-        Configuration::Widget::Parse(*widgetTable, panel.widgets);
-    }
-    return panel;
-}
-
-bool Configuration::Panel::CheckOutput(const std::string outputName) const {
-    if (!check_display) {
+static bool FromChar(const char c, uint8_t& n) {
+    if (c >= '0' && c <= '9') {
+        n = c - '0';
         return true;
     }
-    sol::optional<bool> display = (*check_display)(outputName);
-    return display ? *display : true;
+    if (c >= 'a' && c <= 'f') {
+        n = c - 'a' + 10;
+        return true;
+    }
+    if (c >= 'A' && c <= 'F') {
+        n = c - 'a' + 10;
+        return true;
+    }
+    return false;
 }
 
-std::shared_ptr<Configuration> Configuration::Read(ScriptContext& scriptContext, const char* file) {
-    auto root = scriptContext.ExecuteFile(file);
-    if (!root) return nullptr;
-    // "Parse" the configuration state
-    sol::optional<sol::table> panelsTable = (*root)["panels"];
-    if (!panelsTable) {
-        spdlog::error("No panels found");
-        return nullptr;
+static bool FromChars(const char c1, const char c2, double& c) {
+    uint8_t n1 = 0, n2 = 0;
+    if (!FromChar(c1, n1) || !FromChar(c2, n2)) {
+        return false;
     }
-    auto config = std::unique_ptr<Configuration>(new Configuration());
-    // Panels
-    for (size_t i = 0; i < panelsTable->size(); i++) {
-        sol::optional<sol::table> panelTable = (*panelsTable)[i + 1];
-        if (!panelTable) {
-            spdlog::error("Expected panel table");
-            continue;
-        }
-        auto panel = Panel::Parse(*panelTable, i);
-        config->panels.push_back(panel);
+    c = ((n1 << 4) | n2) / 255.0;
+    return true;
+}
+
+RGBA RGBA::FromString(const std::string& s) {
+    // Should be on format #rrggbb or #rrggbbaa
+    if (s.length() != 7 && s.length() != 9) {
+        return RGBA{};
     }
-    // Buffers
-    sol::optional<sol::table> buffersTable = (*root)["buffers"];
-    config->numBuffers = 1;
-    config->bufferWidth = 1000;
-    config->bufferHeight = 1000;
-    if (buffersTable) {
-        config->numBuffers = GetIntProperty(*buffersTable, "num", config->numBuffers);
-        config->bufferWidth = GetIntProperty(*buffersTable, "width", config->bufferWidth);
-        config->bufferHeight = GetIntProperty(*buffersTable, "height", config->bufferHeight);
+    if (s[0] != '#') {
+        return RGBA{};
     }
-    return config;
+    RGBA c{};
+    bool ok =
+        FromChars(s[1], s[2], c.r) && FromChars(s[3], s[4], c.g) && FromChars(s[5], s[6], c.b);
+    if (!ok) {
+        return RGBA{};
+    }
+    if (s.length() == 7) {
+        c.a = 1;
+        return c;
+    }
+    if (!FromChars(s[7], s[8], c.a)) {
+        return RGBA{};
+    }
+    return c;
 }

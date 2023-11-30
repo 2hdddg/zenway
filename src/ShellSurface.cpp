@@ -29,7 +29,7 @@ static const wl_surface_listener surface_listener = {
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const std::shared_ptr<Roots> roots,
                                                    wl_output *output,
-                                                   Configuration::Panel panelConfig) {
+                                                   PanelConfig panelConfig) {
     auto surface = wl_compositor_create_surface(roots->compositor);
     auto shellSurface = std::unique_ptr<ShellSurface>(
         new ShellSurface(roots, output, surface, std::move(panelConfig)));
@@ -61,7 +61,7 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
             spdlog::trace("Found widget click target");
             auto &widget = m_panelConfig.widgets.at(i);
             if (widget.click) {
-                (*widget.click)();
+                widget.click();
             }
             break;
         }

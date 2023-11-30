@@ -31,10 +31,10 @@ class Output {
         m_wloutput = nullptr;
     }
 
-    void Draw(const Configuration::Panel &panelConfig, std::shared_ptr<Roots> roots,
+    void Draw(const PanelConfig &panelConfig, std::shared_ptr<Roots> roots,
               BufferPool &bufferPool) {
         // Query panel if it wants to be drawn on this display
-        if (!panelConfig.CheckOutput(m_name)) {
+        if (panelConfig.checkDisplay &&  !panelConfig.checkDisplay(m_name)) {
             return;
         }
         spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
