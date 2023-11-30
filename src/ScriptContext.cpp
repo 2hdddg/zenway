@@ -119,7 +119,11 @@ static void ParseWidgetConfig(const sol::table& table,
     }
     auto renderFunction = *maybeRenderFunction;
     widget.render = [renderFunction](auto outputName) { return FromObject(renderFunction(outputName)); };
-    widget.click = table["on_click"];
+    sol::optional<sol::function> maybeClickFunction = table["on_click"];
+    if (maybeClickFunction) {
+      auto clickFunction = *maybeClickFunction;
+      widget.click = [clickFunction]() { clickFunction(); };
+    }
     widget.padding = PaddingFromProperty(table, "padding");
     widgets.push_back(std::move(widget));
 }
