@@ -11,8 +11,7 @@
 // Represents a single buffer used for rendering
 class Buffer {
    public:
-    static std::unique_ptr<Buffer> Create(wl_buffer *buffer, void *address, int cx, int cy,
-                                          const std::string &name);
+    static std::unique_ptr<Buffer> Create(wl_buffer *buffer, void *address, int cx, int cy);
     virtual ~Buffer();
     void OnRelease();
     wl_buffer *Lock() {
@@ -20,16 +19,12 @@ class Buffer {
         return m_wlbuffer;
     }
 
-    const std::string name;
     cairo_t *GetCairoCtx() { return m_cr; }
     void Clear(uint8_t v);
     bool InUse() { return m_inUse; }
-    int Cx() { return m_cx; }
-    int Cy() { return m_cy; }
 
    private:
-    Buffer(wl_buffer *buffer, void *address, int cx, int cy, size_t sizeInBytes,
-           const std::string &name);
+    Buffer(wl_buffer *buffer, void *address, int cx, int cy, size_t sizeInBytes);
 
     wl_buffer *m_wlbuffer;
     bool m_inUse;
