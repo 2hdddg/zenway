@@ -3,9 +3,19 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 
 #include "src/ScriptContext.h"
-#include "src/Source.h"
+
+class Source {
+   public:
+    virtual bool IsSourceDirty() const { return m_sourceDirtyFlag; }
+    virtual void CleanDirtySource() { m_sourceDirtyFlag = false; }
+    virtual void ForceDirtySource() { m_sourceDirtyFlag = true; }
+
+   protected:
+    bool m_sourceDirtyFlag;
+};
 
 // Maintains set of sources
 class Sources {

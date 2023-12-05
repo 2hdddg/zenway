@@ -1,4 +1,4 @@
-#include "Panel.h"
+#include "Draw.h"
 
 #include "pango/pango-layout.h"
 #include "pango/pangocairo.h"
@@ -116,8 +116,7 @@ void FlexContainer::Draw(cairo_t* cr, int x, int y) const {
     }
 }
 
-void Widget::Compute(const WidgetConfig& config, const std::string& outputName,
-                     cairo_t* cr) {
+void Widget::Compute(const WidgetConfig& config, const std::string& outputName, cairo_t* cr) {
     auto item = config.render(outputName);
     if (!item) {
         spdlog::error("Bad return from widget");
@@ -128,18 +127,18 @@ void Widget::Compute(const WidgetConfig& config, const std::string& outputName,
     computed.cy = item->computed.cy + config.padding.top + config.padding.bottom;
     m_paddingX = config.padding.left;
     m_paddingY = config.padding.top;
-    m_item = std::move(item);
+    m_renderable = std::move(item);
 }
 
 void Widget::Draw(cairo_t* cr, int x, int y) const {
     cairo_save(cr);
-    m_item->Draw(cr, x + m_paddingX, y + m_paddingY);
+    m_renderable->Draw(cr, x + m_paddingX, y + m_paddingY);
     cairo_restore(cr);
 }
 
 enum class Align { Left, Right, Top, Bottom, CenterX, CenterY };
 
-bool Panel::Draw(const PanelConfig& panelConfig, const std::string& outputName,
+bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
                  BufferPool& bufferPool, DrawnPanel& drawn) {
     // Get free buffer to draw in. This could fail if both buffers are locked.
     auto buffer = bufferPool.Get();

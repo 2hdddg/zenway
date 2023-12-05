@@ -4,7 +4,8 @@
 
 #include "src/MainLoop.h"
 #include "src/ScriptContext.h"
-#include "src/Source.h"
+#include "src/Sources.h"
+
 class NetworkSource : public Source, public IoHandler {
    public:
     static std::shared_ptr<NetworkSource> Create(MainLoop& mainLoop,

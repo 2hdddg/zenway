@@ -28,8 +28,7 @@ static const wl_surface_listener surface_listener = {
 };
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const std::shared_ptr<Roots> roots,
-                                                   wl_output *output,
-                                                   PanelConfig panelConfig) {
+                                                   wl_output *output, PanelConfig panelConfig) {
     auto surface = wl_compositor_create_surface(roots->compositor);
     auto shellSurface = std::unique_ptr<ShellSurface>(
         new ShellSurface(roots, output, surface, std::move(panelConfig)));
@@ -91,7 +90,7 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
         Show();
     }
     m_drawn.widgets.clear();
-    if (!Panel::Draw(m_panelConfig, outputName, bufferPool, m_drawn)) {
+    if (!Draw::Panel(m_panelConfig, outputName, bufferPool, m_drawn)) {
         // Nothing drawn for this output
         return;
     }

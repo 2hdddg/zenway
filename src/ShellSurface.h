@@ -8,14 +8,13 @@
 
 #include "Buffer.h"
 #include "Configuration.h"
-#include "Panel.h"
+#include "Draw.h"
 #include "Roots.h"
 
 class ShellSurface {
    public:
     static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
-                                                wl_output *output,
-                                                PanelConfig panelConfiguration);
+                                                wl_output *output, PanelConfig panelConfiguration);
     void Draw(BufferPool &bufferPool, const std::string &outputName);
     void Hide();
 

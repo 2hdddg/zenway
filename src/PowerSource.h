@@ -4,7 +4,7 @@
 
 #include "src/MainLoop.h"
 #include "src/ScriptContext.h"
-#include "src/Source.h"
+#include "src/Sources.h"
 
 class PowerSource : public Source, public IoHandler {
    public:

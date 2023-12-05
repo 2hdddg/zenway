@@ -2,7 +2,7 @@
 
 #include "src/MainLoop.h"
 #include "src/Output.h"
-#include "src/Panel.h"
+#include "src/Sources.h"
 
 class Manager : public IoBatchHandler, public Source {
    public:

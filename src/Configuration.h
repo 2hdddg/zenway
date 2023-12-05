@@ -101,7 +101,7 @@ struct Widget {
     Size computed;
 
    private:
-    std::unique_ptr<Renderable> m_item;
+    std::unique_ptr<Renderable> m_renderable;
     int m_paddingX;
     int m_paddingY;
 };
@@ -121,4 +121,3 @@ class Configuration {
     int bufferHeight;
     int numBuffers;
 };
-

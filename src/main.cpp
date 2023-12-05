@@ -7,13 +7,11 @@
 #include <cstdlib>
 #include <filesystem>
 
-#include "Buffer.h"
 #include "Configuration.h"
 #include "DateTimeSources.h"
 #include "MainLoop.h"
 #include "Manager.h"
 #include "NetworkSource.h"
-#include "Panel.h"
 #include "PowerSource.h"
 #include "PulseAudioSource.h"
 #include "Registry.h"

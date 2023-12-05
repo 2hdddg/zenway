@@ -18,7 +18,7 @@ struct DrawnPanel {
     std::vector<DrawnWidget> widgets;
 };
 
-struct Panel {
-    static bool Draw(const PanelConfig& panelConfig, const std::string& outputName,
-                     BufferPool& bufferPool, DrawnPanel& drawn);
+struct Draw {
+    static bool Panel(const PanelConfig& panelConfig, const std::string& outputName,
+                      BufferPool& bufferPool, DrawnPanel& drawn);
 };

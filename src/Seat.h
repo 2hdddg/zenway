@@ -7,7 +7,7 @@
 
 #include "src/Roots.h"
 #include "src/ScriptContext.h"
-#include "src/Source.h"
+#include "src/Sources.h"
 
 using ClickHandler = std::function<void(wl_surface*, int, int)>;
 
