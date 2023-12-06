@@ -144,6 +144,7 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
         }
     }
     if (newState == m_sourceState) return;
+    spdlog::debug("Audio source is dirty");
     m_sourceDirtyFlag = true;
     m_sourceState = newState;
     m_scriptContext->Publish(m_sourceState);

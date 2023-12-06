@@ -138,7 +138,7 @@ local function render_audio()
 end
 
 local function click_audio()
-  print("Click")
+  os.execute("pactl set-sink-mute @DEFAULT_SINK@ toggle")
 end
 
 local function render_power()

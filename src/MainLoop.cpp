@@ -40,6 +40,8 @@ void MainLoop::Run() {
                     if (poll.fd == m_eventFd) {
                         uint64_t ignore;
                         read(m_eventFd, &ignore, sizeof(uint64_t));
+                        // For now internal events always means that a source is dirty
+                        anyDirty = true;
                         continue;
                     }
                     auto& handler = m_handlers[poll.fd];
