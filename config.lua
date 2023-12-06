@@ -2,11 +2,11 @@
 local BLACK = '#1c1b19'
 local RED = '#ef2f27'
 local GREEN = '#519f50'
-local YELLOW = '#fed06e'
+local YELLOW = '#fbb829'
 local BLUE = '#2c78bf'
-local MAGENTA = '#ff5c8f'
-local CYAN = '#2be4d0'
-local WHITE = '#fce8c3'
+local MAGENTA = '#e02c6d'
+local CYAN = '#0aaeb3'
+local WHITE = '#baa67f'
 -- Bright
 local BLACK_BR = '#918175'
 local BLUE_BR = '#68a8e4'
@@ -99,7 +99,7 @@ local function render_workspaces(displayName)
         if #workspace.applications == 0 then app_name = "&lt;desktop&gt;" end
         boxcolor = BLACK_BR
         if workspace.focus then
-            boxcolor = GREEN
+            boxcolor = YELLOW
         end
         local workspace = {
             type = "flex",
@@ -122,7 +122,12 @@ local function render_time()
 end
 
 local function render_keyboard()
-    return box(icon{icon="", size=SMALL_ICON_SIZE} .. label{label=" " .. zen.keyboard.layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE}, CYAN)
+    local layout = zen.keyboard.layout
+    local color = CYAN
+    if layout == "Swedish" then
+        color = MAGENTA
+    end
+    return box(icon{icon="", size=SMALL_ICON_SIZE} .. label{label=" " .. layout, size=SMALL_TEXT_SIZE, rise=SMALL_TEXT_RISE}, color)
 end
 
 local function render_audio()
@@ -139,6 +144,14 @@ end
 
 local function click_audio()
   os.execute("pactl set-sink-mute @DEFAULT_SINK@ toggle")
+end
+
+local function click_keyboard()
+    local layout = "se"
+    if zen.keyboard.layout == "Swedish" then
+        layout = "us"
+    end
+    os.execute('swaymsg input type:keyboard xkb_layout "' .. layout .. '"')
 end
 
 local function render_power()
@@ -194,7 +207,7 @@ return {
         {
             anchor = "right",
             widgets = {
-                { sources = {'keyboard'}, padding = { right = 10 }, on_render = render_keyboard },
+                { sources = {'keyboard'}, padding = { right = 10 }, on_render = render_keyboard, on_click = click_keyboard },
                 { sources = {'audio'}, padding = { top = 10, right = 10 }, on_render = render_audio, on_click = click_audio },
                 { sources = {'power'}, padding = { top = 10, right = 10 }, on_render = render_power },
                 { sources = {'networks'}, padding = { top = 10, right = 10 }, on_render = render_networks },
