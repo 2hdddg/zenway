@@ -148,5 +148,5 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
     m_sourceDirtyFlag = true;
     m_sourceState = newState;
     m_scriptContext->Publish(m_sourceState);
-    m_zenMainloop->WakeupFromOtherThread();
+    m_zenMainloop->Wakeup();
 }

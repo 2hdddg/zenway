@@ -27,7 +27,8 @@ class MainLoop {
     void RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandler);
     // In cases where polling for events is done on another thread that thread should
     // call this to trigger dirty check on all registered batch handlers.
-    void WakeupFromOtherThread();
+    // Or in cases where source gets dirty due to some other type of event
+    void Wakeup();
 
    private:
     MainLoop(int eventFd) : m_eventFd(eventFd) {}

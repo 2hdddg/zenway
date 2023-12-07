@@ -35,7 +35,7 @@ void MainLoop::Run() {
         while (num--) {
             for (auto& poll : m_polls) {
                 if ((poll.events & poll.revents) != 0) {
-                    // Special treatment on internal events. Just empty events and
+                    // Special treatment on internal events. Empty events and
                     // rely on batch processing when all other events has been processed
                     if (poll.fd == m_eventFd) {
                         uint64_t ignore;
@@ -68,7 +68,7 @@ void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandl
     m_batchHandlers.push_back(ioBatchHandler);
 }
 
-void MainLoop::WakeupFromOtherThread() {
+void MainLoop::Wakeup() {
     uint64_t inc = 1;
     write(m_eventFd, &inc, sizeof(uint64_t));
 }

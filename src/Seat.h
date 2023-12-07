@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/MainLoop.h"
 #include "src/Roots.h"
 #include "src/ScriptContext.h"
 #include "src/Sources.h"
@@ -13,16 +14,18 @@ using ClickHandler = std::function<void(wl_surface*, int, int)>;
 
 class Keyboard : public Source {
    public:
-    Keyboard(wl_keyboard* wlkeyboard) : m_wlkeyboard(wlkeyboard) {}
+    Keyboard(std::shared_ptr<MainLoop> mainloop, wl_keyboard* wlkeyboard)
+        : m_mainloop(mainloop), m_wlkeyboard(wlkeyboard) {}
     virtual ~Keyboard() {
         wl_keyboard_destroy(m_wlkeyboard);
         m_wlkeyboard = nullptr;
     }
-    static std::unique_ptr<Keyboard> Create(wl_seat* seat);
+    static std::unique_ptr<Keyboard> Create(std::shared_ptr<MainLoop> mainloop, wl_seat* seat);
     void SetLayout(const char* layout);
     void SetScriptContext(std::shared_ptr<ScriptContext> scriptContext);
 
    private:
+    std::shared_ptr<MainLoop> m_mainloop;
     wl_keyboard* m_wlkeyboard;
     KeyboardState m_sourceState;
     std::shared_ptr<ScriptContext> m_scriptContext;
@@ -55,7 +58,8 @@ class Pointer {
 
 class Seat {
    public:
-    static std::unique_ptr<Seat> Create(const Roots& roots, wl_seat* seat);
+    static std::unique_ptr<Seat> Create(const Roots& roots, std::shared_ptr<MainLoop> mainLoop,
+                                        wl_seat* seat);
     Seat(wl_seat* wlseat) : m_wlseat(wlseat) {}
     virtual ~Seat() {
         wl_seat_destroy(m_wlseat);

@@ -15,7 +15,8 @@
 
 class Registry : public IoHandler {
    public:
-    static std::shared_ptr<Registry> Create(MainLoop &mainLoop, std::shared_ptr<Outputs> outputs);
+    static std::shared_ptr<Registry> Create(std::shared_ptr<MainLoop> mainloop,
+                                            std::shared_ptr<Outputs> outputs);
     virtual ~Registry() {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
@@ -32,13 +33,15 @@ class Registry : public IoHandler {
     std::shared_ptr<Seat> seat;
 
    private:
-    Registry(std::shared_ptr<Outputs> outputs, wl_display *display, wl_registry *registry)
-        : m_outputs(outputs), m_registry(registry) {
+    Registry(std::shared_ptr<MainLoop> mainloop, std::shared_ptr<Outputs> outputs,
+             wl_display *display, wl_registry *registry)
+        : m_outputs(outputs), m_mainloop(mainloop), m_registry(registry) {
         roots = std::make_shared<Roots>();
         roots->display = display;
     }
 
    private:
     std::shared_ptr<Outputs> m_outputs;
+    std::shared_ptr<MainLoop> m_mainloop;  // Hmm, this is circular..
     wl_registry *m_registry;
 };

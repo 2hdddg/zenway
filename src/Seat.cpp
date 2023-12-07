@@ -84,10 +84,10 @@ static const wl_keyboard_listener keyboard_listener = {
     .repeat_info = on_repeat_info,
 };
 
-std::unique_ptr<Keyboard> Keyboard::Create(wl_seat* seat) {
+std::unique_ptr<Keyboard> Keyboard::Create(std::shared_ptr<MainLoop> mainloop, wl_seat* seat) {
     spdlog::info("Creating keyboard");
     auto wlkeyboard = wl_seat_get_keyboard(seat);
-    auto keyboard = std::make_unique<Keyboard>(wlkeyboard);
+    auto keyboard = std::make_unique<Keyboard>(mainloop, wlkeyboard);
     wl_keyboard_add_listener(wlkeyboard, &keyboard_listener, keyboard.get());
     return keyboard;
 }
@@ -97,6 +97,7 @@ void Keyboard::SetLayout(const char* layout) {
     if (m_sourceDirtyFlag) {
         m_sourceState.layout = layout;
         if (m_scriptContext) m_scriptContext->Publish(m_sourceState);
+        m_mainloop->Wakeup();
     }
 }
 void Keyboard::SetScriptContext(std::shared_ptr<ScriptContext> scriptContext) {
@@ -104,8 +105,9 @@ void Keyboard::SetScriptContext(std::shared_ptr<ScriptContext> scriptContext) {
     if (m_sourceDirtyFlag) m_scriptContext->Publish(m_sourceState);
 }
 
-std::unique_ptr<Seat> Seat::Create(const Roots& roots, wl_seat* wlseat) {
-    auto keyboard = Keyboard::Create(wlseat);
+std::unique_ptr<Seat> Seat::Create(const Roots& roots, std::shared_ptr<MainLoop> mainLoop,
+                                   wl_seat* wlseat) {
+    auto keyboard = Keyboard::Create(mainLoop, wlseat);
     auto seat = std::make_unique<Seat>(wlseat);
     seat->keyboard = std::move(keyboard);
     seat->m_pointer = Pointer::Create(wlseat);

@@ -237,6 +237,7 @@ bool SwayCompositor::OnRead() {
             } else {
                 m_manager->Hide();
             }
+            m_manager->DirtyWorkspace();
             break;
         case Message::EVENT_SHUTDOWN:
             spdlog::trace("Sway shutdown event");

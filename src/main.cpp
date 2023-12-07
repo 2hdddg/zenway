@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     // Initialize registry.
     // The registry initializes roots that contains elementary interfaces needed for the system
     // to work. The registry also maintains the list of active outputs (monitors).
-    auto registry = Registry::Create(*mainLoop, outputs);
+    auto registry = Registry::Create(mainLoop, outputs);
     if (!registry) {
         spdlog::error("Failed to initialize registry");
         return -1;
