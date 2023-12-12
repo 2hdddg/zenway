@@ -42,7 +42,8 @@ static void on_subscribe(pa_context* ctx, pa_subscription_event_type_t event_and
 }
 
 std::unique_ptr<PulseAudioSource> PulseAudioSource::Create(
-    std::shared_ptr<MainLoop> zenMainloop, std::shared_ptr<ScriptContext> scriptContext) {
+    std::string_view name, std::shared_ptr<MainLoop> zenMainloop,
+    std::shared_ptr<ScriptContext> scriptContext) {
     auto mainloop = pa_threaded_mainloop_new();
     if (!mainloop) return nullptr;
     pa_threaded_mainloop_lock(mainloop);
@@ -58,7 +59,7 @@ std::unique_ptr<PulseAudioSource> PulseAudioSource::Create(
         return nullptr;
     }
     auto backend = std::unique_ptr<PulseAudioSource>(
-        new PulseAudioSource(zenMainloop, mainloop, scriptContext, api, context));
+        new PulseAudioSource(name, zenMainloop, mainloop, scriptContext, api, context));
     // From now on the backend will free on error
 
     if (pa_context_connect(context, nullptr, PA_CONTEXT_NOFAIL, nullptr) < 0) {
@@ -147,6 +148,6 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
     spdlog::debug("Audio source is dirty");
     m_sourceDirtyFlag = true;
     m_sourceState = newState;
-    m_scriptContext->Publish(m_sourceState);
+    m_scriptContext->Publish(m_name, m_sourceState);
     m_zenMainloop->Wakeup();
 }

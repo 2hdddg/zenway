@@ -30,7 +30,7 @@ static char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen) {
 
     return s;
 }
-std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop,
+std::shared_ptr<NetworkSource> NetworkSource::Create(std::string_view name, MainLoop &mainLoop,
                                                      std::shared_ptr<ScriptContext> scriptContext) {
     auto sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
@@ -47,8 +47,8 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop,
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(sock, fd, scriptContext));
-    mainLoop.Register(fd, "NetworkSource", source);
+    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(name, sock, fd, scriptContext));
+    mainLoop.Register(fd, name, source);
     return source;
 }
 
@@ -92,7 +92,7 @@ void NetworkSource::ReadState() {
     m_sourceDirtyFlag = true;  // m_networks != networks;
     if (m_sourceDirtyFlag) {
         m_networks = networks;
-        m_scriptContext->Publish(m_networks);
+        m_scriptContext->Publish(m_name, m_networks);
     }
 }
 

@@ -8,7 +8,7 @@
 
 class PowerSource : public Source, public IoHandler {
    public:
-    static std::shared_ptr<PowerSource> Create(MainLoop& mainLoop,
+    static std::shared_ptr<PowerSource> Create(std::string_view name, MainLoop& mainLoop,
                                                std::shared_ptr<ScriptContext> scriptContext);
     bool Initialize();
     void ReadState();
@@ -16,8 +16,9 @@ class PowerSource : public Source, public IoHandler {
     virtual ~PowerSource();
 
    private:
-    PowerSource(int fd, std::shared_ptr<ScriptContext> scriptContext)
-        : m_timerfd(fd), m_scriptContext(scriptContext) {}
+    PowerSource(std::string_view name, int fd, std::shared_ptr<ScriptContext> scriptContext)
+        : m_name(name), m_timerfd(fd), m_scriptContext(scriptContext) {}
+    const std::string m_name;
     std::filesystem::path m_batteryCapacity;
     std::filesystem::path m_batteryStatus;
     std::filesystem::path m_ac;

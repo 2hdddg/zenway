@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <string>
 
-std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop,
+std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop& mainLoop,
                                                  std::shared_ptr<ScriptContext> scriptContext) {
     auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
     if (fd == -1) {
@@ -20,8 +20,8 @@ std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop,
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<PowerSource>(new PowerSource(fd, scriptContext));
-    mainLoop.Register(fd, "PowerSource", source);
+    auto source = std::shared_ptr<PowerSource>(new PowerSource(name, fd, scriptContext));
+    mainLoop.Register(fd, name, source);
     return source;
 }
 
@@ -102,7 +102,7 @@ void PowerSource::ReadState() {
     m_sourceDirtyFlag = state != m_sourceState;
     if (m_sourceDirtyFlag) {
         m_sourceState = state;
-        m_scriptContext->Publish(m_sourceState);
+        m_scriptContext->Publish(m_name, m_sourceState);
         spdlog::info("Power status changed, capacity {}, charging {}, plugged in {}",
                      state.Capacity, state.IsCharging, state.IsPluggedIn);
     }

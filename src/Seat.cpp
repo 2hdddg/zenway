@@ -96,13 +96,15 @@ void Keyboard::SetLayout(const char* layout) {
     m_sourceDirtyFlag = m_sourceState.layout != layout;
     if (m_sourceDirtyFlag) {
         m_sourceState.layout = layout;
-        if (m_scriptContext) m_scriptContext->Publish(m_sourceState);
+        if (m_scriptContext) m_scriptContext->Publish(m_sourceName, m_sourceState);
         m_mainloop->Wakeup();
     }
 }
-void Keyboard::SetScriptContext(std::shared_ptr<ScriptContext> scriptContext) {
+void Keyboard::SetScriptContext(const std::string_view sourceName,
+                                std::shared_ptr<ScriptContext> scriptContext) {
+    m_sourceName = sourceName;
     m_scriptContext = scriptContext;
-    if (m_sourceDirtyFlag) m_scriptContext->Publish(m_sourceState);
+    m_scriptContext->Publish(m_sourceName, m_sourceState);
 }
 
 std::unique_ptr<Seat> Seat::Create(const Roots& roots, std::shared_ptr<MainLoop> mainLoop,

@@ -15,7 +15,8 @@ struct pa_source_info;
 
 class PulseAudioSource : public Source {
    public:
-    static std::unique_ptr<PulseAudioSource> Create(std::shared_ptr<MainLoop> zenMainloop,
+    static std::unique_ptr<PulseAudioSource> Create(std::string_view name,
+                                                    std::shared_ptr<MainLoop> zenMainloop,
                                                     std::shared_ptr<ScriptContext> scriptContext);
     virtual ~PulseAudioSource();
 
@@ -24,14 +25,16 @@ class PulseAudioSource : public Source {
     void OnSinkChange(const pa_sink_info*);
 
    private:
-    PulseAudioSource(std::shared_ptr<MainLoop> zenMainloop, pa_threaded_mainloop* mainLoop,
-                     std::shared_ptr<ScriptContext> scriptContext, pa_mainloop_api* api,
-                     pa_context* ctx)
-        : m_zenMainloop(zenMainloop),
+    PulseAudioSource(std::string_view name, std::shared_ptr<MainLoop> mainloop,
+                     pa_threaded_mainloop* mainLoop, std::shared_ptr<ScriptContext> scriptContext,
+                     pa_mainloop_api* api, pa_context* ctx)
+        : m_name(name),
+          m_zenMainloop(mainloop),
           m_mainLoop(mainLoop),
           m_scriptContext(scriptContext),
           m_api(api),
           m_ctx(ctx) {}
+    const std::string m_name;
     std::shared_ptr<MainLoop> m_zenMainloop;
     pa_threaded_mainloop* m_mainLoop;
     std::shared_ptr<ScriptContext> m_scriptContext;

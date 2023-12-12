@@ -192,7 +192,7 @@ return {
         {
             anchor = "left",
             widgets = {
-                { sources = {'workspace'}, padding = {left = 10 }, on_render = render_workspaces },
+                { sources = {'displays'}, padding = {left = 10 }, on_render = render_workspaces },
             },
             direction = "column"
         },

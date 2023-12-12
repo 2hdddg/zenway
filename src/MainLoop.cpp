@@ -62,7 +62,7 @@ void MainLoop::Run() {
     } while (m_polls.size() > 0);
 }
 
-void MainLoop::Register(int fd, const std::string& name, std::shared_ptr<IoHandler> ioHandler) {
+void MainLoop::Register(int fd, const std::string_view name, std::shared_ptr<IoHandler> ioHandler) {
     m_handlers[fd] = ioHandler;
     m_polls.push_back(pollfd{.fd = fd, .events = POLLIN});
     spdlog::debug("Registering {} in main loop for fd {}", name, fd);

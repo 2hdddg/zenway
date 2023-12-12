@@ -85,7 +85,7 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
     workspace.applications.push_back(std::move(application));
 }
 
-static void ParseTree(const std::string &payload, std::shared_ptr<ScriptContext> scriptContext) {
+static void ParseTree(const std::string &payload, Manager &manager) {
     auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
     if (rootNode["type"] != "root") {
         spdlog::error("Expected root");
@@ -123,7 +123,7 @@ static void ParseTree(const std::string &payload, std::shared_ptr<ScriptContext>
         }
         displays.push_back(std::move(display));
     }
-    scriptContext->Publish(displays);
+    manager.Publish(displays);
 }
 static constexpr auto MAGIC = "i3-ipc";
 static constexpr auto MAGIC_LENGTH = 6;
@@ -144,9 +144,8 @@ enum class Message : uint32_t {
 
 };
 
-std::shared_ptr<SwayCompositor> SwayCompositor::Connect(
-    MainLoop &mainLoop, std::shared_ptr<Manager> manager,
-    std::shared_ptr<ScriptContext> scriptContext) {
+std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
+                                                        std::shared_ptr<Manager> manager) {
     auto path = getenv("SWAYSOCK");
     spdlog::debug("Connecting to sway at {}", path);
     auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -162,7 +161,7 @@ std::shared_ptr<SwayCompositor> SwayCompositor::Connect(
         close(fd);
         return nullptr;
     }
-    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, manager, scriptContext));
+    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, manager));
     mainLoop.Register(fd, "Sway", t);
     t->Initialize();
     return t;
@@ -212,8 +211,7 @@ bool SwayCompositor::OnRead() {
     switch (msg) {
         case Message::GET_TREE:
             spdlog::trace("Received sway tree");
-            ParseTree(m_payload, m_scriptContext);
-            m_manager->DirtyWorkspace();
+            ParseTree(m_payload, *m_manager);
             break;
         case Message::SUBSCRIBE:
             spdlog::debug("Sway subscriptions confirmed");
@@ -237,7 +235,6 @@ bool SwayCompositor::OnRead() {
             } else {
                 m_manager->Hide();
             }
-            m_manager->DirtyWorkspace();
             break;
         case Message::EVENT_SHUTDOWN:
             spdlog::trace("Sway shutdown event");

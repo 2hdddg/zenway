@@ -24,7 +24,7 @@ class MainLoop {
     static std::unique_ptr<MainLoop> Create();
 
     void Run();
-    void Register(int fd, const std::string& name, std::shared_ptr<IoHandler> ioHandler);
+    void Register(int fd, const std::string_view name, std::shared_ptr<IoHandler> ioHandler);
     void RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandler);
     // In cases where polling for events is done on another thread that thread should
     // call this to trigger dirty check on all registered batch handlers.

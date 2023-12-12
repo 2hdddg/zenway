@@ -15,8 +15,7 @@ static RGBA RGBAFromProperty(const sol::table& t, const char* name) {
 }
 
 static Border BorderFromTable(const sol::table& t) {
-    return Border{.color = RGBAFromProperty(t, "color"),
-                  .width = GetIntProperty(t, "width", 0)};
+    return Border{.color = RGBAFromProperty(t, "color"), .width = GetIntProperty(t, "width", 0)};
 }
 
 static Border BorderFromProperty(const sol::table& t, const char* name) {
@@ -49,7 +48,7 @@ static std::unique_ptr<MarkupBox> MarkupBoxFromTable(const sol::table& t) {
 
 static std::unique_ptr<Renderable> FromObject(const sol::object& o);
 static void FromChildTable(const sol::table childTable,
-                    std::vector<std::unique_ptr<Renderable>>& children) {
+                           std::vector<std::unique_ptr<Renderable>>& children) {
     size_t size = childTable.size();
     for (size_t i = 0; i < size; i++) {
         const sol::object& o = childTable[i + 1];
@@ -108,8 +107,7 @@ static std::set<std::string> ParseSources(const sol::table& widgetTable) {
     return sources;
 }
 
-static void ParseWidgetConfig(const sol::table& table,
-                              std::vector<WidgetConfig>& widgets) {
+static void ParseWidgetConfig(const sol::table& table, std::vector<WidgetConfig>& widgets) {
     WidgetConfig widget;
     widget.sources = ParseSources(table);
     sol::optional<sol::function> maybeRenderFunction = table["on_render"];
@@ -118,11 +116,13 @@ static void ParseWidgetConfig(const sol::table& table,
         return;
     }
     auto renderFunction = *maybeRenderFunction;
-    widget.render = [renderFunction](auto outputName) { return FromObject(renderFunction(outputName)); };
+    widget.render = [renderFunction](auto outputName) {
+        return FromObject(renderFunction(outputName));
+    };
     sol::optional<sol::function> maybeClickFunction = table["on_click"];
     if (maybeClickFunction) {
-      auto clickFunction = *maybeClickFunction;
-      widget.click = [clickFunction]() { clickFunction(); };
+        auto clickFunction = *maybeClickFunction;
+        widget.click = [clickFunction]() { clickFunction(); };
     }
     widget.padding = PaddingFromProperty(table, "padding");
     widgets.push_back(std::move(widget));
@@ -154,7 +154,7 @@ static PanelConfig ParsePanelConfig(const sol::table panelTable, int index) {
     sol::optional<sol::function> optionalCheckDisplay = panelTable["on_display"];
     if (optionalCheckDisplay) {
         auto checkDisplay = *optionalCheckDisplay;
-         panel.checkDisplay = [checkDisplay](auto outputName) { return checkDisplay(outputName); };
+        panel.checkDisplay = [checkDisplay](auto outputName) { return checkDisplay(outputName); };
     }
 
     sol::optional<sol::table> widgetsTable = panelTable["widgets"];
@@ -181,12 +181,11 @@ class ScriptContextImpl : public ScriptContext {
    public:
     ScriptContextImpl(sol::state&& lua) : m_lua(std::move(lua)) {}
     std::shared_ptr<Configuration> Execute(const char* path) override;
-    void RegisterSource(std::string_view name)  override;
-    void Publish(const Displays& displays) override;
-    void Publish(const PowerState& power) override;
-    void Publish(const AudioState& audio) override;
-    void Publish(const KeyboardState& keyboard) override;
-    void Publish(const Networks& networks) override;
+    void Publish(const std::string_view name, const Displays& displays) override;
+    void Publish(const std::string_view name, const PowerState& power) override;
+    void Publish(const std::string_view name, const AudioState& audio) override;
+    void Publish(const std::string_view name, const KeyboardState& keyboard) override;
+    void Publish(const std::string_view name, const Networks& networks) override;
 
    private:
     sol::state m_lua;
@@ -223,9 +222,6 @@ static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root
     }
     return config;
 }
- void ScriptContextImpl::RegisterSource(std::string_view name) {
-  m_lua["zen"][name] = m_lua.create_table();
-}
 
 std::shared_ptr<Configuration> ScriptContextImpl::Execute(const char* path) {
     try {
@@ -237,7 +233,7 @@ std::shared_ptr<Configuration> ScriptContextImpl::Execute(const char* path) {
     }
 }
 
-void ScriptContextImpl::Publish(const Displays& displays) {
+void ScriptContextImpl::Publish(const std::string_view name, const Displays& displays) {
     auto displaysTable = m_lua.create_table();
     for (const auto& display : displays) {
         auto displayTable = m_lua.create_table();
@@ -262,28 +258,31 @@ void ScriptContextImpl::Publish(const Displays& displays) {
         displayTable["focus"] = display.isFocused;
         displaysTable[display.name] = displayTable;
     }
-    m_lua["zen"]["displays"] = displaysTable;
+    m_lua["zen"][name] = displaysTable;
 }
 
-void ScriptContextImpl::Publish(const PowerState& power) {
-    auto table = m_lua["zen"]["power"];
+void ScriptContextImpl::Publish(const std::string_view name, const PowerState& power) {
+    auto table = m_lua.create_table();
     table["isCharging"] = power.IsCharging;
     table["isPluggedIn"] = power.IsPluggedIn;
     table["capacity"] = (int)power.Capacity;
+    m_lua["zen"][name] = table;
 }
 
-void ScriptContextImpl::Publish(const AudioState& audio) {
-    auto table = m_lua["zen"]["audio"];
+void ScriptContextImpl::Publish(const std::string_view name, const AudioState& audio) {
+    auto table = m_lua.create_table();
     table["muted"] = audio.Muted;
     table["volume"] = audio.Volume;
     table["port"] = audio.PortType;
+    m_lua["zen"][name] = table;
 }
 
-void ScriptContextImpl::Publish(const KeyboardState& keyboard) {
-    auto table = m_lua["zen"]["keyboard"];
+void ScriptContextImpl::Publish(const std::string_view name, const KeyboardState& keyboard) {
+    auto table = m_lua.create_table();
     table["layout"] = keyboard.layout;
+    m_lua["zen"][name] = table;
 }
-void ScriptContextImpl::Publish(const Networks& networks) {
+void ScriptContextImpl::Publish(const std::string_view name, const Networks& networks) {
     auto networksTable = m_lua.create_table();
     for (const auto& network : networks) {
         auto networkTable = m_lua.create_table();
@@ -292,7 +291,7 @@ void ScriptContextImpl::Publish(const Networks& networks) {
         networkTable["address"] = network.address;
         networksTable.add(networkTable);
     }
-    m_lua["zen"]["networks"] = networksTable;
+    m_lua["zen"][name] = networksTable;
 }
 
 std::unique_ptr<ScriptContext> ScriptContext::Create() {

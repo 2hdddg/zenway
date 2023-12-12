@@ -67,14 +67,13 @@ using Networks = std::vector<NetworkState>;
 
 class ScriptContext {
    public:
-     ScriptContext(){}
+    ScriptContext() {}
     virtual ~ScriptContext() {}
     static std::unique_ptr<ScriptContext> Create();
     virtual std::shared_ptr<Configuration> Execute(const char* path) = 0;
-    virtual void RegisterSource(std::string_view name)  = 0;
-    virtual void Publish(const Displays& displays) = 0;
-    virtual void Publish(const PowerState& power) = 0;
-    virtual void Publish(const AudioState& audio) = 0;
-    virtual void Publish(const KeyboardState& keyboard) = 0;
-    virtual void Publish(const Networks& networks) = 0;
+    virtual void Publish(const std::string_view name, const Displays& displays) = 0;
+    virtual void Publish(const std::string_view name, const PowerState& power) = 0;
+    virtual void Publish(const std::string_view name, const AudioState& audio) = 0;
+    virtual void Publish(const std::string_view name, const KeyboardState& keyboard) = 0;
+    virtual void Publish(const std::string_view name, const Networks& networks) = 0;
 };

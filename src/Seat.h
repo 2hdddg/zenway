@@ -22,12 +22,14 @@ class Keyboard : public Source {
     }
     static std::unique_ptr<Keyboard> Create(std::shared_ptr<MainLoop> mainloop, wl_seat* seat);
     void SetLayout(const char* layout);
-    void SetScriptContext(std::shared_ptr<ScriptContext> scriptContext);
+    void SetScriptContext(const std::string_view name,
+                          std::shared_ptr<ScriptContext> scriptContext);
 
    private:
     std::shared_ptr<MainLoop> m_mainloop;
     wl_keyboard* m_wlkeyboard;
     KeyboardState m_sourceState;
+    std::string m_sourceName;
     std::shared_ptr<ScriptContext> m_scriptContext;
 };
 

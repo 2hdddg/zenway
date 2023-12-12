@@ -2,12 +2,9 @@
 
 #include "spdlog/spdlog.h"
 
-std::unique_ptr<Sources> Sources::Create(std::shared_ptr<ScriptContext> scriptContext) {
-    return std::unique_ptr<Sources>(new Sources(scriptContext));
-}
+std::unique_ptr<Sources> Sources::Create() { return std::unique_ptr<Sources>(new Sources()); }
 
 void Sources::Register(std::string_view name, std::shared_ptr<Source> source) {
-    m_scriptContext->RegisterSource(name);
     m_sources[std::string(name)] = source;
 }
 

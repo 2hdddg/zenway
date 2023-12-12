@@ -1,13 +1,8 @@
 #include <spdlog/cfg/env.h>
 #include <spdlog/spdlog.h>
-#include <wayland-client-core.h>
-#include <wayland-client-protocol.h>
-#include <wayland-client.h>
 
-#include <cstdlib>
 #include <filesystem>
 
-#include "Configuration.h"
 #include "DateTimeSources.h"
 #include "MainLoop.h"
 #include "Manager.h"
@@ -57,12 +52,12 @@ static void InitializeSource(const std::string& source, Sources& sources,
         sources.Register("time", timeSource);
         return;
     }
-    if (source == "workspace") {
+    if (source == "displays") {
         // Initialized by manager later..
         return;
     }
     if (source == "networks") {
-        auto networkSource = NetworkSource::Create(*mainLoop, scriptContext);
+        auto networkSource = NetworkSource::Create(source, *mainLoop, scriptContext);
         if (!networkSource) {
             spdlog::error("Failed to initialize network source");
             return;
@@ -72,7 +67,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         return;
     }
     if (source == "audio") {
-        auto audioSource = PulseAudioSource::Create(mainLoop, scriptContext);
+        auto audioSource = PulseAudioSource::Create(source, mainLoop, scriptContext);
         if (!audioSource) {
             spdlog::error("Failed to initialize PulseAudio source");
             return;
@@ -81,7 +76,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         return;
     }
     if (source == "power") {
-        auto powerSource = PowerSource::Create(*mainLoop, scriptContext);
+        auto powerSource = PowerSource::Create(source, *mainLoop, scriptContext);
         if (!powerSource) {
             spdlog::error("Failed to initialize battery source");
             return;
@@ -93,8 +88,8 @@ static void InitializeSource(const std::string& source, Sources& sources,
     }
     if (source == "keyboard") {
         if (registry.seat && registry.seat->keyboard) {
-            sources.Register("keyboard", registry.seat->keyboard);
-            registry.seat->keyboard->SetScriptContext(scriptContext);
+            sources.Register(source, registry.seat->keyboard);
+            registry.seat->keyboard->SetScriptContext(source, scriptContext);
         } else {
             spdlog::warn("No keyboard source");
         }
@@ -145,7 +140,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Initialize sources
-    auto sources = Sources::Create(scriptContext);
+    auto sources = Sources::Create();
     for (auto panelConfig : config->panels) {
         //  Check what sources are needed for the widgets in the panel
         for (const auto& widgetConfig : panelConfig.widgets) {
@@ -158,9 +153,10 @@ int main(int argc, char* argv[]) {
         }
     }
     // Manager handles displays and redrawing
-    auto manager = Manager::Create(*mainLoop, outputs, std::move(sources));
+    auto manager =
+        Manager::Create("displays", *mainLoop, outputs, std::move(sources), scriptContext);
     // Initialize compositor
-    auto sway = SwayCompositor::Connect(*mainLoop, manager, scriptContext);
+    auto sway = SwayCompositor::Connect(*mainLoop, manager);
     if (!sway) {
         spdlog::error("Failed to connect to Sway");
         return -1;

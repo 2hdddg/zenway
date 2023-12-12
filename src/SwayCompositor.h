@@ -8,19 +8,15 @@
 class SwayCompositor : public IoHandler {
    public:
     static std::shared_ptr<SwayCompositor> Connect(MainLoop& mainLoop,
-                                                   std::shared_ptr<Manager> manager,
-                                                   std::shared_ptr<ScriptContext> scriptContext);
+                                                   std::shared_ptr<Manager> manager);
     virtual ~SwayCompositor();
 
     virtual bool OnRead() override;
 
    private:
     void Initialize();
-    SwayCompositor(int fd, std::shared_ptr<Manager> manager,
-                   std::shared_ptr<ScriptContext> scriptContext)
-        : m_fd(fd), m_manager(manager), m_scriptContext(scriptContext) {}
+    SwayCompositor(int fd, std::shared_ptr<Manager> manager) : m_fd(fd), m_manager(manager) {}
     int m_fd;
     std::shared_ptr<Manager> m_manager;
-    std::shared_ptr<ScriptContext> m_scriptContext;
     std::string m_payload;
 };

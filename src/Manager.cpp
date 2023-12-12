@@ -2,17 +2,15 @@
 
 #include "spdlog/spdlog.h"
 
-std::shared_ptr<Manager> Manager::Create(MainLoop& mainLoop, std::shared_ptr<Outputs> outputs,
-                                         std::unique_ptr<Sources> sources) {
-    auto manager = std::shared_ptr<Manager>(new Manager(outputs, std::move(sources)));
+std::shared_ptr<Manager> Manager::Create(std::string_view sourceName, MainLoop& mainLoop,
+                                         std::shared_ptr<Outputs> outputs,
+                                         std::unique_ptr<Sources> sources,
+                                         std::shared_ptr<ScriptContext> scriptContext) {
+    auto manager = std::shared_ptr<Manager>(
+        new Manager(sourceName, outputs, std::move(sources), scriptContext));
     mainLoop.RegisterBatchHandler(manager);
-    manager->m_sources->Register("workspace", manager);
+    manager->m_sources->Register(sourceName, manager);
     return manager;
-}
-
-void Manager::DirtyWorkspace() {
-    m_sourceDirtyFlag = true;
-    OnBatchProcessed();
 }
 
 void Manager::ClickSurface(wl_surface* surface, int x, int y) {
@@ -38,16 +36,22 @@ void Manager::OnBatchProcessed() {
     m_sources->CleanAll();
 }
 
+void Manager::Publish(const Displays& displays) {
+    m_scriptContext->Publish(m_sourceName, displays);
+    m_sourceDirtyFlag = true;
+    OnBatchProcessed();
+}
+
 void Manager::Hide() {
     m_isVisible = false;
     m_visibilityChanged = true;
-    // OnBatchProcessed will be invoked by main loop
-    // This could be problematic on other compositors. Maybe let each compositor be the source
-    // instead
+    m_sourceDirtyFlag = true;
+    OnBatchProcessed();
 }
 
 void Manager::Show() {
     m_isVisible = true;
     m_visibilityChanged = true;
-    // OnBatchProcessed will be invoked by main loop
+    m_sourceDirtyFlag = true;
+    OnBatchProcessed();
 }
