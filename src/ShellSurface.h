@@ -32,6 +32,7 @@ class ShellSurface {
           m_layer(nullptr),
           m_inputRegion(nullptr),
           m_isClosed(false),
+          m_previousDamage{},
           m_panelConfig(std::move(panelConfiguration)) {}
     void Show();
 
@@ -41,7 +42,7 @@ class ShellSurface {
     zwlr_layer_surface_v1 *m_layer;
     wl_region *m_inputRegion;
     bool m_isClosed;
-    Rect m_previousDamage;
+    Size m_previousDamage;
     PanelConfig m_panelConfig;
     DrawnPanel m_drawn;
 };

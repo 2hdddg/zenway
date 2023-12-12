@@ -13,6 +13,7 @@ struct DrawnWidget {
 };
 
 struct DrawnPanel {
+    DrawnPanel() : buffer(nullptr), size{} {}
     std::shared_ptr<Buffer> buffer;
     Size size;
     std::vector<DrawnWidget> widgets;

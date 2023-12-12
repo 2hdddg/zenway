@@ -95,12 +95,12 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
         return;
     }
     const auto &size = m_drawn.size;
-    Rect damage;
-    damage.x = 0;
-    damage.y = 0;
+    Size damage;
     damage.cx = std::max(size.cx, m_previousDamage.cx);
     damage.cy = std::max(size.cy, m_previousDamage.cy);
     spdlog::trace("Draw buffer: {}x{}", size.cx, size.cy);
+    spdlog::trace("Damaging: {}x{}", damage.cx, damage.cy);
+    spdlog::trace("Previous draw: {}x{}", m_previousDamage.cx, m_previousDamage.cy);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
     auto anchor = m_panelConfig.anchor;
     uint32_t zanchor;
@@ -120,7 +120,7 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
     wl_surface_attach(m_surface, m_drawn.buffer->Lock(), 0, 0);
-    wl_surface_damage_buffer(m_surface, damage.x, damage.y, damage.cx, damage.cy);
+    wl_surface_damage_buffer(m_surface, 0, 0, damage.cx, damage.cy);
     // Maintain input region
     if (m_inputRegion) {
         wl_region_destroy(m_inputRegion);
@@ -131,7 +131,7 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     // Commit changes
     wl_surface_commit(m_surface);
     m_roots->FlushAndDispatchCommands();
-    m_previousDamage = {0, 0, size.cx, size.cy};
+    m_previousDamage = size;
 }
 
 void ShellSurface::Hide() {

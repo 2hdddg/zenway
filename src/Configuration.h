@@ -47,6 +47,7 @@ struct Border {
 enum class Anchor { Left, Right, Top, Bottom };
 
 struct Renderable {
+    Renderable() : computed{} {}
     virtual ~Renderable() {}
     virtual void Compute(cairo_t* cr) {}
     virtual void Draw(cairo_t* cr, int x, int y) const {}
@@ -54,7 +55,7 @@ struct Renderable {
 };
 
 struct Markup : public Renderable {
-    Markup(const std::string& string) : string(string), m_layout(nullptr) {}
+    Markup(const std::string& string) : Renderable(), string(string), m_layout(nullptr) {}
     virtual ~Markup() {
         if (m_layout) g_object_unref(m_layout);
     }
@@ -68,7 +69,7 @@ struct Markup : public Renderable {
 
 struct MarkupBox : public Renderable {
     MarkupBox(const std::string& string)
-        : markup(string), color({}), border({}), radius(0), padding({}) {}
+        : Renderable(), markup(string), color({}), border({}), radius(0), padding({}) {}
     void Compute(cairo_t* cr) override;
     void Draw(cairo_t* cr, int x, int y) const override;
 
@@ -80,6 +81,7 @@ struct MarkupBox : public Renderable {
 };
 
 struct FlexContainer : public Renderable {
+    FlexContainer() : Renderable(), isColumn(false), padding({}) {}
     void Compute(cairo_t* cr) override;
     void Draw(cairo_t* cr, int x, int y) const override;
 
@@ -89,6 +91,7 @@ struct FlexContainer : public Renderable {
 };
 
 struct WidgetConfig {
+    WidgetConfig() : padding({}) {}
     std::function<std::unique_ptr<Renderable>(const std::string& outputName)> render;
     std::function<void()> click;
     std::set<std::string> sources;
@@ -96,6 +99,7 @@ struct WidgetConfig {
 };
 
 struct Widget {
+    Widget() : computed({}), m_renderable(nullptr), m_paddingX(0), m_paddingY(0) {}
     void Compute(const WidgetConfig& config, const std::string& outputName, cairo_t* cr);
     void Draw(cairo_t* cr, int x, int y) const;
     Size computed;

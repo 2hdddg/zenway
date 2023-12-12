@@ -82,16 +82,16 @@ void MarkupBox::Draw(cairo_t* cr, int x, int y) const {
 }
 
 void FlexContainer::Compute(cairo_t* cr) {
-    computed.cx = padding.left + padding.right;
-    computed.cy = padding.top + padding.bottom;
+    computed.cx = 0;
+    computed.cy = 0;
     for (const auto& r : children) {
         r->Compute(cr);
         if (isColumn) {
-            computed.cy += r->computed.cy;
-            computed.cx = std::max(computed.cx, r->computed.cx);
+            computed.cy += padding.top + padding.bottom + r->computed.cy;
+            computed.cx = std::max(computed.cx, r->computed.cx + padding.left + padding.right);
         } else {
-            computed.cx += r->computed.cx;
-            computed.cy = std::max(computed.cy, r->computed.cy);
+            computed.cx += padding.left + padding.right + r->computed.cx;
+            computed.cy = std::max(computed.cy, r->computed.cy + padding.top + padding.bottom);
         }
     }
     LogComputed(computed, "FlexContainer");
@@ -123,10 +123,10 @@ void Widget::Compute(const WidgetConfig& config, const std::string& outputName, 
         return;
     }
     item->Compute(cr);
-    computed.cx = item->computed.cx + config.padding.left + config.padding.right;
-    computed.cy = item->computed.cy + config.padding.top + config.padding.bottom;
     m_paddingX = config.padding.left;
     m_paddingY = config.padding.top;
+    computed.cx = item->computed.cx + config.padding.left + config.padding.right + m_paddingX;
+    computed.cy = item->computed.cy + config.padding.top + config.padding.bottom + m_paddingY;
     m_renderable = std::move(item);
 }
 
