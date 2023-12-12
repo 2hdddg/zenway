@@ -1,3 +1,8 @@
 #include "Roots.h"
 
-void Roots::FlushAndDispatchCommands() const { wl_display_roundtrip(display); }
+#include "spdlog/spdlog.h"
+
+void Roots::FlushAndDispatchCommands() const {
+    spdlog::trace("Flushing and dispatching wayland commands");
+    wl_display_roundtrip(display);
+}

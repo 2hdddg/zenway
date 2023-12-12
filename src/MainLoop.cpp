@@ -39,7 +39,10 @@ void MainLoop::Run() {
                     // rely on batch processing when all other events has been processed
                     if (poll.fd == m_eventFd) {
                         uint64_t ignore;
+                        spdlog::trace("Popping internal event");
+                        m_wakupMutex.lock();
                         read(m_eventFd, &ignore, sizeof(uint64_t));
+                        m_wakupMutex.unlock();
                         // For now internal events always means that a source is dirty
                         anyDirty = true;
                         continue;
@@ -47,6 +50,7 @@ void MainLoop::Run() {
                     auto& handler = m_handlers[poll.fd];
                     spdlog::trace("Invoking io handler for fd {}", poll.fd);
                     anyDirty = handler->OnRead() || anyDirty;
+                    spdlog::trace("Io handler done");
                 }
             }
         }
@@ -69,6 +73,8 @@ void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandl
 }
 
 void MainLoop::Wakeup() {
+    m_wakupMutex.lock();
     uint64_t inc = 1;
     write(m_eventFd, &inc, sizeof(uint64_t));
+    m_wakupMutex.unlock();
 }

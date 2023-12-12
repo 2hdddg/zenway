@@ -5,6 +5,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
 class IoHandler {
@@ -34,6 +35,7 @@ class MainLoop {
     MainLoop(int eventFd) : m_eventFd(eventFd) {}
 
     int m_eventFd;
+    std::mutex m_wakupMutex;
     std::vector<pollfd> m_polls;
     std::map<int, std::shared_ptr<IoHandler>> m_handlers;
     std::vector<std::shared_ptr<IoBatchHandler>> m_batchHandlers;
