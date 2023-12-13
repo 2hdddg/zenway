@@ -3,6 +3,7 @@
 
 #include "sol/sol.hpp"
 #include "spdlog/spdlog.h"
+#include "util.h"
 
 int GetIntProperty(const sol::table& t, const char* name, int missing) {
     const sol::optional<int> o = t[name];
@@ -294,10 +295,23 @@ void ScriptContextImpl::Publish(const std::string_view name, const Networks& net
     m_lua["zen"][name] = networksTable;
 }
 
+std::string HtmlEscape(sol::optional<std::string> maybeString) {
+    if (!maybeString) {
+        spdlog::error("html_encode requires string");
+        return "";
+    }
+    return Util::HtmlEscape(*maybeString);
+}
+
 std::unique_ptr<ScriptContext> ScriptContext::Create() {
     sol::state lua;
     lua.open_libraries();
+    // Build utilities
+    auto util = lua.create_table();
+    util.set_function("html_escape", &HtmlEscape);
+    auto zen = lua.create_table();
+    zen["u"] = util;
     // Expose root api for configuration to Lua
-    lua["zen"] = lua.create_table("zen");
+    lua["zen"] = zen;
     return std::unique_ptr<ScriptContext>(new ScriptContextImpl(std::move(lua)));
 }

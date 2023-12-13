@@ -96,7 +96,7 @@ local function render_workspaces(displayName)
         for _, app in pairs(workspace.applications) do
             if app.focus then app_name = app.name end
         end
-        if #workspace.applications == 0 then app_name = "&lt;desktop&gt;" end
+        if #workspace.applications == 0 then app_name = "<desktop>" end
         boxcolor = BLACK_BR
         if workspace.focus then
             boxcolor = YELLOW
@@ -106,8 +106,8 @@ local function render_workspaces(displayName)
             direction = "row",
             padding = { right = 1 },
             items = {
-                wsbox(label{label=" " .. workspace.name .. " "}, boxcolor),
-                wsbox(label{label=app_name}, boxcolor),
+                wsbox(label{label=" " .. zen.u.html_escape(workspace.name) .. " "}, boxcolor),
+                wsbox(label{label=zen.u.html_escape(app_name)}, boxcolor),
             },
         }
         table.insert(workspaces, workspace)
