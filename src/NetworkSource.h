@@ -13,6 +13,7 @@ class NetworkSource : public Source, public IoHandler {
     void Initialize();
     void ReadState();
     virtual bool OnRead() override;
+    virtual ~NetworkSource() { close(m_timerfd); }
 
    private:
     NetworkSource(std::string_view name, int socket, int timerfd,
