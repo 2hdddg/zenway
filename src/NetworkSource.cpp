@@ -36,7 +36,7 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(std::string_view name, Main
     if (sock < 0) {
         return nullptr;
     }
-    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
+    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     if (fd == -1) {
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
@@ -99,7 +99,11 @@ void NetworkSource::ReadState() {
 bool NetworkSource::OnRead() {
     spdlog::info("Check power");
     uint64_t ignore;
-    read(m_timerfd, &ignore, sizeof(ignore));
+    auto n = read(m_timerfd, &ignore, sizeof(ignore));
+    if (n <= 0) {
+        // Either block or no events
+        return false;
+    }
     ReadState();
     return m_sourceDirtyFlag;
 }

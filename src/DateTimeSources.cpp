@@ -22,7 +22,7 @@ void DateSource::Evaluate() {
 
 std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
                                                std::shared_ptr<DateSource> dateSource) {
-    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
+    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     if (fd == -1) {
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
@@ -47,7 +47,11 @@ TimeSource::~TimeSource() { close(m_fd); }
 bool TimeSource::OnRead() {
     spdlog::debug("Time source set to dirty");
     uint64_t ignore;
-    read(m_fd, &ignore, sizeof(ignore));
+    auto n = read(m_fd, &ignore, sizeof(ignore));
+    if (n <= 0) {
+        // Either block or no events
+        return false;
+    }
     m_sourceDirtyFlag = true;
     m_dateSource->Evaluate();
     return m_sourceDirtyFlag;

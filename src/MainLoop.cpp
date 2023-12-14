@@ -32,21 +32,19 @@ void MainLoop::Run() {
         // Process
         spdlog::trace("{} events in main loop", num);
         bool anyDirty = false;
-        while (num--) {
-            for (auto& poll : m_polls) {
-                if ((poll.events & poll.revents) != 0) {
-                    // Special treatment on internal events. Empty events and
-                    // rely on batch processing when all other events has been processed
-                    if (poll.fd == m_eventFd) {
-                        uint64_t ignore;
-                        spdlog::trace("Popping internal event");
-                        m_wakupMutex.lock();
-                        read(m_eventFd, &ignore, sizeof(uint64_t));
-                        m_wakupMutex.unlock();
-                        // For now internal events always means that a source is dirty
-                        anyDirty = true;
-                        continue;
-                    }
+        for (auto& poll : m_polls) {
+            if ((poll.events & poll.revents) != 0) {
+                // Special treatment on internal events. Empty events and
+                // rely on batch processing when all other events has been processed
+                if (poll.fd == m_eventFd) {
+                    uint64_t ignore;
+                    spdlog::trace("Popping internal event");
+                    m_wakupMutex.lock();
+                    read(m_eventFd, &ignore, sizeof(uint64_t));
+                    m_wakupMutex.unlock();
+                    // For now internal events always means that a source is dirty
+                    anyDirty = true;
+                } else {
                     auto& handler = m_handlers[poll.fd];
                     spdlog::trace("Invoking io handler for fd {}", poll.fd);
                     anyDirty = handler->OnRead() || anyDirty;

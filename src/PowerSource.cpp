@@ -9,7 +9,8 @@
 
 std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop& mainLoop,
                                                  std::shared_ptr<ScriptContext> scriptContext) {
-    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
+    // Use non blocking to make sure we never hang on read
+    auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     if (fd == -1) {
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
@@ -113,7 +114,11 @@ PowerSource::~PowerSource() { close(m_timerfd); }
 bool PowerSource::OnRead() {
     spdlog::debug("Polling power status");
     uint64_t ignore;
-    read(m_timerfd, &ignore, sizeof(ignore));
+    auto n = read(m_timerfd, &ignore, sizeof(ignore));
+    if (n <= 0) {
+        // Either block or no events
+        return false;
+    }
     ReadState();
     return m_sourceDirtyFlag;
 }
