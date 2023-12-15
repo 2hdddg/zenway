@@ -1,5 +1,7 @@
 #include "src/SwayCompositor.h"
 
+#define JSON_USE_IMPLICIT_CONVERSIONS 0
+
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,20 +38,20 @@ const std::set<std::string> ignore = {"rect",
 
 const auto filter = [](int depth, json::parse_event_t event, json &parsed) {
     if (event != json::parse_event_t::key) return true;
-    std::string key = parsed;
+    auto key = parsed.get<std::string>();
     return ignore.find(key) == ignore.end();
 };
 
 static void ParseEvent(const std::string &payload) {
     auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
-    std::string change = rootNode["change"];
+    auto change = rootNode["change"].get<std::string>();
     spdlog::trace("Change is: {}", change);
 }
 
 static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleByModifier) {
     auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
     // std::string barId = rootNode["id"];
-    visibleByModifier = rootNode["visible_by_modifier"];
+    visibleByModifier = rootNode["visible_by_modifier"].get<bool>();
 }
 
 static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applicationNode,
@@ -70,16 +72,17 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
         return;
     }
 
-    auto application = Application{.name = applicationNode["name"]};
-    int applicationId = applicationNode["id"];
+    auto application = Application{.name = applicationNode["name"].get<std::string>()};
+    int applicationId = applicationNode["id"].get<int>();
     // Can be null
-    if (!applicationNode["app_id"].is_null()) {
-        application.appId = applicationNode["app_id"];
+    auto appId = applicationNode["app_id"];
+    if (!appId.is_null()) {
+        application.appId = appId.get<std::string>();
     }
     // In sway the only focused app is the one in the focused workspace. When that app is focused
     // the workspace is not. To simplify usage this considers the focused app in a non focused
     // workspace to be the next in line.
-    application.isFocused = applicationNode["focused"];
+    application.isFocused = applicationNode["focused"].get<bool>();
     if (application.isFocused) {
         workspace.isFocused = true;
     } else {
@@ -101,22 +104,23 @@ static void ParseTree(const std::string &payload, Manager &manager) {
             // spdlog::error("Expected output but was {}", outputNode["type"]);
             continue;
         }
-        auto display = Display{.name = outputNode["name"]};  // workspaces->AddDisplay();
+        auto display =
+            Display{.name = outputNode["name"].get<std::string>()};  // workspaces->AddDisplay();
         auto workspaceNodes = outputNode["nodes"];
         for (auto workspaceNode : workspaceNodes) {
             if (workspaceNode["type"] != "workspace") {
                 spdlog::error("Expected workspace");
                 continue;
             }
-            auto workspace = Workspace{.name = workspaceNode["name"]};
+            auto workspace = Workspace{.name = workspaceNode["name"].get<std::string>()};
             //   Better way?
             auto focusNode = workspaceNode["focus"];
             int nextFocusId = -1;
-            for (auto i : focusNode) {
-                nextFocusId = i;
+            for (auto n : focusNode) {
+                nextFocusId = n.get<int>();
                 break;
             }
-            workspace.isFocused = workspaceNode["focused"];
+            workspace.isFocused = workspaceNode["focused"].get<bool>();
             auto applicationNodes = workspaceNode["nodes"];
             for (auto applicationNode : applicationNodes) {
                 ParseApplication(workspace, applicationNode, nextFocusId);
