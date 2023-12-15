@@ -72,7 +72,10 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
 
     auto application = Application{.name = applicationNode["name"]};
     int applicationId = applicationNode["id"];
-    application.appId = applicationNode["app_id"];
+    // Can be null
+    if (!applicationNode["app_id"].is_null()) {
+        application.appId = applicationNode["app_id"];
+    }
     // In sway the only focused app is the one in the focused workspace. When that app is focused
     // the workspace is not. To simplify usage this considers the focused app in a non focused
     // workspace to be the next in line.
