@@ -60,8 +60,7 @@ class Pointer {
 
 class Seat {
    public:
-    static std::unique_ptr<Seat> Create(const Roots& roots, std::shared_ptr<MainLoop> mainLoop,
-                                        wl_seat* seat);
+    static std::unique_ptr<Seat> Create(std::shared_ptr<MainLoop> mainLoop, wl_seat* seat);
     Seat(wl_seat* wlseat) : m_wlseat(wlseat) {}
     virtual ~Seat() {
         wl_seat_destroy(m_wlseat);

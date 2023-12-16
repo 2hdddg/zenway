@@ -107,8 +107,7 @@ void Keyboard::SetScriptContext(const std::string_view sourceName,
     m_scriptContext->Publish(m_sourceName, m_sourceState);
 }
 
-std::unique_ptr<Seat> Seat::Create(const Roots& roots, std::shared_ptr<MainLoop> mainLoop,
-                                   wl_seat* wlseat) {
+std::unique_ptr<Seat> Seat::Create(std::shared_ptr<MainLoop> mainLoop, wl_seat* wlseat) {
     auto keyboard = Keyboard::Create(mainLoop, wlseat);
     auto seat = std::make_unique<Seat>(wlseat);
     seat->keyboard = std::move(keyboard);

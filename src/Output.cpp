@@ -7,9 +7,8 @@ class Output {
     using OnNamedCallback = std::function<void(Output *output, const std::string &name)>;
 
    public:
-    static void Create(const std::shared_ptr<Roots> roots, wl_output *wloutput,
-                       const wl_output_listener *listener, std::shared_ptr<Configuration> config,
-                       OnNamedCallback onNamed) {
+    static void Create(wl_output *wloutput, const wl_output_listener *listener,
+                       std::shared_ptr<Configuration> config, OnNamedCallback onNamed) {
         // This will be in lingo until name is received
         auto output = new Output(wloutput, config, onNamed);
         wl_output_add_listener(wloutput, listener, output);
@@ -34,7 +33,7 @@ class Output {
     void Draw(const PanelConfig &panelConfig, std::shared_ptr<Roots> roots,
               BufferPool &bufferPool) {
         // Query panel if it wants to be drawn on this display
-        if (panelConfig.checkDisplay &&  !panelConfig.checkDisplay(m_name)) {
+        if (panelConfig.checkDisplay && !panelConfig.checkDisplay(m_name)) {
             return;
         }
         spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
@@ -123,7 +122,7 @@ bool Outputs::Initialize(const std::shared_ptr<Roots> roots) {
 }
 
 void Outputs::Add(wl_output *wloutput) {
-    Output::Create(m_roots, wloutput, &listener, m_config, [this](auto output, auto name) {
+    Output::Create(wloutput, &listener, m_config, [this](auto output, auto name) {
         spdlog::info("Adding output {}", name);
         m_map[name] = std::shared_ptr<Output>(output);
     });

@@ -34,7 +34,6 @@ class ShellSurface {
           m_isClosed(false),
           m_previousDamage{},
           m_panelConfig(std::move(panelConfiguration)) {}
-    void Show();
 
     const std::shared_ptr<Roots> m_roots;
     wl_output *m_output;

@@ -52,7 +52,6 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
     if (!isThis) {
         return false;
     }
-
     // Check what widget
     int i = 0;
     for (const auto w : m_drawn.widgets) {
@@ -70,37 +69,29 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
     return true;
 }
 
-void ShellSurface::Show() {
-    if (m_isClosed) return;
-    if (m_layer) return;
-    m_layer = zwlr_layer_shell_v1_get_layer_surface(m_roots->shell, m_surface, m_output,
-                                                    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "namespace");
-    zwlr_layer_surface_v1_add_listener(m_layer, &layer_listener, this);
-    zwlr_layer_surface_v1_set_size(m_layer, 1, 1);
-    zwlr_layer_surface_v1_set_anchor(m_layer, ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
-    wl_surface_commit(m_surface);
-    m_roots->FlushAndDispatchCommands();
-}
-
 void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     if (m_isClosed) {
         return;
-    }
-    if (!m_layer) {
-        Show();
     }
     m_drawn.widgets.clear();
     if (!Draw::Panel(m_panelConfig, outputName, bufferPool, m_drawn)) {
         // Nothing drawn for this output
         return;
     }
+    if (!m_layer) {
+        m_layer = zwlr_layer_shell_v1_get_layer_surface(
+            m_roots->shell, m_surface, m_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "namespace");
+        zwlr_layer_surface_v1_add_listener(m_layer, &layer_listener, this);
+        zwlr_layer_surface_v1_set_size(m_layer, 1, 1);
+        zwlr_layer_surface_v1_set_anchor(m_layer, ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
+        wl_surface_commit(m_surface);
+        m_roots->FlushAndDispatchCommands();
+    }
     const auto &size = m_drawn.size;
     Size damage;
     damage.cx = std::max(size.cx, m_previousDamage.cx);
     damage.cy = std::max(size.cy, m_previousDamage.cy);
-    spdlog::trace("Draw buffer: {}x{}", size.cx, size.cy);
-    spdlog::trace("Damaging: {}x{}", damage.cx, damage.cy);
-    spdlog::trace("Previous draw: {}x{}", m_previousDamage.cx, m_previousDamage.cy);
+    spdlog::trace("Draw buffer: {}x{}, damaging {}x{}", size.cx, size.cy, damage.cx, damage.cy);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
     auto anchor = m_panelConfig.anchor;
     uint32_t zanchor;

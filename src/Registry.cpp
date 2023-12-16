@@ -38,7 +38,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
             return;
         }
         auto wlseat = (wl_seat *)wl_registry_bind(registry, name, &wl_seat_interface, 8);
-        seat = Seat::Create(*roots, m_mainloop, wlseat);
+        seat = Seat::Create(m_mainloop, wlseat);
         return;
     }
     spdlog::trace("Event wl_registry::register {} {}", interface, version);
