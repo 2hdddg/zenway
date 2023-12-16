@@ -17,6 +17,24 @@
 
 using namespace nlohmann;
 
+static constexpr auto MAGIC = "i3-ipc";
+static constexpr auto MAGIC_LENGTH = 6;
+static constexpr auto HEADER_SIZE = MAGIC_LENGTH + 4 + 4;
+
+enum class Message : uint32_t {
+    RUN_COMMAND = 0,
+    GET_WORKSPACES,
+    SUBSCRIBE,
+    GET_OUTPUTS,
+    GET_TREE,
+
+    EVENT_WORKSPACE = 0x80000000,
+    EVENT_WINDOW = 0x80000003,
+    EVENT_SHUTDOWN = 0x80000006,
+    EVENT_BAR_STATE_UPDATE = 0x80000014,
+    EVENT_INPUT = 0x80000015,
+};
+
 static bool Filter(int depth, json::parse_event_t event, json &parsed) {
     static const std::set<std::string> ignore = {"rect",
                                                  "window_rect",
@@ -58,11 +76,14 @@ static bool IsArray(basic_json<> node) { return !node.is_null() && node.is_array
 static std::string GetString(basic_json<> node, const char *attr) {
     auto v = node[attr];
     if (v.is_null()) return "";
+    // TODO: Warn
     if (!v.is_string()) return "";
     return v.get<std::string>();
 }
 
 static std::string GetName(basic_json<> node) { return GetString(node, "name"); }
+
+static bool GetFocused(basic_json<> node) { return node["focused"].get<bool>(); }
 
 static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleByModifier) {
     auto rootNode = json::parse(payload, Filter, false /*ignore exceptions*/);
@@ -95,18 +116,13 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
         }
         return;
     }
-
-    auto application = Application{.name = applicationNode["name"].get<std::string>()};
+    auto application = Application{.name = GetName(applicationNode),
+                                   .appId = GetString(applicationNode, "app_id")};
     int applicationId = applicationNode["id"].get<int>();
-    // Can be null
-    auto appId = applicationNode["app_id"];
-    if (!appId.is_null()) {
-        application.appId = appId.get<std::string>();
-    }
     // In sway the only focused app is the one in the focused workspace. When that app is focused
     // the workspace is not. To simplify usage this considers the focused app in a non focused
     // workspace to be the next in line.
-    application.isFocused = applicationNode["focused"].get<bool>();
+    application.isFocused = GetFocused(applicationNode);
     if (application.isFocused) {
         workspace.isFocused = true;
     } else {
@@ -161,7 +177,7 @@ static void ParseTree(const std::string &payload, Manager &manager) {
                 nextFocusId = n.get<int>();
                 break;
             }
-            workspace.isFocused = workspaceNode["focused"].get<bool>();
+            workspace.isFocused = GetFocused(workspaceNode);
             auto applicationNodes = workspaceNode["nodes"];
             if (!IsArray(applicationNodes)) {
                 continue;
@@ -176,24 +192,6 @@ static void ParseTree(const std::string &payload, Manager &manager) {
     }
     manager.Publish(displays);
 }
-static constexpr auto MAGIC = "i3-ipc";
-static constexpr auto MAGIC_LENGTH = 6;
-static constexpr auto HEADER_SIZE = MAGIC_LENGTH + 4 + 4;
-
-enum class Message : uint32_t {
-    RUN_COMMAND = 0,
-    GET_WORKSPACES,
-    SUBSCRIBE,
-    GET_OUTPUTS,
-    GET_TREE,
-
-    EVENT_WORKSPACE = 0x80000000,
-    EVENT_WINDOW = 0x80000003,
-    EVENT_SHUTDOWN = 0x80000006,
-    EVENT_BAR_STATE_UPDATE = 0x80000014,
-    EVENT_INPUT = 0x80000015,
-
-};
 
 std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
                                                         std::shared_ptr<Manager> manager) {
@@ -244,35 +242,31 @@ bool SwayCompositor::OnRead() {
     read(m_fd, hdr, HEADER_SIZE);
     if (memcmp(hdr, MAGIC, MAGIC_LENGTH) != 0) {
         spdlog::error("Bad read");
+        return false;
     }
     uint32_t len = *((uint32_t *)(hdr + MAGIC_LENGTH));
     m_payload = "";
     m_payload.resize(len + 1);
-    /* TODO: Fix this
-    if (len > m_payload.capacity()) {
-        m_payload.clear();
-        m_payload.reserve(len + 1);
-        m_payload.resize(len + 1);
-    }
-    */
     auto msg = Message(*((uint32_t *)(hdr + MAGIC_LENGTH + 4)));
-
     read(m_fd, m_payload.data(), len);
-    //   Dispatch
+    bool isDirty = false;
     switch (msg) {
         case Message::GET_TREE:
             spdlog::trace("Received sway tree");
             ParseTree(m_payload, *m_manager);
+            isDirty = true;
             break;
         case Message::SUBSCRIBE:
             spdlog::debug("Sway subscriptions confirmed");
             break;
         case Message::EVENT_WORKSPACE:
             spdlog::trace("Sway workspace event");
+            // TODO: Parse workspace change instead of requesting tree
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_WINDOW:
             spdlog::trace("Sway window event");
+            // TODO: Parse window change instead of requesting tree
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_BAR_STATE_UPDATE:
@@ -284,6 +278,7 @@ bool SwayCompositor::OnRead() {
             } else {
                 m_manager->Hide();
             }
+            isDirty = true;
             break;
         case Message::EVENT_SHUTDOWN:
             spdlog::trace("Sway shutdown event");
@@ -292,5 +287,5 @@ bool SwayCompositor::OnRead() {
             spdlog::error("Received unhandled sway message: {}", (uint32_t)msg);
             break;
     }
-    return true;
+    return isDirty;
 }
