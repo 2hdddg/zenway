@@ -17,46 +17,70 @@
 
 using namespace nlohmann;
 
-const std::set<std::string> ignore = {"rect",
-                                      "window_rect",
-                                      "deco_rect",
-                                      "geometry",
-                                      "border",
-                                      "layout",
-                                      "current_border_width",
-                                      "orientation",
-                                      "percent",
-                                      "sticky",
-                                      "window_properties",
-                                      "idle_inhibitors",
-                                      "representation",
-                                      "transform",
-                                      "scale",
-                                      "serial",
-                                      "modes",
-                                      "current_mode"};
-
-const auto filter = [](int depth, json::parse_event_t event, json &parsed) {
-    if (event != json::parse_event_t::key) return true;
+static bool Filter(int depth, json::parse_event_t event, json &parsed) {
+    static const std::set<std::string> ignore = {"rect",
+                                                 "window_rect",
+                                                 "deco_rect",
+                                                 "geometry",
+                                                 "border",
+                                                 "layout",
+                                                 "current_border_width",
+                                                 "orientation",
+                                                 "percent",
+                                                 "sticky",
+                                                 "window_properties",
+                                                 "idle_inhibitors",
+                                                 "representation",
+                                                 "transform",
+                                                 "scale",
+                                                 "serial",
+                                                 "modes",
+                                                 "current_mode"};
+    if (event != json::parse_event_t::key) {
+        return true;
+    }
+    if (!parsed.is_string()) {
+        return true;
+    }
     auto key = parsed.get<std::string>();
     return ignore.find(key) == ignore.end();
 };
 
-static void ParseEvent(const std::string &payload) {
-    auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
-    auto change = rootNode["change"].get<std::string>();
-    spdlog::trace("Change is: {}", change);
+static bool IsNodeType(basic_json<> node, const char *expectedType) {
+    auto type = node["type"];
+    if (type.is_null()) return false;
+    if (!type.is_string()) return false;
+    return type.get<std::string>() == expectedType;
 }
 
+static bool IsArray(basic_json<> node) { return !node.is_null() && node.is_array(); }
+
+static std::string GetString(basic_json<> node, const char *attr) {
+    auto v = node[attr];
+    if (v.is_null()) return "";
+    if (!v.is_string()) return "";
+    return v.get<std::string>();
+}
+
+static std::string GetName(basic_json<> node) { return GetString(node, "name"); }
+
 static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleByModifier) {
-    auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
-    // std::string barId = rootNode["id"];
-    visibleByModifier = rootNode["visible_by_modifier"].get<bool>();
+    auto rootNode = json::parse(payload, Filter, false /*ignore exceptions*/);
+    if (rootNode.is_discarded()) {
+        spdlog::error("Failed to parse Sway status update event");
+        return;
+    }
+    auto visible = rootNode["visible_by_modifier"];
+    if (visible.is_null() || !visible.is_boolean()) {
+        spdlog::error("Failed to get visible modifier from Sway status update event");
+        return;
+    }
+    visibleByModifier = visible.get<bool>();
 }
 
 static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applicationNode,
                              int nextFocusId) {
-    if (applicationNode["type"] != "con" && applicationNode != "floating_con") {
+    if (!IsNodeType(applicationNode, "con") && !IsNodeType(applicationNode, "floating_con")) {
         spdlog::error("Expected app");
         return;
     }
@@ -92,27 +116,44 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
 }
 
 static void ParseTree(const std::string &payload, Manager &manager) {
-    auto rootNode = json::parse(payload, filter, false /*ignore exceptions*/);
-    if (rootNode["type"] != "root") {
-        spdlog::error("Expected root");
+    auto rootNode = json::parse(payload, Filter, false /*ignoring exceptions*/);
+    if (rootNode.is_discarded()) {
+        spdlog::error("Failed to parse Sway tree");
         return;
     }
-    Displays displays;
+    if (!IsNodeType(rootNode, "root")) {
+        spdlog::error("Sway tree root node should be of value root");
+        return;
+    }
     auto outputNodes = rootNode["nodes"];
+    if (!IsArray(outputNodes)) {
+        spdlog::error("Sway tree has invalid nodes");
+        return;
+    }
+    // Iterate over displays/outputs
+    Displays displays;
     for (auto outputNode : outputNodes) {
-        if (outputNode["type"] != "output") {
-            // spdlog::error("Expected output but was {}", outputNode["type"]);
+        if (!outputNode.is_object()) {
+            spdlog::error("Expected Sway node to be object");
             continue;
         }
-        auto display =
-            Display{.name = outputNode["name"].get<std::string>()};  // workspaces->AddDisplay();
+        // Ensure that node is output
+        if (!IsNodeType(outputNode, "output")) {
+            continue;
+        }
+        // Retrieve name of output/display
+        auto display = Display{.name = GetName(outputNode)};
+        // Iterate over workspaces
         auto workspaceNodes = outputNode["nodes"];
+        if (!IsArray(workspaceNodes)) {
+            continue;
+        }
         for (auto workspaceNode : workspaceNodes) {
-            if (workspaceNode["type"] != "workspace") {
+            if (!IsNodeType(workspaceNode, "workspace")) {
                 spdlog::error("Expected workspace");
                 continue;
             }
-            auto workspace = Workspace{.name = workspaceNode["name"].get<std::string>()};
+            auto workspace = Workspace{.name = GetName(workspaceNode)};
             //   Better way?
             auto focusNode = workspaceNode["focus"];
             int nextFocusId = -1;
@@ -122,6 +163,9 @@ static void ParseTree(const std::string &payload, Manager &manager) {
             }
             workspace.isFocused = workspaceNode["focused"].get<bool>();
             auto applicationNodes = workspaceNode["nodes"];
+            if (!IsArray(applicationNodes)) {
+                continue;
+            }
             for (auto applicationNode : applicationNodes) {
                 ParseApplication(workspace, applicationNode, nextFocusId);
             }
@@ -225,12 +269,10 @@ bool SwayCompositor::OnRead() {
             break;
         case Message::EVENT_WORKSPACE:
             spdlog::trace("Sway workspace event");
-            ParseEvent(m_payload);
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_WINDOW:
             spdlog::trace("Sway window event");
-            ParseEvent(m_payload);
             Send(m_fd, Message::GET_TREE, "");
             break;
         case Message::EVENT_BAR_STATE_UPDATE:
@@ -245,7 +287,6 @@ bool SwayCompositor::OnRead() {
             break;
         case Message::EVENT_SHUTDOWN:
             spdlog::trace("Sway shutdown event");
-            ParseEvent(m_payload);
             break;
         default:
             spdlog::error("Received unhandled sway message: {}", (uint32_t)msg);
