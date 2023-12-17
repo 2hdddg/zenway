@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "src/MainLoop.h"
-#include "src/Roots.h"
 #include "src/ScriptContext.h"
 #include "src/Sources.h"
 

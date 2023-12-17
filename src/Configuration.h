@@ -49,8 +49,8 @@ enum class Anchor { Left, Right, Top, Bottom };
 struct Renderable {
     Renderable() : computed{} {}
     virtual ~Renderable() {}
-    virtual void Compute(cairo_t* cr) {}
-    virtual void Draw(cairo_t* cr, int x, int y) const {}
+    virtual void Compute(cairo_t*) {}
+    virtual void Draw(cairo_t*, int /*x*/, int /*y*/) const {}
     Size computed;
 };
 

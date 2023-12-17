@@ -6,17 +6,15 @@
 
 #include <memory>
 
-#include "Buffer.h"
 #include "Configuration.h"
 #include "Draw.h"
-#include "Roots.h"
 
 class ShellSurface {
    public:
-    static std::unique_ptr<ShellSurface> Create(const std::shared_ptr<Roots> roots,
-                                                wl_output *output, PanelConfig panelConfiguration);
-    void Draw(BufferPool &bufferPool, const std::string &outputName);
-    void Hide();
+    static std::unique_ptr<ShellSurface> Create(const Registry &registry, wl_output *output,
+                                                PanelConfig panelConfiguration);
+    void Draw(const Registry &registry, BufferPool &bufferPool, const std::string &outputName);
+    void Hide(const Registry &registry);
 
     void OnShellConfigure(uint32_t cx, uint32_t cy);
     void OnClosed();
@@ -24,10 +22,8 @@ class ShellSurface {
     bool ClickSurface(wl_surface *surface, int x, int y);
 
    private:
-    ShellSurface(const std::shared_ptr<Roots> roots, wl_output *output, wl_surface *surface,
-                 PanelConfig panelConfiguration)
-        : m_roots(roots),
-          m_output(output),
+    ShellSurface(wl_output *output, wl_surface *surface, PanelConfig panelConfiguration)
+        : m_output(output),
           m_surface(surface),
           m_layer(nullptr),
           m_inputRegion(nullptr),
@@ -35,7 +31,6 @@ class ShellSurface {
           m_previousDamage{},
           m_panelConfig(std::move(panelConfiguration)) {}
 
-    const std::shared_ptr<Roots> m_roots;
     wl_output *m_output;
     wl_surface *m_surface;
     zwlr_layer_surface_v1 *m_layer;

@@ -2,12 +2,13 @@
 
 #include "spdlog/spdlog.h"
 
-std::shared_ptr<Manager> Manager::Create(std::string_view sourceName, MainLoop& mainLoop,
+std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry,
+                                         std::string_view sourceName, MainLoop& mainLoop,
                                          std::shared_ptr<Outputs> outputs,
                                          std::unique_ptr<Sources> sources,
                                          std::shared_ptr<ScriptContext> scriptContext) {
     auto manager = std::shared_ptr<Manager>(
-        new Manager(sourceName, outputs, std::move(sources), scriptContext));
+        new Manager(registry, sourceName, outputs, std::move(sources), scriptContext));
     mainLoop.RegisterBatchHandler(manager);
     manager->m_sources->Register(sourceName, manager);
     return manager;
@@ -28,11 +29,11 @@ void Manager::OnBatchProcessed() {
         if (m_isVisible) {
             m_sources->DirtyAll();
         } else {
-            m_outputs->Hide();
+            m_outputs->Hide(*m_registry);
             return;
         }
     }
-    m_outputs->Draw(*m_sources);
+    m_outputs->Draw(*m_registry, *m_sources);
     m_sources->CleanAll();
 }
 

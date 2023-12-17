@@ -1,7 +1,7 @@
 #include "Output.h"
 
-#include "Roots.h"
 #include "spdlog/spdlog.h"
+#include "src/ShellSurface.h"
 
 class Output {
     using OnNamedCallback = std::function<void(Output *output, const std::string &name)>;
@@ -21,7 +21,7 @@ class Output {
         m_onNamed = nullptr;
     }
 
-    void OnDescription(const char *description) {
+    void OnDescription(const char * /*description*/) {
         // Might change over lifetime
     }
 
@@ -30,8 +30,7 @@ class Output {
         m_wloutput = nullptr;
     }
 
-    void Draw(const PanelConfig &panelConfig, std::shared_ptr<Roots> roots,
-              BufferPool &bufferPool) {
+    void Draw(const Registry &registry, const PanelConfig &panelConfig, BufferPool &bufferPool) {
         // Query panel if it wants to be drawn on this display
         if (panelConfig.checkDisplay && !panelConfig.checkDisplay(m_name)) {
             return;
@@ -39,19 +38,19 @@ class Output {
         spdlog::info("Drawing panel {} on output {}", panelConfig.index, m_name);
         // Ensure that there is a surface for this panel
         if (!m_surfaces.contains(panelConfig.index)) {
-            auto surface = ShellSurface::Create(roots, m_wloutput, panelConfig /* copies */);
+            auto surface = ShellSurface::Create(registry, m_wloutput, panelConfig /* copies */);
             if (!surface) {
                 spdlog::error("Failed to create surface");
                 return;
             }
             m_surfaces[panelConfig.index] = std::move(surface);
         }
-        m_surfaces[panelConfig.index]->Draw(bufferPool, m_name);
+        m_surfaces[panelConfig.index]->Draw(registry, bufferPool, m_name);
     }
 
-    void Hide() {
+    void Hide(const Registry &registry) {
         for (const auto &kv : m_surfaces) {
-            kv.second->Hide();
+            kv.second->Hide(registry);
         }
     }
 
@@ -78,17 +77,17 @@ class Output {
     std::string m_name;
 };
 
-static void on_name(void *data, struct wl_output *wl_output, const char *name) {
+static void on_name(void *data, struct wl_output *, const char *name) {
     ((Output *)data)->OnName(name);
 }
 
-void on_description(void *data, struct wl_output *wl_output, const char *description) {
+void on_description(void *data, struct wl_output *, const char *description) {
     ((Output *)data)->OnDescription(description);
 }
 
-void on_geometry(void *data, struct wl_output *wl_output, int32_t x, int32_t y,
-                 int32_t physical_width, int32_t physical_height, int32_t subpixel,
-                 const char *make, const char *model, int32_t transform) {}
+void on_geometry(void *data, struct wl_output *, int32_t x, int32_t y, int32_t physical_width,
+                 int32_t physical_height, int32_t subpixel, const char *make, const char *model,
+                 int32_t transform) {}
 
 void on_mode(void *data, struct wl_output *wl_output, uint32_t flags, int32_t width, int32_t height,
              int32_t refresh) {}
@@ -110,14 +109,13 @@ std::unique_ptr<Outputs> Outputs::Create(std::shared_ptr<Configuration> config) 
     return std::unique_ptr<Outputs>(new Outputs(config));
 }
 
-bool Outputs::Initialize(const std::shared_ptr<Roots> roots) {
-    m_bufferPool = BufferPool::Create(roots, m_config->numBuffers, m_config->bufferWidth,
+bool Outputs::Initialize(const Registry &registry) {
+    m_bufferPool = BufferPool::Create(registry, m_config->numBuffers, m_config->bufferWidth,
                                       m_config->bufferHeight);
     if (!m_bufferPool) {
         spdlog::error("Failed to initialize buffer pool");
         return false;
     }
-    m_roots = roots;
     return true;
 }
 
@@ -128,7 +126,7 @@ void Outputs::Add(wl_output *wloutput) {
     });
 }
 
-void Outputs::Draw(const Sources &sources) {
+void Outputs::Draw(const Registry &registry, const Sources &sources) {
     spdlog::trace("Draw outputs");
     for (const auto &panelConfig : m_config->panels) {
         bool dirty = false;
@@ -141,15 +139,15 @@ void Outputs::Draw(const Sources &sources) {
         // This panel is dirty, redraw it on every output
         if (dirty) {
             for (const auto &keyValue : m_map) {
-                keyValue.second->Draw(panelConfig, m_roots, *m_bufferPool);
+                keyValue.second->Draw(registry, panelConfig, *m_bufferPool);
             }
         }
     }
 }
 
-void Outputs::Hide() {
+void Outputs::Hide(const Registry &registry) {
     for (auto &keyValue : m_map) {
-        keyValue.second->Hide();
+        keyValue.second->Hide(registry);
     }
 }
 

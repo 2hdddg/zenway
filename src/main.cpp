@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Outputs needs roots initialized by the registry
-    if (!outputs->Initialize(registry->roots)) {
+    if (!outputs->Initialize(*registry)) {
         return -1;
     }
     // Initialize sources
@@ -153,8 +153,8 @@ int main(int argc, char* argv[]) {
         }
     }
     // Manager handles displays and redrawing
-    auto manager =
-        Manager::Create("displays", *mainLoop, outputs, std::move(sources), scriptContext);
+    auto manager = Manager::Create(registry, "displays", *mainLoop, outputs, std::move(sources),
+                                   scriptContext);
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager);
     if (!sway) {

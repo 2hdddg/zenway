@@ -9,7 +9,6 @@
 
 #include "MainLoop.h"
 #include "Output.h"
-#include "Roots.h"
 #include "Seat.h"
 #include "ShellSurface.h"
 
@@ -20,7 +19,18 @@ class Registry : public IoHandler {
     virtual ~Registry() {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
+        zwlr_layer_shell_v1_destroy(shell);
+        shell = nullptr;
+        wl_shm_destroy(shm);
+        shm = nullptr;
+        wl_compositor_destroy(compositor);
+        compositor = nullptr;
+        // Should be last!
+        wl_display_disconnect(display);
+        display = nullptr;
     }
+
+    void FlushAndDispatchCommands() const;
 
     void Register(struct wl_registry *registry, uint32_t name, const char *interface,
                   uint32_t version);
@@ -29,15 +39,18 @@ class Registry : public IoHandler {
     virtual bool OnRead() override;
 
     // These are maintained by the registry
-    std::shared_ptr<Roots> roots;
     std::shared_ptr<Seat> seat;
+    // Do not copy these!
+    zwlr_layer_shell_v1 *shell;
+    wl_shm *shm;
+    wl_compositor *compositor;
+    wl_display *display;
 
    private:
     Registry(std::shared_ptr<MainLoop> mainloop, std::shared_ptr<Outputs> outputs,
              wl_display *display, wl_registry *registry)
         : m_outputs(outputs), m_mainloop(mainloop), m_registry(registry) {
-        roots = std::make_shared<Roots>();
-        roots->display = display;
+        this->display = display;
     }
 
    private:

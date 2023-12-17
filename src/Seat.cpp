@@ -6,7 +6,7 @@
 
 #include "spdlog/spdlog.h"
 
-static void on_pointer_enter(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
+static void on_pointer_enter(void* data, struct wl_pointer*, uint32_t /*serial*/,
                              struct wl_surface* surface, wl_fixed_t surface_x,
                              wl_fixed_t surface_y) {
     ((Pointer*)data)->Enter(surface);
@@ -14,26 +14,26 @@ static void on_pointer_enter(void* data, struct wl_pointer* wl_pointer, uint32_t
     spdlog::trace("Pointer enter {}: {},{}", (uint64_t)surface, surface_x, surface_y);
 }
 
-static void on_pointer_leave(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
-                             struct wl_surface* surface) {
+static void on_pointer_leave(void* data, struct wl_pointer*, uint32_t /*serial*/,
+                             struct wl_surface*) {
     spdlog::info("Pointer leave");
     ((Pointer*)data)->Leave();
 }
 
-static void on_pointer_motion(void* data, struct wl_pointer* wl_pointer, uint32_t time,
+static void on_pointer_motion(void* data, struct wl_pointer*, uint32_t /*time*/,
                               wl_fixed_t surface_x, wl_fixed_t surface_y) {
     ((Pointer*)data)->Track(surface_x, surface_y);
 }
 
-static void on_pointer_button(void* data, struct wl_pointer* wl_pointer, uint32_t serial,
-                              uint32_t time, uint32_t button, uint32_t state) {
+static void on_pointer_button(void* data, struct wl_pointer*, uint32_t /*serial*/,
+                              uint32_t /*time*/, uint32_t button, uint32_t state) {
     spdlog::trace("Pointer click button {} state {}", button, state);
     if (state == 0 /*release*/) {
         ((Pointer*)data)->Click();
     }
 }
 
-void on_pointer_frame(void* data, struct wl_pointer* wl_pointer) {}
+void on_pointer_frame(void* /*data*/, struct wl_pointer*) {}
 
 static const wl_pointer_listener pointer_listener = {
     .enter = on_pointer_enter,
@@ -56,8 +56,7 @@ void Pointer::Click() {
     m_clickHandler(m_current, wl_fixed_to_int(m_x), wl_fixed_to_int(m_y));
 }
 
-static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t format, int32_t fd,
-                      uint32_t size) {
+static void on_keymap(void* data, struct wl_keyboard*, uint32_t format, int32_t fd, uint32_t size) {
     if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
         spdlog::error("Keyboard: Invalid keymap format");
         return;
@@ -77,7 +76,7 @@ static void on_keymap(void* data, struct wl_keyboard* wl_keyboard, uint32_t form
     xkb_context_unref(ctx);
 }
 
-void on_repeat_info(void* data, struct wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {}
+void on_repeat_info(void* /*data*/, struct wl_keyboard*, int32_t /*rate*/, int32_t /*delay*/) {}
 
 static const wl_keyboard_listener keyboard_listener = {
     .keymap = on_keymap,

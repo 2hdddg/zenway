@@ -35,7 +35,6 @@ src = files(
   'src/PowerSource.cpp',
   'src/PulseAudioSource.cpp',
   'src/Registry.cpp',
-  'src/Roots.cpp',
   'src/ScriptContext.cpp',
   'src/Seat.cpp',
   'src/ShellSurface.cpp',

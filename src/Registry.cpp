@@ -12,17 +12,17 @@
 void Registry::Register(struct wl_registry *registry, uint32_t name, const char *interface,
                         uint32_t version) {
     if (interface == std::string_view(zwlr_layer_shell_v1_interface.name)) {
-        roots->shell = (zwlr_layer_shell_v1 *)wl_registry_bind(
+        this->shell = (zwlr_layer_shell_v1 *)wl_registry_bind(
             registry, name, &zwlr_layer_shell_v1_interface, zwlr_layer_shell_v1_interface.version);
         return;
     }
     if (interface == std::string_view(wl_shm_interface.name)) {
-        roots->shm =
+        this->shm =
             (wl_shm *)wl_registry_bind(registry, name, &wl_shm_interface, wl_shm_interface.version);
         return;
     }
     if (interface == std::string_view(wl_compositor_interface.name)) {
-        roots->compositor = (wl_compositor *)wl_registry_bind(
+        this->compositor = (wl_compositor *)wl_registry_bind(
             registry, name, &wl_compositor_interface, 5 /*wl_compositor_interface.version*/);
         return;
     }
@@ -44,7 +44,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
     spdlog::trace("Event wl_registry::register {} {}", interface, version);
 }
 
-void Registry::Unregister(struct wl_registry *registry, uint32_t name) {
+void Registry::Unregister(struct wl_registry *, uint32_t /*name*/) {
     // TODO: Outputs will be removed here
 }
 
@@ -82,9 +82,14 @@ std::shared_ptr<Registry> Registry::Create(std::shared_ptr<MainLoop> mainLoop,
 }
 
 bool Registry::OnRead() {
-    wl_display_prepare_read(roots->display);
-    wl_display_read_events(roots->display);
-    wl_display_dispatch_pending(roots->display);
-    wl_display_flush(roots->display);
+    wl_display_prepare_read(display);
+    wl_display_read_events(display);
+    wl_display_dispatch_pending(display);
+    wl_display_flush(display);
     return false;
+}
+
+void Registry::FlushAndDispatchCommands() const {
+    spdlog::trace("Flushing and dispatching wayland commands");
+    wl_display_roundtrip(display);
 }

@@ -35,7 +35,7 @@ enum class Message : uint32_t {
     EVENT_INPUT = 0x80000015,
 };
 
-static bool Filter(int depth, json::parse_event_t event, json &parsed) {
+static bool Filter(int /*depth*/, json::parse_event_t event, json &parsed) {
     static const std::set<std::string> ignore = {"rect",
                                                  "window_rect",
                                                  "deco_rect",

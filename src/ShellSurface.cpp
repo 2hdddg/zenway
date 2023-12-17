@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 #include <wayland-client-protocol.h>
 
+#include "src/Registry.h"
 #include "wlr-layer-shell-unstable-v1.h"
 
 static void on_configure(void *data, struct zwlr_layer_surface_v1 *layer, uint32_t serial,
@@ -12,12 +13,12 @@ static void on_configure(void *data, struct zwlr_layer_surface_v1 *layer, uint32
     zwlr_layer_surface_v1_ack_configure(layer, serial);
 }
 
-static void on_closed(void *data, struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1) {
+static void on_closed(void *data, struct zwlr_layer_surface_v1 *) {
     auto shellSurface = (ShellSurface *)data;
     shellSurface->OnClosed();
 }
 
-static void on_enter(void *data, struct wl_surface *wl_surface, struct wl_output *output) {}
+static void on_enter(void * /*data*/, struct wl_surface *, struct wl_output *) {}
 
 static const zwlr_layer_surface_v1_listener layer_listener = {.configure = on_configure,
                                                               .closed = on_closed};
@@ -27,11 +28,11 @@ static const wl_surface_listener surface_listener = {
     .leave = nullptr,
 };
 
-std::unique_ptr<ShellSurface> ShellSurface::Create(const std::shared_ptr<Roots> roots,
-                                                   wl_output *output, PanelConfig panelConfig) {
-    auto surface = wl_compositor_create_surface(roots->compositor);
-    auto shellSurface = std::unique_ptr<ShellSurface>(
-        new ShellSurface(roots, output, surface, std::move(panelConfig)));
+std::unique_ptr<ShellSurface> ShellSurface::Create(const Registry &registry, wl_output *output,
+                                                   PanelConfig panelConfig) {
+    auto surface = wl_compositor_create_surface(registry.compositor);
+    auto shellSurface =
+        std::unique_ptr<ShellSurface>(new ShellSurface(output, surface, std::move(panelConfig)));
     wl_surface_add_listener(surface, &surface_listener, shellSurface.get());
     wl_surface_commit(surface);
     return shellSurface;
@@ -42,7 +43,6 @@ void ShellSurface::OnShellConfigure(uint32_t cx, uint32_t cy) {
 };
 
 void ShellSurface::OnClosed() {
-    Hide();
     // Should destroy this!
     m_isClosed = true;
 }
@@ -69,7 +69,8 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
     return true;
 }
 
-void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
+void ShellSurface::Draw(const Registry &registry, BufferPool &bufferPool,
+                        const std::string &outputName) {
     if (m_isClosed) {
         return;
     }
@@ -80,12 +81,12 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     }
     if (!m_layer) {
         m_layer = zwlr_layer_shell_v1_get_layer_surface(
-            m_roots->shell, m_surface, m_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "namespace");
+            registry.shell, m_surface, m_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "namespace");
         zwlr_layer_surface_v1_add_listener(m_layer, &layer_listener, this);
         zwlr_layer_surface_v1_set_size(m_layer, 1, 1);
         zwlr_layer_surface_v1_set_anchor(m_layer, ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
         wl_surface_commit(m_surface);
-        m_roots->FlushAndDispatchCommands();
+        registry.FlushAndDispatchCommands();
     }
     const auto &size = m_drawn.size;
     Size damage;
@@ -116,21 +117,21 @@ void ShellSurface::Draw(BufferPool &bufferPool, const std::string &outputName) {
     if (m_inputRegion) {
         wl_region_destroy(m_inputRegion);
     }
-    m_inputRegion = wl_compositor_create_region(m_roots->compositor);
+    m_inputRegion = wl_compositor_create_region(registry.compositor);
     wl_region_add(m_inputRegion, 0, 0, size.cx, size.cy);
     wl_surface_set_input_region(m_surface, m_inputRegion);
     // Commit changes
     wl_surface_commit(m_surface);
-    m_roots->FlushAndDispatchCommands();
+    registry.FlushAndDispatchCommands();
     m_previousDamage = size;
 }
 
-void ShellSurface::Hide() {
+void ShellSurface::Hide(const Registry &registry) {
     if (!m_layer) return;
     zwlr_layer_surface_v1_destroy(m_layer);
     wl_surface_attach(m_surface, NULL, 0, 0);
     m_layer = nullptr;
     wl_region_destroy(m_inputRegion);
     m_inputRegion = nullptr;
-    m_roots->FlushAndDispatchCommands();
+    registry.FlushAndDispatchCommands();
 }

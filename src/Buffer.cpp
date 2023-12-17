@@ -6,7 +6,9 @@
 
 #include <cstring>
 
-static void on_release(void *data, struct wl_buffer *wl_buffer) { ((Buffer *)data)->OnRelease(); }
+#include "src/Registry.h"
+
+static void on_release(void *data, struct wl_buffer *) { ((Buffer *)data)->OnRelease(); }
 
 const struct wl_buffer_listener listener = {
     .release = on_release,
@@ -39,8 +41,8 @@ void Buffer::OnRelease() {
     m_inUse = false;
 }
 
-std::unique_ptr<BufferPool> BufferPool::Create(const std::shared_ptr<Roots> roots, const int n,
-                                               const int cx, const int cy) {
+std::unique_ptr<BufferPool> BufferPool::Create(const Registry &registry, const int n, const int cx,
+                                               const int cy) {
     auto fname = "/zenbuffers";
     int fd = shm_open(fname, O_RDWR | O_CREAT, 0600);
     if (fd < 0) {
@@ -60,7 +62,7 @@ std::unique_ptr<BufferPool> BufferPool::Create(const std::shared_ptr<Roots> root
         spdlog::error("Failed to mmap initial fd: ");
         return nullptr;
     }
-    auto pool = wl_shm_create_pool(roots->shm, fd, total_size);
+    auto pool = wl_shm_create_pool(registry.shm, fd, total_size);
     Buffers buffers(n);
     for (int i = 0; i < n; i++) {
         auto buffer = Buffer::Create(

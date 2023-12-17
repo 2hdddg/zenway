@@ -7,7 +7,8 @@
 
 class Manager : public IoBatchHandler, public Source {
    public:
-    static std::shared_ptr<Manager> Create(std::string_view sourceName, MainLoop& mainLoop,
+    static std::shared_ptr<Manager> Create(std::shared_ptr<Registry> registry,
+                                           std::string_view sourceName, MainLoop& mainLoop,
                                            std::shared_ptr<Outputs> outputs,
                                            std::unique_ptr<Sources> sources,
                                            std::shared_ptr<ScriptContext> scriptContext);
@@ -22,13 +23,16 @@ class Manager : public IoBatchHandler, public Source {
     void ClickSurface(wl_surface* surface, int x, int y);
 
    private:
-    Manager(std::string_view sourceName, std::shared_ptr<Outputs> outputs,
-            std::unique_ptr<Sources> sources, std::shared_ptr<ScriptContext> scriptContext)
-        : m_sourceName(sourceName),
+    Manager(std::shared_ptr<Registry> registry, std::string_view sourceName,
+            std::shared_ptr<Outputs> outputs, std::unique_ptr<Sources> sources,
+            std::shared_ptr<ScriptContext> scriptContext)
+        : m_registry(registry),
+          m_sourceName(sourceName),
           m_outputs(outputs),
           m_sources(std::move(sources)),
           m_scriptContext(scriptContext) {}
 
+    std::shared_ptr<Registry> m_registry;
     std::string m_sourceName;
     bool m_isVisible;
     bool m_visibilityChanged;
