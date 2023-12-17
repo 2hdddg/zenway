@@ -5,11 +5,10 @@
 
 std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry,
                                          std::string_view sourceName, MainLoop& mainLoop,
-                                         std::shared_ptr<Outputs> outputs,
                                          std::unique_ptr<Sources> sources,
                                          std::shared_ptr<ScriptContext> scriptContext) {
     auto manager = std::shared_ptr<Manager>(
-        new Manager(registry, sourceName, outputs, std::move(sources), scriptContext));
+        new Manager(registry, sourceName, std::move(sources), scriptContext));
     // Register as a source
     manager->m_sources->Register(sourceName, manager);
     // Register source batch handler
@@ -26,7 +25,7 @@ std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry,
 
 void Manager::ClickSurface(wl_surface* surface, int x, int y) {
     spdlog::debug("Click in surface {} at {},{}", (void*)surface, x, y);
-    m_outputs->ClickSurface(surface, x, y);
+    m_registry->BorrowOutputs().ClickSurface(surface, x, y);
 }
 
 void Manager::OnBatchProcessed() {
@@ -39,11 +38,11 @@ void Manager::OnBatchProcessed() {
         if (m_isVisible) {
             m_sources->DirtyAll();
         } else {
-            m_outputs->Hide(*m_registry);
+            m_registry->BorrowOutputs().Hide(*m_registry);
             return;
         }
     }
-    m_outputs->Draw(*m_registry, *m_sources);
+    m_registry->BorrowOutputs().Draw(*m_registry, *m_sources);
     m_sources->CleanAll();
 }
 

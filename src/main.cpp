@@ -126,17 +126,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Registry fills the outputs with output instances
-    auto outputs = std::shared_ptr<Outputs>(Outputs::Create(config));
     // Initialize registry.
     // The registry initializes roots that contains elementary interfaces needed for the system
     // to work. The registry also maintains the list of active outputs (monitors).
-    auto registry = Registry::Create(mainLoop, outputs);
+    auto registry = Registry::Create(mainLoop, Outputs::Create(config));
     if (!registry) {
         spdlog::error("Failed to initialize registry");
-        return -1;
-    }
-    // Outputs needs roots initialized by the registry
-    if (!outputs->Initialize(*registry)) {
         return -1;
     }
     // Initialize sources
@@ -153,8 +148,8 @@ int main(int argc, char* argv[]) {
         }
     }
     // Manager handles displays and redrawing
-    auto manager = Manager::Create(registry, "displays", *mainLoop, outputs, std::move(sources),
-                                   scriptContext);
+    auto manager =
+        Manager::Create(registry, "displays", *mainLoop, std::move(sources), scriptContext);
     // Initialize compositor
     auto sway = SwayCompositor::Connect(*mainLoop, manager);
     if (!sway) {

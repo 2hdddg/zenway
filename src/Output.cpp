@@ -85,16 +85,16 @@ void on_description(void *data, struct wl_output *, const char *description) {
     ((Output *)data)->OnDescription(description);
 }
 
-void on_geometry(void *data, struct wl_output *, int32_t x, int32_t y, int32_t physical_width,
-                 int32_t physical_height, int32_t subpixel, const char *make, const char *model,
-                 int32_t transform) {}
+void on_geometry(void * /*data*/, struct wl_output *, int32_t /*x*/, int32_t /*y*/,
+                 int32_t /*physical_width*/, int32_t /*physical_height*/, int32_t /*subpixel*/,
+                 const char * /*make*/, const char * /*model*/, int32_t /*transform*/) {}
 
-void on_mode(void *data, struct wl_output *wl_output, uint32_t flags, int32_t width, int32_t height,
-             int32_t refresh) {}
+void on_mode(void * /*data*/, struct wl_output *, uint32_t /*flags*/, int32_t /*width*/,
+             int32_t /*height*/, int32_t /*refresh*/) {}
 
-void on_done(void *data, struct wl_output *wl_output) {}
+void on_done(void * /*data*/, struct wl_output *) {}
 
-void on_scale(void *data, struct wl_output *wl_output, int32_t factor) {}
+void on_scale(void * /*data */, struct wl_output *, int32_t /*factor*/) {}
 
 const struct wl_output_listener listener = {
     .geometry = on_geometry,

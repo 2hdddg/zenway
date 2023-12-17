@@ -15,7 +15,7 @@
 class Registry : public IoHandler {
    public:
     static std::shared_ptr<Registry> Create(std::shared_ptr<MainLoop> mainloop,
-                                            std::shared_ptr<Outputs> outputs);
+                                            std::unique_ptr<Outputs> outputs);
     virtual ~Registry() {
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
@@ -38,6 +38,8 @@ class Registry : public IoHandler {
 
     virtual bool OnRead() override;
 
+    Outputs &BorrowOutputs() { return *m_outputs; }
+
     // These are maintained by the registry
     std::shared_ptr<Seat> seat;
     // Do not copy these!
@@ -47,14 +49,14 @@ class Registry : public IoHandler {
     wl_display *display;
 
    private:
-    Registry(std::shared_ptr<MainLoop> mainloop, std::shared_ptr<Outputs> outputs,
+    Registry(std::shared_ptr<MainLoop> mainloop, std::unique_ptr<Outputs> outputs,
              wl_display *display, wl_registry *registry)
-        : m_outputs(outputs), m_mainloop(mainloop), m_registry(registry) {
+        : m_outputs(std::move(outputs)), m_mainloop(mainloop), m_registry(registry) {
         this->display = display;
     }
 
    private:
-    std::shared_ptr<Outputs> m_outputs;
+    std::unique_ptr<Outputs> m_outputs;
     std::shared_ptr<MainLoop> m_mainloop;  // Hmm, this is circular..
     wl_registry *m_registry;
 };
