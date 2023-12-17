@@ -6,8 +6,6 @@
 #include <memory>
 #include <vector>
 
-class Registry;
-
 // Represents a single buffer used for rendering
 class Buffer {
    public:
@@ -39,8 +37,7 @@ class Buffer {
 // Represents a memory map with one or more buffers in it
 class BufferPool {
    public:
-    static std::unique_ptr<BufferPool> Create(const Registry &, const int n, const int cx,
-                                              const int cy);
+    static std::unique_ptr<BufferPool> Create(wl_shm &shm, const int n, const int cx, const int cy);
     std::shared_ptr<Buffer> Get();
 
    private:

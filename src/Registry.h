@@ -21,8 +21,8 @@ class Registry : public IoHandler {
         m_registry = nullptr;
         zwlr_layer_shell_v1_destroy(shell);
         shell = nullptr;
-        wl_shm_destroy(shm);
-        shm = nullptr;
+        wl_shm_destroy(m_shm);
+        m_shm = nullptr;
         wl_compositor_destroy(compositor);
         compositor = nullptr;
         // Should be last!
@@ -44,7 +44,6 @@ class Registry : public IoHandler {
     std::shared_ptr<Seat> seat;
     // Do not copy these!
     zwlr_layer_shell_v1 *shell;
-    wl_shm *shm;
     wl_compositor *compositor;
     wl_display *display;
 
@@ -59,4 +58,5 @@ class Registry : public IoHandler {
     std::unique_ptr<Outputs> m_outputs;
     std::shared_ptr<MainLoop> m_mainloop;  // Hmm, this is circular..
     wl_registry *m_registry;
+    wl_shm *m_shm;
 };

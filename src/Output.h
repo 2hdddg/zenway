@@ -18,7 +18,7 @@ class BufferPool;
 class Outputs {
    public:
     static std::unique_ptr<Outputs> Create(std::shared_ptr<Configuration> config);
-    bool Initialize(const Registry& registry);
+    bool InitializeBuffers(wl_shm&);
     void Add(wl_output* output);
 
     void Draw(const Registry& registry, const Sources& sources);

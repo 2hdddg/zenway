@@ -17,7 +17,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
         return;
     }
     if (interface == std::string_view(wl_shm_interface.name)) {
-        this->shm =
+        this->m_shm =
             (wl_shm *)wl_registry_bind(registry, name, &wl_shm_interface, wl_shm_interface.version);
         return;
     }
@@ -80,7 +80,8 @@ std::shared_ptr<Registry> Registry::Create(std::shared_ptr<MainLoop> mainLoop,
     // Register in mainloop
     mainLoop->Register(wl_display_get_fd(display), "wayland", registry);
     // Initialize buffers in outputs
-    if (!registry->m_outputs->Initialize(*registry)) {
+    if (!registry->m_outputs->InitializeBuffers(*registry->m_shm)) {
+        spdlog::error("Failed to initialize output buffers");
         return nullptr;
     }
     return registry;

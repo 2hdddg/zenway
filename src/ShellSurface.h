@@ -9,6 +9,8 @@
 #include "Configuration.h"
 #include "Draw.h"
 
+class Registry;
+
 class ShellSurface {
    public:
     static std::unique_ptr<ShellSurface> Create(const Registry &registry, wl_output *output,

@@ -1,6 +1,7 @@
 #include "Output.h"
 
 #include "spdlog/spdlog.h"
+#include "src/Registry.h"
 #include "src/ShellSurface.h"
 
 class Output {
@@ -109,8 +110,8 @@ std::unique_ptr<Outputs> Outputs::Create(std::shared_ptr<Configuration> config) 
     return std::unique_ptr<Outputs>(new Outputs(config));
 }
 
-bool Outputs::Initialize(const Registry &registry) {
-    m_bufferPool = BufferPool::Create(registry, m_config->numBuffers, m_config->bufferWidth,
+bool Outputs::InitializeBuffers(wl_shm &shm) {
+    m_bufferPool = BufferPool::Create(shm, m_config->numBuffers, m_config->bufferWidth,
                                       m_config->bufferHeight);
     if (!m_bufferPool) {
         spdlog::error("Failed to initialize buffer pool");
