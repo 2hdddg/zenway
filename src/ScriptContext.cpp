@@ -192,6 +192,25 @@ class ScriptContextImpl : public ScriptContext {
     sol::state m_lua;
 };
 
+static DisplaysConfig ParseDisplays(sol::optional<sol::table> sourcesTable) {
+    sol::optional<sol::table> displaysTable;
+    if (sourcesTable) {
+        displaysTable = (*sourcesTable)["displays"];
+    }
+    // Make a default
+    auto config = DisplaysConfig{.windowManager = WindowManager::Sway};
+    if (!displaysTable) {
+        return config;
+    }
+    sol::optional<std::string> wm = (*displaysTable)["wm"];
+    if (wm) {
+        if (*wm != "sway") {
+            spdlog::error("Unknown window manager: {}", *wm);
+        }
+    }
+    return config;
+}
+
 static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root) {
     if (!root) return nullptr;
     // "Parse" the configuration state
@@ -221,6 +240,9 @@ static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root
         config->bufferWidth = GetIntProperty(*buffersTable, "width", config->bufferWidth);
         config->bufferHeight = GetIntProperty(*buffersTable, "height", config->bufferHeight);
     }
+    // Sources
+    sol::optional<sol::table> sourcesTable = (*root)["sources"];
+    config->displays = ParseDisplays(sourcesTable);
     return config;
 }
 

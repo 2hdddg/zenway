@@ -118,9 +118,18 @@ struct PanelConfig {
     std::function<bool(const std::string& outputName)> checkDisplay;
 };
 
+enum class WindowManager {
+    Sway,
+};
+
+struct DisplaysConfig {
+    WindowManager windowManager;
+};
+
 class Configuration {
    public:
     std::vector<PanelConfig> panels;
+    DisplaysConfig displays;
     int bufferWidth;
     int bufferHeight;
     int numBuffers;

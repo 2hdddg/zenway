@@ -216,4 +216,7 @@ return {
             on_display = is_focused_display,
         },
     },
+    sources = {
+        displays = { wm = "sway" },
+    }
 }

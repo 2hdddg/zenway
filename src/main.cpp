@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
     }
     spdlog::info("Loading configuration at: {}", configPath->c_str());
     // Read configuration
-    auto config = scriptContext->Execute(configPath->c_str());
+    const auto config = scriptContext->Execute(configPath->c_str());
     if (!config) {
         spdlog::error("Failed to read configuration");
         return -1;
@@ -151,12 +151,20 @@ int main(int argc, char* argv[]) {
     auto manager =
         Manager::Create(registry, "displays", *mainLoop, std::move(sources), scriptContext);
     // Initialize compositor
-    auto sway = SwayCompositor::Connect(*mainLoop, manager);
-    if (!sway) {
-        spdlog::error("Failed to connect to Sway");
-        return -1;
+    switch (config->displays.windowManager) {
+        case WindowManager::Sway: {
+            auto sway = SwayCompositor::Connect(*mainLoop, manager);
+            if (!sway) {
+                spdlog::error("Failed to connect to Sway");
+                return -1;
+            }
+            // Leave the rest to main loop
+            mainLoop->Run();
+            break;
+        }
+        default:
+            spdlog::error("Unsupported window manager");
+            break;
     }
-    // Leave the rest to main loop
-    mainLoop->Run();
     return 0;
 }
