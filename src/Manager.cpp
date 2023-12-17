@@ -1,6 +1,7 @@
 #include "Manager.h"
 
 #include "spdlog/spdlog.h"
+#include "src/Registry.h"
 
 std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry,
                                          std::string_view sourceName, MainLoop& mainLoop,
@@ -9,8 +10,17 @@ std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry,
                                          std::shared_ptr<ScriptContext> scriptContext) {
     auto manager = std::shared_ptr<Manager>(
         new Manager(registry, sourceName, outputs, std::move(sources), scriptContext));
-    mainLoop.RegisterBatchHandler(manager);
+    // Register as a source
     manager->m_sources->Register(sourceName, manager);
+    // Register source batch handler
+    mainLoop.RegisterBatchHandler(manager);
+    // Register click handler
+    if (!registry->seat) {
+        spdlog::error("No seat in registry");
+        return nullptr;
+    }
+    registry->seat->RegisterClickHandler(
+        [manager](auto surface, int x, int y) { manager->ClickSurface(surface, x, y); });
     return manager;
 }
 
