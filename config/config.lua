@@ -217,6 +217,6 @@ return {
         },
     },
     sources = {
-        displays = { wm = "sway" },
+        displays = { compositor = "sway" },
     }
 }

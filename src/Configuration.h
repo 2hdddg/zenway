@@ -123,7 +123,7 @@ enum class WindowManager {
 };
 
 struct DisplaysConfig {
-    WindowManager windowManager;
+    WindowManager compositor;
 };
 
 class Configuration {

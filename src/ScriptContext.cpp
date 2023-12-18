@@ -198,14 +198,14 @@ static DisplaysConfig ParseDisplays(sol::optional<sol::table> sourcesTable) {
         displaysTable = (*sourcesTable)["displays"];
     }
     // Make a default
-    auto config = DisplaysConfig{.windowManager = WindowManager::Sway};
+    auto config = DisplaysConfig{.compositor = WindowManager::Sway};
     if (!displaysTable) {
         return config;
     }
-    sol::optional<std::string> wm = (*displaysTable)["wm"];
-    if (wm) {
-        if (*wm != "sway") {
-            spdlog::error("Unknown window manager: {}", *wm);
+    sol::optional<std::string> compositor = (*displaysTable)["wm"];
+    if (compositor) {
+        if (*compositor != "sway") {
+            spdlog::error("Unknown compositor: {}", *compositor);
         }
     }
     return config;

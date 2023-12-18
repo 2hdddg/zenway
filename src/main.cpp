@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
     auto manager =
         Manager::Create(registry, "displays", *mainLoop, std::move(sources), scriptContext);
     // Initialize compositor
-    switch (config->displays.windowManager) {
+    switch (config->displays.compositor) {
         case WindowManager::Sway: {
             auto sway = SwayCompositor::Connect(*mainLoop, manager);
             if (!sway) {
