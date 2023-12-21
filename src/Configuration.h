@@ -118,18 +118,27 @@ struct PanelConfig {
     std::function<bool(const std::string& outputName)> checkDisplay;
 };
 
-enum class WindowManager {
+enum class Compositor {
     Sway,
 };
 
 struct DisplaysConfig {
-    WindowManager compositor;
+    Compositor compositor;
+};
+
+enum class SoundServer {
+    PulseAudio,
+};
+
+struct AudioConfig {
+    SoundServer soundServer;
 };
 
 class Configuration {
    public:
     std::vector<PanelConfig> panels;
     DisplaysConfig displays;
+    AudioConfig audio;
     int bufferWidth;
     int bufferHeight;
     int numBuffers;

@@ -217,6 +217,7 @@ return {
         },
     },
     sources = {
-        displays = { compositor = "sway" },
+      displays = {compositor = "sway"},
+      audio = {server = "pulseaudio"},
     }
 }

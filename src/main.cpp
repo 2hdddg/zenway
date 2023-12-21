@@ -42,8 +42,8 @@ static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char*
 
 static void InitializeSource(const std::string& source, Sources& sources,
                              std::shared_ptr<MainLoop> mainLoop,
-                             std::shared_ptr<ScriptContext> scriptContext,
-                             const Registry& registry) {
+                             std::shared_ptr<ScriptContext> scriptContext, const Registry& registry,
+                             const Configuration config) {
     if (source == "date" || source == "time") {
         //  Date time sources
         auto dateSource = DateSource::Create();
@@ -67,13 +67,20 @@ static void InitializeSource(const std::string& source, Sources& sources,
         return;
     }
     if (source == "audio") {
-        auto audioSource = PulseAudioSource::Create(source, mainLoop, scriptContext);
-        if (!audioSource) {
-            spdlog::error("Failed to initialize PulseAudio source");
-            return;
+        switch (config.audio.soundServer) {
+            case SoundServer::PulseAudio: {
+                auto audioSource = PulseAudioSource::Create(source, mainLoop, scriptContext);
+                if (!audioSource) {
+                    spdlog::error("Failed to initialize PulseAudio source");
+                    return;
+                }
+                sources.Register(source, std::move(audioSource));
+                return;
+            }
+            default:
+                spdlog::error("Unknown sound server for audio");
+                return;
         }
-        sources.Register(source, std::move(audioSource));
-        return;
     }
     if (source == "power") {
         auto powerSource = PowerSource::Create(source, *mainLoop, scriptContext);
@@ -142,7 +149,7 @@ int main(int argc, char* argv[]) {
             for (const auto& source : widgetConfig.sources) {
                 // Initialize source if not already done
                 if (!sources->IsRegistered(source)) {
-                    InitializeSource(source, *sources, mainLoop, scriptContext, *registry);
+                    InitializeSource(source, *sources, mainLoop, scriptContext, *registry, *config);
                 }
             }
         }
@@ -152,7 +159,7 @@ int main(int argc, char* argv[]) {
         Manager::Create(registry, "displays", *mainLoop, std::move(sources), scriptContext);
     // Initialize compositor
     switch (config->displays.compositor) {
-        case WindowManager::Sway: {
+        case Compositor::Sway: {
             auto sway = SwayCompositor::Connect(*mainLoop, manager);
             if (!sway) {
                 spdlog::error("Failed to connect to Sway");

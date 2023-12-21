@@ -193,20 +193,33 @@ class ScriptContextImpl : public ScriptContext {
 };
 
 static DisplaysConfig ParseDisplays(sol::optional<sol::table> sourcesTable) {
-    sol::optional<sol::table> displaysTable;
-    if (sourcesTable) {
-        displaysTable = (*sourcesTable)["displays"];
-    }
-    // Make a default
-    auto config = DisplaysConfig{.compositor = WindowManager::Sway};
-    if (!displaysTable) {
+    auto config = DisplaysConfig{.compositor = Compositor::Sway};
+    if (!sourcesTable) {
         return config;
     }
-    sol::optional<std::string> compositor = (*displaysTable)["wm"];
-    if (compositor) {
-        if (*compositor != "sway") {
-            spdlog::error("Unknown compositor: {}", *compositor);
-        }
+    auto table = sourcesTable->get<sol::optional<sol::table>>("displays");
+    if (!table) {
+        return config;
+    }
+    auto compositor = table->get_or<std::string>("compositor", "sway");
+    if (compositor != "sway") {
+        spdlog::error("Unknown compositor: {}", compositor);
+    }
+    return config;
+}
+
+static AudioConfig ParseAudio(sol::optional<sol::table> sourcesTable) {
+    auto config = AudioConfig{.soundServer = SoundServer::PulseAudio};
+    if (!sourcesTable) {
+        return config;
+    }
+    auto table = sourcesTable->get<sol::optional<sol::table>>("audio");
+    if (!table) {
+        return config;
+    }
+    auto server = table->get_or<std::string>("server", "pulseaudio");
+    if (server != "pulseaudio") {
+        spdlog::error("Unknown sound server: {}", server);
     }
     return config;
 }
@@ -241,8 +254,9 @@ static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root
         config->bufferHeight = GetIntProperty(*buffersTable, "height", config->bufferHeight);
     }
     // Sources
-    sol::optional<sol::table> sourcesTable = (*root)["sources"];
-    config->displays = ParseDisplays(sourcesTable);
+    auto sources = root->get<sol::optional<sol::table>>("sources");
+    config->displays = ParseDisplays(sources);
+    config->audio = ParseAudio(sources);
     return config;
 }
 
