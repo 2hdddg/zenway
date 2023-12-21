@@ -194,14 +194,12 @@ return {
             widgets = {
                 { sources = {'displays'}, padding = {left = 10 }, on_render = render_workspaces },
             },
-            direction = "column"
         },
         {
             anchor = "top",
             widgets = {
                 { sources = {'time', 'date'}, padding = { top = 10 }, on_render = render_time },
             },
-            direction = "column",
             on_display = is_focused_display,
         },
         {
