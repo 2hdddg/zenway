@@ -7,15 +7,15 @@
 
 #include "src/ScriptContext.h"
 
-static void on_state(pa_context* ctx, void* data) {
+static void on_state(pa_context*, void* data) {
     static_cast<PulseAudioSource*>(data)->OnStateChange();
 }
 
-static void on_server(pa_context* ctx, const pa_server_info* info, void* data) {
+static void on_server(pa_context*, const pa_server_info* info, void* data) {
     static_cast<PulseAudioSource*>(data)->OnServerChange(info);
 }
 
-static void on_sink(pa_context* c, const pa_sink_info* info, int eol, void* data) {
+static void on_sink(pa_context*, const pa_sink_info* info, int /*eol*/, void* data) {
     if (!info) return;
     static_cast<PulseAudioSource*>(data)->OnSinkChange(info);
 }

@@ -41,7 +41,8 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(std::string_view name, Main
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
     }
-    itimerspec timer = {.it_interval = {.tv_sec = 30}, .it_value = {.tv_sec = 1}};
+    itimerspec timer = {.it_interval = {.tv_sec = 30, .tv_nsec = 0},
+                        .it_value = {.tv_sec = 1, .tv_nsec = 0}};
     auto ret = timerfd_settime(fd, 0, &timer, nullptr);
     if (ret == -1) {
         spdlog::error("Failed to set timer: {}", strerror(errno));
@@ -56,7 +57,7 @@ void NetworkSource::Initialize() { ReadState(); }
 
 void NetworkSource::ReadState() {
     char buf[8192] = {0};
-    struct ifconf ifc = {0};
+    struct ifconf ifc = {0, {0}};
     char ip[INET6_ADDRSTRLEN] = {0};
     ifc.ifc_len = sizeof(buf);
     ifc.ifc_buf = buf;

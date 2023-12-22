@@ -19,12 +19,14 @@ struct Application {
 };
 
 struct Workspace {
+    Workspace(const std::string name_) : name(name_), isFocused(false) {}
     std::string name;
     bool isFocused;  // Has the focused application
     std::vector<Application> applications;
 };
 
 struct Display {
+    Display(const std::string& name_) : name(name_), isFocused(false) {}
     std::string name;
     bool isFocused;  // Has the focused workspace
     std::vector<Workspace> workspaces;

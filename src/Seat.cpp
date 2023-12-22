@@ -40,7 +40,13 @@ static const wl_pointer_listener pointer_listener = {
     .leave = on_pointer_leave,
     .motion = on_pointer_motion,
     .button = on_pointer_button,
+    .axis = nullptr,
     .frame = on_pointer_frame,
+    .axis_source = nullptr,
+    .axis_stop = nullptr,
+    .axis_discrete = nullptr,
+    .axis_value120 = nullptr,
+    .axis_relative_direction = nullptr,
 };
 
 std::unique_ptr<Pointer> Pointer::Create(wl_seat* seat) {
@@ -80,6 +86,10 @@ void on_repeat_info(void* /*data*/, struct wl_keyboard*, int32_t /*rate*/, int32
 
 static const wl_keyboard_listener keyboard_listener = {
     .keymap = on_keymap,
+    .enter = nullptr,
+    .leave = nullptr,
+    .key = nullptr,
+    .modifiers = nullptr,
     .repeat_info = on_repeat_info,
 };
 

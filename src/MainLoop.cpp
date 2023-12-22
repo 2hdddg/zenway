@@ -14,7 +14,7 @@ std::unique_ptr<MainLoop> MainLoop::Create() {
 
 void MainLoop::Run() {
     // Register internal events
-    m_polls.push_back(pollfd{.fd = m_eventFd, .events = POLLIN});
+    m_polls.push_back(pollfd{.fd = m_eventFd, .events = POLLIN, .revents = 0});
 
     do {
         // Should be ppoll
@@ -62,7 +62,7 @@ void MainLoop::Run() {
 
 void MainLoop::Register(int fd, const std::string_view name, std::shared_ptr<IoHandler> ioHandler) {
     m_handlers[fd] = ioHandler;
-    m_polls.push_back(pollfd{.fd = fd, .events = POLLIN});
+    m_polls.push_back(pollfd{.fd = fd, .events = POLLIN, .revents = 0});
     spdlog::debug("Registering {} in main loop for fd {}", name, fd);
 }
 

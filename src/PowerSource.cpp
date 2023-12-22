@@ -15,7 +15,8 @@ std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop
         spdlog::error("Failed to create timer: {}", strerror(errno));
         return nullptr;
     }
-    itimerspec timer = {.it_interval = {.tv_sec = 30}, .it_value = {.tv_sec = 1}};
+    itimerspec timer = {.it_interval = {.tv_sec = 30, .tv_nsec = 0},
+                        .it_value = {.tv_sec = 1, .tv_nsec = 0}};
     auto ret = timerfd_settime(fd, 0, &timer, nullptr);
     if (ret == -1) {
         spdlog::error("Failed to set timer: {}", strerror(errno));

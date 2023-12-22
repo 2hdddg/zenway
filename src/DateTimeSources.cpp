@@ -30,7 +30,8 @@ std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
     // Set initial timer
     auto now = Now();
     auto initial = 60 - now.tm_sec;
-    itimerspec timer = {.it_interval = {.tv_sec = 60}, .it_value = {.tv_sec = initial}};
+    itimerspec timer = {.it_interval = {.tv_sec = 60, .tv_nsec = 0},
+                        .it_value = {.tv_sec = initial, .tv_nsec = 0}};
     auto ret = timerfd_settime(fd, 0, &timer, nullptr);
     if (ret == -1) {
         spdlog::error("Failed to set timer: {}", strerror(errno));

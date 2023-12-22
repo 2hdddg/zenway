@@ -26,6 +26,8 @@ static const zwlr_layer_surface_v1_listener layer_listener = {.configure = on_co
 static const wl_surface_listener surface_listener = {
     .enter = on_enter,
     .leave = nullptr,
+    .preferred_buffer_scale = nullptr,
+    .preferred_buffer_transform = nullptr,
 };
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const Registry &registry, wl_output *output,

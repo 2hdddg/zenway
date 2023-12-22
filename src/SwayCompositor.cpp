@@ -117,7 +117,8 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
         return;
     }
     auto application = Application{.name = GetName(applicationNode),
-                                   .appId = GetString(applicationNode, "app_id")};
+                                   .appId = GetString(applicationNode, "app_id"),
+                                   .isFocused = false};
     int applicationId = applicationNode["id"].get<int>();
     // In sway the only focused app is the one in the focused workspace. When that app is focused
     // the workspace is not. To simplify usage this considers the focused app in a non focused
@@ -158,7 +159,7 @@ static void ParseTree(const std::string &payload, Manager &manager) {
             continue;
         }
         // Retrieve name of output/display
-        auto display = Display{.name = GetName(outputNode)};
+        auto display = Display(GetName(outputNode));
         // Iterate over workspaces
         auto workspaceNodes = outputNode["nodes"];
         if (!IsArray(workspaceNodes)) {
@@ -169,7 +170,7 @@ static void ParseTree(const std::string &payload, Manager &manager) {
                 spdlog::error("Expected workspace");
                 continue;
             }
-            auto workspace = Workspace{.name = GetName(workspaceNode)};
+            auto workspace = Workspace(GetName(workspaceNode));
             //   Better way?
             auto focusNode = workspaceNode["focus"];
             int nextFocusId = -1;
@@ -202,7 +203,7 @@ std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
         return nullptr;
     }
     struct sockaddr_un remote {
-        .sun_family = AF_UNIX
+        .sun_family = AF_UNIX, .sun_path = "",
     };
     strcpy(remote.sun_path, path);
     auto data_len = strlen(remote.sun_path) + sizeof(remote.sun_family);
