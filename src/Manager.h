@@ -11,6 +11,7 @@ class Manager : public IoBatchHandler, public Source {
                                            std::string_view sourceName, MainLoop& mainLoop,
                                            std::unique_ptr<Sources> sources,
                                            std::shared_ptr<ScriptContext> scriptContext);
+    virtual ~Manager() {}
     // When a batch of IO events has been processed and sources are potentially dirty
     void OnBatchProcessed() override;
 

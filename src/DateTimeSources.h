@@ -7,6 +7,7 @@ class DateSource : public Source {
    public:
     static std::shared_ptr<DateSource> Create();
     void Evaluate();
+    virtual ~DateSource() {}
 
    private:
     DateSource() {}

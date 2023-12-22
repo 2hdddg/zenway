@@ -10,6 +10,7 @@ class Source {
     virtual bool IsSourceDirty() const { return m_sourceDirtyFlag; }
     virtual void CleanDirtySource() { m_sourceDirtyFlag = false; }
     virtual void ForceDirtySource() { m_sourceDirtyFlag = true; }
+    virtual ~Source() {}
 
    protected:
     bool m_sourceDirtyFlag;
