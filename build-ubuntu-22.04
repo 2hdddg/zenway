@@ -1,0 +1,3 @@
+#!/bin/sh -l
+docker build -t zenway/ubuntu:latest .github/actions/build-ubuntu
+docker run -v $(pwd):/code -u $(id -u ${USER}):$(id -g ${USER})  zenway/ubuntu:latest

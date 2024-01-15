@@ -1,0 +1,11 @@
+# https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action 
+name: build
+on: [push]
+jobs:
+  build-job:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        uses: ./.github/actions/build-ubuntu-22.04/

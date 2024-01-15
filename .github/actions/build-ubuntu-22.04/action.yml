@@ -1,0 +1,4 @@
+name: 'Build on Ubuntu-22.04'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
