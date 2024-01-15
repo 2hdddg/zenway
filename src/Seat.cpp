@@ -45,8 +45,8 @@ static const wl_pointer_listener pointer_listener = {
     .axis_source = nullptr,
     .axis_stop = nullptr,
     .axis_discrete = nullptr,
-    .axis_value120 = nullptr,
-    .axis_relative_direction = nullptr,
+    //.axis_value120 = nullptr,
+    //.axis_relative_direction = nullptr,
 };
 
 std::unique_ptr<Pointer> Pointer::Create(wl_seat* seat) {

@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
+#include <optional>
 
 #include "DateTimeSources.h"
 #include "MainLoop.h"
