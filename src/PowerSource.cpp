@@ -5,6 +5,7 @@
 #include <sys/timerfd.h>
 
 #include <filesystem>
+#include <optional>
 #include <string>
 
 std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop& mainLoop,
