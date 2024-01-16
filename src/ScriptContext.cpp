@@ -111,14 +111,19 @@ static std::set<std::string> ParseSources(const sol::table& widgetTable) {
 static void ParseWidgetConfig(const sol::table& table, std::vector<WidgetConfig>& widgets) {
     WidgetConfig widget;
     widget.sources = ParseSources(table);
-    sol::optional<sol::function> maybeRenderFunction = table["on_render"];
+    sol::optional<sol::protected_function> maybeRenderFunction = table["on_render"];
     if (!maybeRenderFunction) {
         // TODO: Log
         return;
     }
     auto renderFunction = *maybeRenderFunction;
     widget.render = [renderFunction](auto outputName) {
-        return FromObject(renderFunction(outputName));
+        sol::optional<sol::object> result = renderFunction(outputName);
+        if (!result) {
+            spdlog::error("Bad return from render function");
+            return std::unique_ptr<Renderable>(nullptr);
+        }
+        return FromObject(*result);
     };
     sol::optional<sol::function> maybeClickFunction = table["on_click"];
     if (maybeClickFunction) {

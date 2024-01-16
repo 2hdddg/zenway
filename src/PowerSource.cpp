@@ -29,6 +29,9 @@ std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop
 }
 
 bool PowerSource::Initialize() {
+    // Publish initial value to make sure that something is published
+    m_scriptContext->Publish(m_name,
+                             PowerState{.IsPluggedIn = false, .IsCharging = false, .Capacity = 0});
     // TODO: Probe that these exists
     m_ac = "/sys/class/power_supply/AC/online";
     // TODO: Always BAT0?

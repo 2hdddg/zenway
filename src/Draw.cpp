@@ -119,7 +119,11 @@ void FlexContainer::Draw(cairo_t* cr, int x, int y) const {
 void Widget::Compute(const WidgetConfig& config, const std::string& outputName, cairo_t* cr) {
     auto item = config.render(outputName);
     if (!item) {
-        spdlog::error("Bad return from widget");
+        spdlog::error("Bad render return from widget");
+        m_paddingX = 0;
+        m_paddingY = 0;
+        computed.cx = 0;
+        computed.cy = 0;
         return;
     }
     item->Compute(cr);
@@ -131,6 +135,10 @@ void Widget::Compute(const WidgetConfig& config, const std::string& outputName, 
 }
 
 void Widget::Draw(cairo_t* cr, int x, int y) const {
+    if (!m_renderable) {
+        // Lua render failed previously
+        return;
+    }
     cairo_save(cr);
     m_renderable->Draw(cr, x + m_paddingX, y + m_paddingY);
     cairo_restore(cr);
