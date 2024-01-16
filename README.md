@@ -85,6 +85,8 @@ The widgets will be rendered with time aligned to the left with the keyboard ren
 below as specified by the direction = "column".
 
 # How to build
+
+## Build with Docker
 See docker container matching your platform to build locally. The docker containers
 have two purposes. One, build on pull requests and two, build locally for different
 platforms.
@@ -93,4 +95,24 @@ Supported docker builds:
 * Ubuntu-22.04. Use build script build-ubuntu-22.04 in project root.
 * ...
 
+## Build on host
+These packages are needed to build locally (exact name and version might vary):
+* libfmt-dev
+* wayland-protocols
+* libwayland-client0
+* libwayland-dev
+* libcairo2-dev
+* libpango1.0-dev
+* libxkbcommon-dev
+* liblua5.4-dev
+* libpulse-dev
+
+To build you need gcc, pkg-config, meson and ninja
+
+In repo root:
+meson build
+ninja -C build
+
+Binary and config is currently not installed so invoke the binary from the build
+directory. Copy the config folder to ~/.config/zenway/
 
