@@ -2,7 +2,7 @@
 name: build
 on: [push]
 jobs:
-  ubuntu-22.04:
+  ubuntu-22_04:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
