@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 
-# Baseline and software-properties-common to be able to add new repository
+# Baseline
+# Use gcc on Ubuntu
 RUN apt-get update && \
     apt-get install -y software-properties-common build-essential pkg-config meson ninja-build && \
     apt-get clean

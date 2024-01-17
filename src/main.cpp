@@ -38,7 +38,7 @@ static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char*
             return path;
         }
     }
-    return std::optional<std::filesystem::path>();
+    return {};
 }
 
 static void InitializeSource(const std::string& source, Sources& sources,

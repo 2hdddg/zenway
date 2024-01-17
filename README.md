@@ -91,9 +91,13 @@ See docker container matching your platform to build locally. The docker contain
 have two purposes. One, build on pull requests and two, build locally for different
 platforms.
 
-Supported docker builds:
-* Ubuntu-22.04. Use build script build-ubuntu-22.04 in project root.
-* ...
+Docker based build scripts for different distributions are in project root.
+Each build script outputs to a corresponding build directory where the binary can
+be found. Runtime dependencies on host needs to be installed manually.
+
+Supported distributions:
+* Ubuntu-22.04. Use build script build-ubuntu-22.04.
+* Archlinux. Use build script build-arch.
 
 ## Build on host
 These packages are needed to build locally (exact name and version might vary):
