@@ -1,0 +1,5 @@
+name: 'Build on Archlinux'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+

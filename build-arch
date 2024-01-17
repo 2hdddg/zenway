@@ -1,0 +1,4 @@
+#!/bin/sh -l
+docker build -t zenway/arch .github/actions/build-arch
+docker run -v $(pwd):/code -u $(id -u ${USER}):$(id -g ${USER}) zenway/arch
+
