@@ -48,62 +48,48 @@ static std::optional<std::string> ReadAll(int fd) {
     auto n = read(fd, buf, size);
     if (n == -1) {
         // Probably blocking..
-        return nullptr;
+        spdlog::warn("Power source blocked read");
+        return {};
     }
     if (n == size) {
         // Read exact amount, might be more, not sure
-        return nullptr;
+        spdlog::warn("Power source too much data");
+        return {};
     }
     return std::string(buf, n);
+}
+
+static std::optional<std::string> Read(const char* path, const char* kind) {
+    auto fd = open(path, O_RDONLY | O_NONBLOCK);
+    if (fd == -1) {
+        spdlog::error("Power source failed to open {} for {}: {}", path, kind, strerror(errno));
+        return {};
+    }
+    auto s = ReadAll(fd);
+    close(fd);
+    if (!s) {
+        return {};
+    }
+    return s;
 }
 
 void PowerSource::ReadState() {
     auto state = PowerState{};
     // Use non-blocking to avoid sporadic hanging
     // Current capacity
-    {
-        auto fd = open(m_batteryCapacity.c_str(), O_RDONLY | O_NONBLOCK);
-        if (fd == -1) {
-            spdlog::error("Failed to check battery capacity");
-            return;
-        }
-        auto maybeCapacityString = ReadAll(fd);
-        close(fd);
-        if (!maybeCapacityString) {
-            spdlog::warn("Blocking read of capacity");
-            return;
-        }
-        state.Capacity = std::stoi(*maybeCapacityString);
+    auto maybeString = Read(m_batteryCapacity.c_str(), "capacity");
+    if (maybeString) {
+        state.Capacity = std::stoi(*maybeString);
     }
-    // Status
-    {
-        auto fd = open(m_batteryStatus.c_str(), O_RDONLY | O_NONBLOCK);
-        if (fd == -1) {
-            spdlog::error("Failed to check battery status");
-            return;
-        }
-        auto maybeStatus = ReadAll(fd);
-        close(fd);
-        if (!maybeStatus) {
-            spdlog::warn("Blocking read of status");
-            return;
-        }
-        state.IsCharging = *maybeStatus == "Charging";
+    // Battery status
+    maybeString = Read(m_batteryStatus.c_str(), "status");
+    if (maybeString) {
+        state.IsCharging = *maybeString == "Charging";
     }
     // AC status
-    {
-        auto fd = open(m_ac.c_str(), O_RDONLY | O_NONBLOCK);
-        if (fd == -1) {
-            spdlog::error("Failed to check AC online status");
-            return;
-        }
-        auto maybeOnline = ReadAll(fd);
-        close(fd);
-        if (!maybeOnline) {
-            spdlog::warn("Blocking read of AC online");
-            return;
-        }
-        state.IsPluggedIn = std::stoi(*maybeOnline) != 0;
+    maybeString = Read(m_ac.c_str(), "AC");
+    if (maybeString) {
+        state.IsPluggedIn = std::stoi(*maybeString) != 0;
     }
     m_sourceDirtyFlag = state != m_sourceState;
     if (m_sourceDirtyFlag) {
