@@ -125,7 +125,7 @@ static void ParseWidgetConfig(const sol::table& table, std::vector<WidgetConfig>
         }
         return FromObject(*result);
     };
-    sol::optional<sol::function> maybeClickFunction = table["on_click"];
+    sol::optional<sol::protected_function> maybeClickFunction = table["on_click"];
     if (maybeClickFunction) {
         auto clickFunction = *maybeClickFunction;
         widget.click = [clickFunction]() { clickFunction(); };
@@ -157,10 +157,17 @@ static PanelConfig ParsePanelConfig(const sol::table panelTable, int index) {
     const sol::optional<std::string> directionString = panelTable["direction"];
     panel.isColumn = !directionString || *directionString != "row";
 
-    sol::optional<sol::function> optionalCheckDisplay = panelTable["on_display"];
+    sol::optional<sol::protected_function> optionalCheckDisplay = panelTable["on_display"];
     if (optionalCheckDisplay) {
         auto checkDisplay = *optionalCheckDisplay;
-        panel.checkDisplay = [checkDisplay](auto outputName) { return checkDisplay(outputName); };
+        panel.checkDisplay = [checkDisplay](auto outputName) {
+            sol::optional<bool> b = checkDisplay(outputName);
+            if (b) {
+                return *b;
+            }
+            spdlog::error("Lua display check failed, defaulting to true");
+            return true;
+        };
     }
 
     sol::optional<sol::table> widgetsTable = panelTable["widgets"];
