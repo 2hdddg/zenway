@@ -9,39 +9,59 @@
 
 #include "ShellSurface.h"
 
+// Current oldest supported setup is Ubuntu 22.04 -> that ships with
+//  - Sway version 1.7 ->
+//    - wlroots version 0.15 ->
+//      - wayland version 1.20 ->
+//        - wl_shm -> version 1
+//      - zwlr_layer_shell version 4
+//      - wl_seat version 7
+//      - wl_output version 4
+//      - wl_compositor version 4
 void Registry::Register(struct wl_registry *registry, uint32_t name, const char *interface,
                         uint32_t version) {
+    uint32_t wanted_version = 0;
+    uint32_t build_version = 0;
     if (interface == std::string_view(zwlr_layer_shell_v1_interface.name)) {
+        // Not in wayland-protocols or core wayland.
+        wanted_version = 3;  // 4 possible but minor thing related to keyboard interactivity not
+                             // of interest right now. Current protocol file is ver 3, no need
+                             // to update until something is needed.
+        build_version = zwlr_layer_shell_v1_interface.version;
         this->shell = (zwlr_layer_shell_v1 *)wl_registry_bind(
-            registry, name, &zwlr_layer_shell_v1_interface, zwlr_layer_shell_v1_interface.version);
-        return;
-    }
-    if (interface == std::string_view(wl_shm_interface.name)) {
-        this->m_shm =
-            (wl_shm *)wl_registry_bind(registry, name, &wl_shm_interface, wl_shm_interface.version);
-        return;
-    }
-    if (interface == std::string_view(wl_compositor_interface.name)) {
+            registry, name, &zwlr_layer_shell_v1_interface, wanted_version);
+    } else if (interface == std::string_view(wl_shm_interface.name)) {
+        // Defined in core wayland. There is a version 2 at time of writing..
+        wanted_version = 1;
+        build_version = wl_shm_interface.version;
+        this->m_shm = (wl_shm *)wl_registry_bind(registry, name, &wl_shm_interface, wanted_version);
+    } else if (interface == std::string_view(wl_compositor_interface.name)) {
+        wanted_version = 4;
+        build_version = wl_compositor_interface.version;
         this->compositor = (wl_compositor *)wl_registry_bind(
-            registry, name, &wl_compositor_interface, 5 /*wl_compositor_interface.version*/);
-        return;
-    }
-    if (interface == std::string_view(wl_output_interface.name)) {
-        auto output = (wl_output *)wl_registry_bind(registry, name, &wl_output_interface,
-                                                    wl_output_interface.version);
+            registry, name, &wl_compositor_interface, wanted_version);
+    } else if (interface == std::string_view(wl_output_interface.name)) {
+        wanted_version = 4;
+        build_version = wl_output_interface.version;
+        auto output =
+            (wl_output *)wl_registry_bind(registry, name, &wl_output_interface, wanted_version);
         m_outputs->Add(output);
-        return;
-    }
-    if (interface == std::string_view(wl_seat_interface.name)) {
+    } else if (interface == std::string_view(wl_seat_interface.name)) {
         if (seat) {
             spdlog::warn("Registration of additional seat, ignoring");
             return;
         }
-        auto wlseat = (wl_seat *)wl_registry_bind(registry, name, &wl_seat_interface, 8);
+        wanted_version = 7;
+        build_version = wl_seat_interface.version;
+        auto wlseat =
+            (wl_seat *)wl_registry_bind(registry, name, &wl_seat_interface, wanted_version);
         seat = Seat::Create(m_mainloop, wlseat);
+    } else {
+        spdlog::trace("Ignored global interface: {} version {}", interface, version);
         return;
     }
-    spdlog::trace("Event wl_registry::register {} {}", interface, version);
+    spdlog::info("Bound to global interface {} version {}. Max version {}. Built with version {}.",
+                 interface, wanted_version, version, build_version);
 }
 
 void Registry::Unregister(struct wl_registry *, uint32_t /*name*/) {

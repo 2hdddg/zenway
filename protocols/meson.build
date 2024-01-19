@@ -9,6 +9,7 @@ generate_h = generator(
   output: '@BASENAME@.h',
   arguments: ['client-header', '@INPUT@', '@OUTPUT@']
 )
+# xdg-shell is indirect used through wlr-layer-shell
 protocols = [
   'xdg-shell.xml',
   'wlr-layer-shell-unstable-v1.xml',

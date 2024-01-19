@@ -20,7 +20,7 @@ local ICON_SIZE = "30pt"
 local SMALL_ICON_SIZE = "22pt"
 
 local empty_string_meta = {
-    __index = function() return "" end,
+    __index = function(table, key) return "" end,
 }
 
 local audio_port_icons = {
