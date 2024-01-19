@@ -197,6 +197,10 @@ static void ParseTree(const std::string &payload, Manager &manager) {
 std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
                                                         std::shared_ptr<Manager> manager) {
     auto path = getenv("SWAYSOCK");
+    if (path == nullptr) {
+      spdlog::error("SWAYSOCK not set");
+      return nullptr;
+    }
     spdlog::debug("Connecting to sway at {}", path);
     auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd == -1) {
