@@ -16,7 +16,7 @@
 //        - wl_shm -> version 1
 //      - zwlr_layer_shell version 4
 //      - wl_seat version 5
-//      - wl_output version 3
+//      - wl_output version 4
 //      - wl_compositor version 4
 void Registry::Register(struct wl_registry *registry, uint32_t name, const char *interface,
                         uint32_t version) {
@@ -41,7 +41,7 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
         this->compositor = (wl_compositor *)wl_registry_bind(
             registry, name, &wl_compositor_interface, wanted_version);
     } else if (interface == std::string_view(wl_output_interface.name)) {
-        wanted_version = 3;
+        wanted_version = 4;
         build_version = wl_output_interface.version;
         auto output =
             (wl_output *)wl_registry_bind(registry, name, &wl_output_interface, wanted_version);
