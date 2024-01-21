@@ -45,6 +45,7 @@ static const wl_pointer_listener pointer_listener = {
     .axis_source = nullptr,
     .axis_stop = nullptr,
     .axis_discrete = nullptr,
+    // Version > supported
     //.axis_value120 = nullptr,
     //.axis_relative_direction = nullptr,
 };
@@ -102,18 +103,17 @@ std::unique_ptr<Keyboard> Keyboard::Create(std::shared_ptr<MainLoop> mainloop, w
 }
 
 void Keyboard::SetLayout(const char* layout) {
-    m_sourceDirtyFlag = m_sourceState.layout != layout;
-    if (m_sourceDirtyFlag) {
+    if (m_sourceState.layout != layout) {
+        m_drawn = m_published = false;
         m_sourceState.layout = layout;
-        if (m_scriptContext) m_scriptContext->Publish(m_sourceName, m_sourceState);
         m_mainloop->Wakeup();
     }
 }
-void Keyboard::SetScriptContext(const std::string_view sourceName,
-                                std::shared_ptr<ScriptContext> scriptContext) {
-    m_sourceName = sourceName;
-    m_scriptContext = scriptContext;
-    m_scriptContext->Publish(m_sourceName, m_sourceState);
+
+void Keyboard::Publish(const std::string_view sourceName, ScriptContext& scriptContext) {
+    if (m_published) return;
+    scriptContext.Publish(sourceName, m_sourceState);
+    m_published = true;
 }
 
 std::unique_ptr<Seat> Seat::Create(std::shared_ptr<MainLoop> mainLoop, wl_seat* wlseat) {

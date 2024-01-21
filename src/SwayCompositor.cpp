@@ -132,20 +132,20 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
     workspace.applications.push_back(std::move(application));
 }
 
-static void ParseTree(const std::string &payload, Manager &manager) {
+static std::optional<Displays> ParseTree(const std::string &payload) {
     auto rootNode = json::parse(payload, Filter, false /*ignoring exceptions*/);
     if (rootNode.is_discarded()) {
         spdlog::error("Failed to parse Sway tree");
-        return;
+        return {};
     }
     if (!IsNodeType(rootNode, "root")) {
         spdlog::error("Sway tree root node should be of value root");
-        return;
+        return {};
     }
     auto outputNodes = rootNode["nodes"];
     if (!IsArray(outputNodes)) {
         spdlog::error("Sway tree has invalid nodes");
-        return;
+        return {};
     }
     // Iterate over displays/outputs
     Displays displays;
@@ -191,11 +191,10 @@ static void ParseTree(const std::string &payload, Manager &manager) {
         }
         displays.push_back(std::move(display));
     }
-    manager.Publish(displays);
+    return displays;
 }
 
-std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
-                                                        std::shared_ptr<Manager> manager) {
+std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop, Visibility visibility) {
     auto path = getenv("SWAYSOCK");
     spdlog::debug("Connecting to sway at {}", path);
     auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -211,7 +210,7 @@ std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop,
         close(fd);
         return nullptr;
     }
-    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, manager));
+    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, visibility));
     mainLoop.Register(fd, "Sway", t);
     t->Initialize();
     return t;
@@ -250,13 +249,16 @@ bool SwayCompositor::OnRead() {
     m_payload.resize(len + 1);
     auto msg = Message(*((uint32_t *)(hdr + MAGIC_LENGTH + 4)));
     read(m_fd, m_payload.data(), len);
-    bool isDirty = false;
     switch (msg) {
-        case Message::GET_TREE:
+        case Message::GET_TREE: {
             spdlog::trace("Received sway tree");
-            ParseTree(m_payload, *m_manager);
-            isDirty = true;
+            auto maybeDisplays = ParseTree(m_payload);
+            if (maybeDisplays) {
+                m_displays = std::move(*maybeDisplays);
+                m_drawn = m_published = false;
+            }  // else, error!
             break;
+        }
         case Message::SUBSCRIBE:
             spdlog::debug("Sway subscriptions confirmed");
             break;
@@ -274,12 +276,8 @@ bool SwayCompositor::OnRead() {
             bool visible;
             ParseBarStateUpdateEvent(m_payload, visible);
             spdlog::debug("Sway bar state event, visible: {}", visible);
-            if (visible) {
-                m_manager->Show();
-            } else {
-                m_manager->Hide();
-            }
-            isDirty = true;
+            m_visibility(visible);
+            m_drawn = m_published = false;
             break;
         case Message::EVENT_SHUTDOWN:
             spdlog::trace("Sway shutdown event");
@@ -288,5 +286,11 @@ bool SwayCompositor::OnRead() {
             spdlog::error("Received unhandled sway message: {}", (uint32_t)msg);
             break;
     }
-    return isDirty;
+    // True if state changed
+    return !m_published;
+}
+
+void SwayCompositor::Publish(const std::string_view sourceName, ScriptContext &scriptContext) {
+    scriptContext.Publish(sourceName, m_displays);
+    m_published = true;
 }

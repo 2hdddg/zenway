@@ -17,7 +17,9 @@ std::shared_ptr<DateSource> DateSource::Create() {
 }
 
 void DateSource::Evaluate() {
-    // TODO: Check dirty
+    // TODO: To save some redraws the redraw flag should check if date has changed since last draw
+    m_published = true;  // No need to publish
+    m_drawn = false;
 }
 
 std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
@@ -53,7 +55,8 @@ bool TimeSource::OnRead() {
         // Either block or no events
         return false;
     }
-    m_sourceDirtyFlag = true;
+    m_published = true;  // No need to publish
+    m_drawn = false;
     m_dateSource->Evaluate();
-    return m_sourceDirtyFlag;
+    return !m_drawn;
 }

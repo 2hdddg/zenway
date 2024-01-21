@@ -42,8 +42,7 @@ static const std::optional<std::filesystem::path> ProbeForConfig(int argc, char*
 }
 
 static void InitializeSource(const std::string& source, Sources& sources,
-                             std::shared_ptr<MainLoop> mainLoop,
-                             std::shared_ptr<ScriptContext> scriptContext, const Registry& registry,
+                             std::shared_ptr<MainLoop> mainLoop, const Registry& registry,
                              const Configuration config) {
     if (source == "date" || source == "time") {
         //  Date time sources
@@ -58,7 +57,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         return;
     }
     if (source == "networks") {
-        auto networkSource = NetworkSource::Create(source, *mainLoop, scriptContext);
+        auto networkSource = NetworkSource::Create(*mainLoop);
         if (!networkSource) {
             spdlog::error("Failed to initialize network source");
             return;
@@ -70,7 +69,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
     if (source == "audio") {
         switch (config.audio.soundServer) {
             case SoundServer::PulseAudio: {
-                auto audioSource = PulseAudioSource::Create(source, mainLoop, scriptContext);
+                auto audioSource = PulseAudioSource::Create(mainLoop);
                 if (!audioSource) {
                     spdlog::error("Failed to initialize PulseAudio source");
                     return;
@@ -84,7 +83,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         }
     }
     if (source == "power") {
-        auto powerSource = PowerSource::Create(source, *mainLoop, scriptContext);
+        auto powerSource = PowerSource::Create(*mainLoop);
         if (!powerSource) {
             spdlog::error("Failed to initialize battery source");
             return;
@@ -97,7 +96,6 @@ static void InitializeSource(const std::string& source, Sources& sources,
     if (source == "keyboard") {
         if (registry.seat && registry.seat->keyboard) {
             sources.Register(source, registry.seat->keyboard);
-            registry.seat->keyboard->SetScriptContext(source, scriptContext);
         } else {
             spdlog::warn("No keyboard source");
         }
@@ -110,7 +108,7 @@ int main(int argc, char* argv[]) {
     // Environment variable configurable logging
     spdlog::cfg::load_env_levels();
     // Initialize Lua context
-    auto scriptContext = std::shared_ptr<ScriptContext>(ScriptContext::Create());
+    auto scriptContext = ScriptContext::Create();
     if (!scriptContext) {
         spdlog::error("Failed to create script context");
         return -1;
@@ -143,36 +141,48 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     // Initialize sources
-    auto sources = Sources::Create();
+    auto sources = Sources::Create(std::move(scriptContext));
+    scriptContext = nullptr;
     for (auto panelConfig : config->panels) {
         //  Check what sources are needed for the widgets in the panel
         for (const auto& widgetConfig : panelConfig.widgets) {
             for (const auto& source : widgetConfig.sources) {
                 // Initialize source if not already done
                 if (!sources->IsRegistered(source)) {
-                    InitializeSource(source, *sources, mainLoop, scriptContext, *registry, *config);
+                    InitializeSource(source, *sources, mainLoop, *registry, *config);
                 }
             }
         }
     }
     // Manager handles displays and redrawing
-    auto manager =
-        Manager::Create(registry, "displays", *mainLoop, std::move(sources), scriptContext);
+    std::shared_ptr<Manager> manager = Manager::Create(registry);
     // Initialize compositor
     switch (config->displays.compositor) {
         case Compositor::Sway: {
-            auto sway = SwayCompositor::Connect(*mainLoop, manager);
+            auto sway = SwayCompositor::Connect(*mainLoop, [manager](bool visible) {
+                if (visible) {
+                    manager->Show();
+                } else {
+                    manager->Hide();
+                }
+            });
             if (!sway) {
                 spdlog::error("Failed to connect to Sway");
                 return -1;
             }
-            // Leave the rest to main loop
-            mainLoop->Run();
+            sources->Register("displays", sway);
             break;
         }
         default:
             spdlog::error("Unsupported window manager");
             break;
     }
+    // Make sure that an initial state of all sources are published
+    sources->PublishAll();
+    // Let over control to mainloop and manager
+    manager->SetSources(std::move(sources));
+    sources = nullptr;
+    mainLoop->RegisterBatchHandler(manager);
+    mainLoop->Run();
     return 0;
 }
