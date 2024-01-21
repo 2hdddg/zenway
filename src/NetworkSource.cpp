@@ -30,8 +30,7 @@ static char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen) {
 
     return s;
 }
-std::shared_ptr<NetworkSource> NetworkSource::Create(std::string_view name, MainLoop &mainLoop,
-                                                     std::shared_ptr<ScriptContext> scriptContext) {
+std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop) {
     auto sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         return nullptr;
@@ -48,8 +47,8 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(std::string_view name, Main
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(name, sock, fd, scriptContext));
-    mainLoop.Register(fd, name, source);
+    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(sock, fd));
+    mainLoop.Register(fd, "NetworkSource", source);
     return source;
 }
 
@@ -90,10 +89,9 @@ void NetworkSource::ReadState() {
         network.address = get_ip_str(addr, ip, sizeof(ip));
         networks.push_back(std::move(network));
     }
-    m_sourceDirtyFlag = true;  // m_networks != networks;
-    if (m_sourceDirtyFlag) {
+    if (m_networks != networks) {
+        m_drawn = m_published = false;
         m_networks = networks;
-        m_scriptContext->Publish(m_name, m_networks);
     }
 }
 
@@ -105,6 +103,11 @@ bool NetworkSource::OnRead() {
         // Either block or no events
         return false;
     }
-    ReadState();
-    return m_sourceDirtyFlag;
+    return !m_published;
+}
+
+void NetworkSource::Publish(const std::string_view sourceName, ScriptContext &scriptContext) {
+    if (m_published) return;
+    scriptContext.Publish(sourceName, m_networks);
+    m_published = true;
 }

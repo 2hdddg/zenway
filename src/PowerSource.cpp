@@ -8,8 +8,7 @@
 #include <optional>
 #include <string>
 
-std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop& mainLoop,
-                                                 std::shared_ptr<ScriptContext> scriptContext) {
+std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop) {
     // Use non blocking to make sure we never hang on read
     auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     if (fd == -1) {
@@ -23,15 +22,14 @@ std::shared_ptr<PowerSource> PowerSource::Create(std::string_view name, MainLoop
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<PowerSource>(new PowerSource(name, fd, scriptContext));
-    mainLoop.Register(fd, name, source);
+    auto source = std::shared_ptr<PowerSource>(new PowerSource(fd));
+    mainLoop.Register(fd, "PowerSource", source);
     return source;
 }
 
 bool PowerSource::Initialize() {
-    // Publish initial value to make sure that something is published
-    m_scriptContext->Publish(m_name,
-                             PowerState{.IsPluggedIn = false, .IsCharging = false, .Capacity = 0});
+    m_drawn = m_published = false;
+    m_sourceState = PowerState{.IsPluggedIn = false, .IsCharging = false, .Capacity = 0};
     // TODO: Probe that these exists
     m_ac = "/sys/class/power_supply/AC/online";
     // TODO: Always BAT0?
@@ -91,12 +89,11 @@ void PowerSource::ReadState() {
     if (maybeString) {
         state.IsPluggedIn = std::stoi(*maybeString) != 0;
     }
-    m_sourceDirtyFlag = state != m_sourceState;
-    if (m_sourceDirtyFlag) {
-        m_sourceState = state;
-        m_scriptContext->Publish(m_name, m_sourceState);
+    if (state != m_sourceState) {
         spdlog::info("Power status changed, capacity {}, charging {}, plugged in {}",
                      state.Capacity, state.IsCharging, state.IsPluggedIn);
+        m_sourceState = state;
+        m_drawn = m_published = false;
     }
 }
 
@@ -111,5 +108,11 @@ bool PowerSource::OnRead() {
         return false;
     }
     ReadState();
-    return m_sourceDirtyFlag;
+    return !m_published;
+}
+
+void PowerSource::Publish(const std::string_view sourceName, ScriptContext& scriptContext) {
+    if (m_published) return;
+    scriptContext.Publish(sourceName, m_sourceState);
+    m_published = true;
 }

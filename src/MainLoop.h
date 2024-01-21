@@ -38,5 +38,5 @@ class MainLoop {
     std::mutex m_wakupMutex;
     std::vector<pollfd> m_polls;
     std::map<int, std::shared_ptr<IoHandler>> m_handlers;
-    std::vector<std::shared_ptr<IoBatchHandler>> m_batchHandlers;
+    std::shared_ptr<IoBatchHandler> m_batchHandler;
 };

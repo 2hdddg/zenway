@@ -132,7 +132,7 @@ void Outputs::Draw(const Registry &registry, const Sources &sources) {
     for (const auto &panelConfig : m_config->panels) {
         bool dirty = false;
         for (const auto &widgetConfig : panelConfig.widgets) {
-            if (sources.IsDirty(widgetConfig.sources)) {
+            if (sources.NeedsRedraw(widgetConfig.sources)) {
                 dirty = true;
                 break;
             }

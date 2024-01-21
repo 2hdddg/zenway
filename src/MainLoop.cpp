@@ -52,10 +52,8 @@ void MainLoop::Run() {
                 }
             }
         }
-        if (anyDirty) {
-            for (auto& handler : m_batchHandlers) {
-                handler->OnBatchProcessed();
-            }
+        if (anyDirty && m_batchHandler) {
+            m_batchHandler->OnBatchProcessed();
         }
     } while (m_polls.size() > 0);
 }
@@ -66,8 +64,11 @@ void MainLoop::Register(int fd, const std::string_view name, std::shared_ptr<IoH
     spdlog::debug("Registering {} in main loop for fd {}", name, fd);
 }
 
-void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> ioBatchHandler) {
-    m_batchHandlers.push_back(ioBatchHandler);
+void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> batchHandler) {
+    if (m_batchHandler) {
+        spdlog::error("Only one batch handler supported");
+    }
+    m_batchHandler = batchHandler;
 }
 
 void MainLoop::Wakeup() {

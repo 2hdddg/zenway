@@ -41,9 +41,7 @@ static void on_subscribe(pa_context* ctx, pa_subscription_event_type_t event_and
     }
 }
 
-std::unique_ptr<PulseAudioSource> PulseAudioSource::Create(
-    std::string_view name, std::shared_ptr<MainLoop> zenMainloop,
-    std::shared_ptr<ScriptContext> scriptContext) {
+std::unique_ptr<PulseAudioSource> PulseAudioSource::Create(std::shared_ptr<MainLoop> zenMainloop) {
     auto mainloop = pa_threaded_mainloop_new();
     if (!mainloop) return nullptr;
     pa_threaded_mainloop_lock(mainloop);
@@ -59,7 +57,7 @@ std::unique_ptr<PulseAudioSource> PulseAudioSource::Create(
         return nullptr;
     }
     auto backend = std::unique_ptr<PulseAudioSource>(
-        new PulseAudioSource(name, zenMainloop, mainloop, scriptContext, api, context));
+        new PulseAudioSource(zenMainloop, mainloop, api, context));
     // From now on the backend will free on error
 
     if (pa_context_connect(context, nullptr, PA_CONTEXT_NOFAIL, nullptr) < 0) {
@@ -144,10 +142,20 @@ void PulseAudioSource::OnSinkChange(const pa_sink_info* info) {
                 break;
         }
     }
-    if (newState == m_sourceState) return;
-    spdlog::debug("Audio source is dirty");
-    m_sourceDirtyFlag = true;
-    m_sourceState = newState;
-    m_scriptContext->Publish(m_name, m_sourceState);
-    m_zenMainloop->Wakeup();
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (newState == m_sourceState) return;
+        spdlog::debug("Audio source is dirty");
+        m_drawn = m_published = false;
+        m_sourceState = newState;
+        m_zenMainloop->Wakeup();
+    }
+}
+
+// This is invoked on main thread. Can not publish on another thread
+void PulseAudioSource::Publish(const std::string_view sourceName, ScriptContext& scriptContext) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_published) return;
+    scriptContext.Publish(sourceName, m_sourceState);
+    m_published = true;
 }

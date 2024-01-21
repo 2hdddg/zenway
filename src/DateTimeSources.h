@@ -8,6 +8,7 @@ class DateSource : public Source {
     static std::shared_ptr<DateSource> Create();
     void Evaluate();
     virtual ~DateSource() {}
+    void Publish(const std::string_view, ScriptContext&) override {}
 
    private:
     DateSource() {}
@@ -19,6 +20,7 @@ class TimeSource : public Source, public IoHandler {
                                               std::shared_ptr<DateSource> dateSource);
     virtual ~TimeSource();
     virtual bool OnRead() override;
+    void Publish(const std::string_view, ScriptContext&) override {}
 
    private:
     TimeSource(int fd, std::shared_ptr<DateSource> dateSource)
