@@ -10,6 +10,7 @@
 
 struct DrawnWidget {
     Rect position;
+    std::vector<Target> targets;
 };
 
 struct DrawnPanel {

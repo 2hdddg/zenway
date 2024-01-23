@@ -109,10 +109,15 @@ local function render_workspaces(displayName)
                 wsbox(label{label=" " .. zen.u.html_escape(workspace.name) .. " "}, boxcolor),
                 wsbox(label{label=zen.u.html_escape(app_name)}, boxcolor),
             },
+            tag = workspace.name
         }
         table.insert(workspaces, workspace)
     end
     return { type = "flex", direction = "column", padding = { left = 10, bottom = 10 }, items = workspaces }
+end
+
+local function click_workspace(tag)
+    os.execute("swaymsg workspace '" .. tag .. "'")
 end
 
 local function render_time()
@@ -192,7 +197,7 @@ return {
         {
             anchor = "left",
             widgets = {
-                { sources = {'displays'}, padding = {left = 10 }, on_render = render_workspaces },
+                { sources = {'displays'}, padding = {left = 10 }, on_render = render_workspaces, on_click = click_workspace },
             },
         },
         {

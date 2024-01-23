@@ -55,12 +55,21 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
     }
     // Check what widget
     int i = 0;
-    for (const auto w : m_drawn.widgets) {
+    for (const auto &w : m_drawn.widgets) {
         if (w.position.Contains(x, y)) {
-            spdlog::trace("Found widget click target");
             auto &widget = m_panelConfig.widgets.at(i);
             if (widget.click) {
-                widget.click();
+                // Widget has a click handler. There might be inner more
+                // specific targets, find the tag of the correct one.
+                std::string tag = "";
+                for (const auto &t : w.targets) {
+                    if (t.position.Contains(x, y)) {
+                        tag = t.tag;
+                        break;
+                    }
+                }
+                spdlog::debug("Click in widget, tag: {}", tag);
+                widget.click(tag);
             }
             break;
         }

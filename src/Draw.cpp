@@ -23,7 +23,7 @@ void Markup::Compute(cairo_t* cr) {
     LogComputed(computed, ("Markup " + string).c_str());
 }
 
-void Markup::Draw(cairo_t* cr, int x, int y) const {
+void Markup::Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const {
     LogDraw("Markup", x, y);
     cairo_move_to(cr, x, y);
     pango_cairo_show_layout(cr, m_layout);
@@ -54,7 +54,7 @@ void MarkupBox::Compute(cairo_t* cr) {
     LogComputed(computed, "MarkupBox ");
 }
 
-void MarkupBox::Draw(cairo_t* cr, int x, int y) const {
+void MarkupBox::Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const {
     LogDraw("MarkupBox", x, y);
     BeginRectangleSubPath(cr, x + border.width, y + border.width, computed.cx - (2 * border.width),
                           computed.cy - (2 * border.width), radius);
@@ -78,7 +78,11 @@ void MarkupBox::Draw(cairo_t* cr, int x, int y) const {
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_fill(cr);
     // Inner
-    markup.Draw(cr, x + padding.left + border.width, y + padding.top + border.width);
+    markup.Draw(cr, x + padding.left + border.width, y + padding.top + border.width, targets);
+    if (tag != "") {
+        targets.push_back(Target{
+            .position = Rect{.x = x, .y = y, .cx = computed.cx, .cy = computed.cy}, .tag = tag});
+    }
 }
 
 void FlexContainer::Compute(cairo_t* cr) {
@@ -97,22 +101,29 @@ void FlexContainer::Compute(cairo_t* cr) {
     LogComputed(computed, "FlexContainer");
 }
 
-void FlexContainer::Draw(cairo_t* cr, int x, int y) const {
+void FlexContainer::Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const {
     LogDraw("FlexBox", x, y);
+    const int startx = x;
+    const int starty = y;
     if (isColumn) {
         for (const auto& r : children) {
             y += padding.top;
-            r->Draw(cr, x + padding.left, y);
+            r->Draw(cr, x + padding.left, y, targets);
             y += r->computed.cy + padding.bottom;
         }
     } else {
         y += padding.top;
         for (const auto& r : children) {
             x += padding.left;
-            r->Draw(cr, x, y);
+            r->Draw(cr, x, y, targets);
             x += r->computed.cx + padding.right;
         }
         y += padding.bottom;
+    }
+    if (tag != "") {
+        targets.push_back(
+            Target{.position = Rect{.x = startx, .y = starty, .cx = computed.cx, .cy = computed.cy},
+                   .tag = tag});
     }
 }
 
@@ -134,13 +145,13 @@ void Widget::Compute(const WidgetConfig& config, const std::string& outputName, 
     m_renderable = std::move(item);
 }
 
-void Widget::Draw(cairo_t* cr, int x, int y) const {
+void Widget::Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const {
     if (!m_renderable) {
         // Lua render failed previously
         return;
     }
     cairo_save(cr);
-    m_renderable->Draw(cr, x + m_paddingX, y + m_paddingY);
+    m_renderable->Draw(cr, x + m_paddingX, y + m_paddingY, targets);
     cairo_restore(cr);
 }
 
@@ -171,6 +182,7 @@ bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
         cx += widget.computed.cx;
         cy += widget.computed.cy;
     }
+    std::vector<Target> targets;
     Align align;
     int xfac = 0, yfac = 0;
     if (panelConfig.isColumn) {
@@ -225,9 +237,10 @@ bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
                 y = (maxCy - widget.computed.cy) / 2;
                 break;
         }
-        widget.Draw(cr, x, y);
+        widget.Draw(cr, x, y, targets);
         drawn.widgets.push_back(
-            DrawnWidget{.position = {x, y, widget.computed.cx, widget.computed.cy}});
+            DrawnWidget{.position = {x, y, widget.computed.cx, widget.computed.cy},
+                        .targets = std::move(targets)});
         x += widget.computed.cx * xfac;
         y += widget.computed.cy * yfac;
     }

@@ -36,6 +36,11 @@ Padding PaddingFromProperty(const sol::table& t, const char* name) {
     return o ? PaddingFromTable(*o) : Padding{};
 }
 
+std::string TagFromTable(const sol::table& t) {
+    const sol::optional<std::string> optionalTag = t["tag"];
+    return optionalTag ? *optionalTag : "";
+}
+
 static std::unique_ptr<MarkupBox> MarkupBoxFromTable(const sol::table& t) {
     const sol::optional<std::string> optionalMarkup = t["markup"];
     const std::string markup = optionalMarkup ? *optionalMarkup : "";
@@ -44,6 +49,7 @@ static std::unique_ptr<MarkupBox> MarkupBoxFromTable(const sol::table& t) {
     box->border = BorderFromProperty(t, "border");
     box->color = RGBAFromProperty(t, "color");
     box->padding = PaddingFromProperty(t, "padding");
+    box->tag = TagFromTable(t);
     return box;
 }
 
@@ -71,6 +77,7 @@ static std::unique_ptr<Renderable> FlexContainerFromTable(const sol::table& t) {
     if (children) {
         FromChildTable(*children, f.children);
     }
+    f.tag = TagFromTable(t);
     return std::unique_ptr<Renderable>(new FlexContainer(std::move(f)));
 }
 
@@ -128,7 +135,10 @@ static void ParseWidgetConfig(const sol::table& table, std::vector<WidgetConfig>
     sol::optional<sol::protected_function> maybeClickFunction = table["on_click"];
     if (maybeClickFunction) {
         auto clickFunction = *maybeClickFunction;
-        widget.click = [clickFunction]() { clickFunction(); };
+        widget.click = [clickFunction](std::string_view tag) {
+            clickFunction(tag);
+            return true;
+        };
     }
     widget.padding = PaddingFromProperty(table, "padding");
     widgets.push_back(std::move(widget));
