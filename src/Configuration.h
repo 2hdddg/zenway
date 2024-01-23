@@ -46,11 +46,16 @@ struct Border {
 
 enum class Anchor { Left, Right, Top, Bottom };
 
+struct Target {
+    Rect position;
+    std::string tag;
+};
+
 struct Renderable {
     Renderable() : computed{} {}
     virtual ~Renderable() {}
     virtual void Compute(cairo_t*) {}
-    virtual void Draw(cairo_t*, int /*x*/, int /*y*/) const {}
+    virtual void Draw(cairo_t*, int /*x*/, int /*y*/, std::vector<Target>& /*targets*/) const {}
     Size computed;
 };
 
@@ -60,7 +65,7 @@ struct Markup : public Renderable {
         if (m_layout) g_object_unref(m_layout);
     }
     void Compute(cairo_t* cr) override;
-    void Draw(cairo_t* cr, int x, int y) const override;
+    void Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const override;
 
    private:
     const std::string string;
@@ -71,29 +76,31 @@ struct MarkupBox : public Renderable {
     MarkupBox(const std::string& string)
         : Renderable(), markup(string), color({}), border({}), radius(0), padding({}) {}
     void Compute(cairo_t* cr) override;
-    void Draw(cairo_t* cr, int x, int y) const override;
+    void Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const override;
 
     Markup markup;
     RGBA color;
     Border border;
     uint8_t radius;
     Padding padding;
+    std::string tag;
 };
 
 struct FlexContainer : public Renderable {
     FlexContainer() : Renderable(), isColumn(false), padding({}) {}
     void Compute(cairo_t* cr) override;
-    void Draw(cairo_t* cr, int x, int y) const override;
+    void Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const override;
 
     bool isColumn;
     Padding padding;
     std::vector<std::unique_ptr<Renderable>> children;
+    std::string tag;
 };
 
 struct WidgetConfig {
     WidgetConfig() : padding({}) {}
     std::function<std::unique_ptr<Renderable>(const std::string& outputName)> render;
-    std::function<void()> click;
+    std::function<void(std::string_view tag)> click;
     std::set<std::string> sources;
     Padding padding;
 };
@@ -101,7 +108,7 @@ struct WidgetConfig {
 struct Widget {
     Widget() : computed({}), m_renderable(nullptr), m_paddingX(0), m_paddingY(0) {}
     void Compute(const WidgetConfig& config, const std::string& outputName, cairo_t* cr);
-    void Draw(cairo_t* cr, int x, int y) const;
+    void Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const;
     Size computed;
 
    private:
