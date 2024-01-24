@@ -66,6 +66,17 @@ class Output {
         return false;
     }
 
+    bool WheelSurface(wl_surface *surface, int x, int y, int value) {
+        for (auto &kv : m_surfaces) {
+            if (kv.second->WheelSurface(surface, x, y, value)) {
+                spdlog::debug("Wheel in surface");
+                return true;
+            }
+        }
+        spdlog::debug("No surface found for wheel");
+        return false;
+    }
+
    private:
     Output(wl_output *wloutput, std::shared_ptr<Configuration> config, OnNamedCallback onNamed)
         : m_wloutput(wloutput), m_config(config), m_onNamed(onNamed) {}
@@ -155,6 +166,14 @@ void Outputs::Hide(const Registry &registry) {
 void Outputs::ClickSurface(wl_surface *surface, int x, int y) {
     for (auto &kv : m_map) {
         if (kv.second->ClickSurface(surface, x, y)) {
+            return;
+        }
+    }
+}
+
+void Outputs::WheelSurface(wl_surface *surface, int x, int y, int value) {
+    for (auto &kv : m_map) {
+        if (kv.second->WheelSurface(surface, x, y, value)) {
             return;
         }
     }

@@ -49,8 +49,7 @@ void ShellSurface::OnClosed() {
 }
 
 bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
-    bool isThis = surface == m_surface;
-    if (!isThis) {
+    if (surface != m_surface) {
         return false;
     }
     // Check what widget
@@ -70,6 +69,37 @@ bool ShellSurface::ClickSurface(wl_surface *surface, int x, int y) {
                 }
                 spdlog::debug("Click in widget, tag: {}", tag);
                 widget.click(tag);
+            }
+            break;
+        }
+        i++;
+    }
+    // Return true even if no widget was found to stop trying other surfaces
+    return true;
+}
+
+// TODO: Refactor to share some code between Click and Wheel
+bool ShellSurface::WheelSurface(wl_surface *surface, int x, int y, int value) {
+    if (surface != m_surface) {
+        return false;
+    }
+    // Check what widget
+    int i = 0;
+    for (const auto &w : m_drawn.widgets) {
+        if (w.position.Contains(x, y)) {
+            auto &widget = m_panelConfig.widgets.at(i);
+            if (widget.wheel) {
+                // Widget has a wheel handler. There might be inner more
+                // specific targets, find the tag of the correct one.
+                std::string tag = "";
+                for (const auto &t : w.targets) {
+                    if (t.position.Contains(x, y)) {
+                        tag = t.tag;
+                        break;
+                    }
+                }
+                spdlog::debug("Wheel in widget, tag: {}", tag);
+                widget.wheel(tag, value);
             }
             break;
         }

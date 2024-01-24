@@ -132,11 +132,21 @@ static void ParseWidgetConfig(const sol::table& table, std::vector<WidgetConfig>
         }
         return FromObject(*result);
     };
+    // Click handler
     sol::optional<sol::protected_function> maybeClickFunction = table["on_click"];
     if (maybeClickFunction) {
         auto clickFunction = *maybeClickFunction;
         widget.click = [clickFunction](std::string_view tag) {
             clickFunction(tag);
+            return true;
+        };
+    }
+    // Wheel handler
+    sol::optional<sol::protected_function> maybeWheelFunction = table["on_wheel"];
+    if (maybeWheelFunction) {
+        auto wheelFunction = *maybeWheelFunction;
+        widget.wheel = [wheelFunction](std::string_view tag, int value) {
+            wheelFunction(tag, value);
             return true;
         };
     }

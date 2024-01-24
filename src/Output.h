@@ -25,6 +25,7 @@ class Outputs {
     void Hide(const Registry& registry);
 
     void ClickSurface(wl_surface* surface, int x, int y);
+    void WheelSurface(wl_surface* surface, int x, int y, int value);
 
    private:
     Outputs(std::shared_ptr<Configuration> config) : m_config(config) {}

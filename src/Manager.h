@@ -19,6 +19,7 @@ class Manager : public IoBatchHandler {
     void Hide();
 
     void ClickSurface(wl_surface* surface, int x, int y);
+    void WheelSurface(wl_surface* surface, int x, int y, int value);
 
    private:
     Manager(std::shared_ptr<Registry> registry) : m_registry(registry) {}
