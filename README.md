@@ -14,7 +14,7 @@ Screenshot shows Neovim and Firefox in background with zenway status shown above
   - Audio (currently only PulseAudio), mute, volume 
   - Current time and date
   - Keyboard layout.
-* Primitive click support
+* Customizable mouse click/wheel per status widget.
 
 # Installation
 In Sway config add entry to start Zenway:
@@ -47,7 +47,7 @@ return {
             anchor = "left"
             widgets = {
                 { sources = {'time', 'date'}, on_render = render_time },
-                { sources = {'keyboard'}, on_render = render_keyboard, on_click = click_keyboard },
+                { sources = {'keyboard'}, on_render = render_keyboard, on_click = click_keyboard, on_wheel = wheel_keyboard },
             },
             direction = "column",
         },
@@ -77,12 +77,18 @@ local function render_keyboard()
         color = "#1c1b19",
         radius = 5,
         border = { width = 2, color = '#10101080' },
+        tag = "id",
     }
 end
 ```
 
+
 The widgets will be rendered with time aligned to the left with the keyboard rendered
 below as specified by the direction = "column".
+
+The keyboard widget also specifies two other Lua functions in on_click and on_wheel. Those are invoked
+when user mouse clicks or wheels on widget. The render function specifies a tag, if the user clicks in
+that part of the widget, the tag will be the first argument to the event handler.
 
 # How to build
 
