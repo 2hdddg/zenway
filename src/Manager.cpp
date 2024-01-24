@@ -10,14 +10,22 @@ std::shared_ptr<Manager> Manager::Create(std::shared_ptr<Registry> registry) {
         spdlog::error("No seat in registry");
         return nullptr;
     }
-    registry->seat->RegisterClickHandler(
-        [manager](auto surface, int x, int y) { manager->ClickSurface(surface, x, y); });
+    registry->seat->RegisterHandlers(
+        [manager](auto surface, int x, int y) { manager->ClickSurface(surface, x, y); },
+        [manager](auto surface, int x, int y, int value) {
+            manager->WheelSurface(surface, x, y, value);
+        });
     return manager;
 }
 
 void Manager::ClickSurface(wl_surface* surface, int x, int y) {
     spdlog::debug("Click in surface {} at {},{}", (void*)surface, x, y);
     m_registry->BorrowOutputs().ClickSurface(surface, x, y);
+}
+
+void Manager::WheelSurface(wl_surface* surface, int x, int y, int value) {
+    spdlog::debug("Wheel in surface {} at {},{},{}", (void*)surface, x, y, value);
+    m_registry->BorrowOutputs().WheelSurface(surface, x, y, value);
 }
 
 void Manager::OnBatchProcessed() {

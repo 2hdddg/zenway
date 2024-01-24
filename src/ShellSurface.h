@@ -22,6 +22,7 @@ class ShellSurface {
     void OnClosed();
 
     bool ClickSurface(wl_surface *surface, int x, int y);
+    bool WheelSurface(wl_surface *surface, int x, int y, int value);
 
    private:
     ShellSurface(wl_output *output, wl_surface *surface, PanelConfig panelConfiguration)

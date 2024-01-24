@@ -101,6 +101,7 @@ struct WidgetConfig {
     WidgetConfig() : padding({}) {}
     std::function<std::unique_ptr<Renderable>(const std::string& outputName)> render;
     std::function<void(std::string_view tag)> click;
+    std::function<void(std::string_view tag, int value)> wheel;
     std::set<std::string> sources;
     Padding padding;
 };

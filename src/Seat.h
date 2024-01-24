@@ -10,6 +10,7 @@
 #include "src/Sources.h"
 
 using ClickHandler = std::function<void(wl_surface*, int, int)>;
+using WheelHandler = std::function<void(wl_surface*, int, int, int)>;
 
 class Keyboard : public Source {
    public:
@@ -37,7 +38,10 @@ class Pointer {
         wl_pointer_destroy(m_wlpointer);
         m_wlpointer = nullptr;
     }
-    void RegisterClickHandler(ClickHandler handler) { m_clickHandler = handler; }
+    void RegisterHandlers(ClickHandler clickHandler, WheelHandler wheelHandler) {
+        m_clickHandler = clickHandler;
+        m_wheelHandler = wheelHandler;
+    }
     void Enter(wl_surface* surface) { m_current = surface; }
     void Leave() { m_current = nullptr; }
     void Track(wl_fixed_t x, wl_fixed_t y) {
@@ -45,6 +49,7 @@ class Pointer {
         m_y = y;
     }
     void Click();
+    void Wheel(int value);
 
    private:
     wl_pointer* m_wlpointer;
@@ -52,6 +57,7 @@ class Pointer {
     wl_fixed_t m_x;
     wl_fixed_t m_y;
     ClickHandler m_clickHandler;
+    WheelHandler m_wheelHandler;
 };
 
 class Seat {
@@ -63,11 +69,11 @@ class Seat {
         m_wlseat = nullptr;
     }
 
-    void RegisterClickHandler(ClickHandler handler) {
+    void RegisterHandlers(ClickHandler clickHandler, WheelHandler wheelHandler) {
         // TODO: Log error
         if (!m_pointer) return;
 
-        m_pointer->RegisterClickHandler(handler);
+        m_pointer->RegisterHandlers(clickHandler, wheelHandler);
     }
 
     std::shared_ptr<Keyboard> keyboard;

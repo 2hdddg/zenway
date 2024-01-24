@@ -1,5 +1,6 @@
 #include "Seat.h"
 
+#include <linux/input-event-codes.h>
 #include <sys/mman.h>
 #include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon.h>
@@ -28,23 +29,43 @@ static void on_pointer_motion(void* data, struct wl_pointer*, uint32_t /*time*/,
 static void on_pointer_button(void* data, struct wl_pointer*, uint32_t /*serial*/,
                               uint32_t /*time*/, uint32_t button, uint32_t state) {
     spdlog::trace("Pointer click button {} state {}", button, state);
-    if (state == 0 /*release*/) {
+    if (state == 0 /*release*/ && button == BTN_LEFT) {
         ((Pointer*)data)->Click();
+        return;
     }
 }
 
-void on_pointer_frame(void* /*data*/, struct wl_pointer*) {}
+static void on_axis(void* data, struct wl_pointer*, uint32_t /*time*/, uint32_t axis,
+                    wl_fixed_t value) {
+    spdlog::trace("on_axis, axis: {}, value: {}", axis, value);
+    if (axis == WL_POINTER_AXIS_SOURCE_WHEEL) {
+        ((Pointer*)data)->Wheel(value);
+    }
+}
+
+static void on_pointer_frame(void* /*data*/, struct wl_pointer*) {}
+
+static void on_axis_source(void* /*data*/, struct wl_pointer*, uint32_t /*axis_source*/) {}
+static void on_axis_stop(void* /*data*/, struct wl_pointer*, uint32_t /*time*/, uint32_t /*axis*/) {
+}
+static void on_axis_discrete(void* /*data*/, struct wl_pointer*, uint32_t /*axis*/,
+                             int32_t /*discrete*/) {}
+/*
+[2024-01-24 19:34:07.087] [trace] on_axis_source: 0
+[2024-01-24 19:34:07.087] [trace] on_axis_discrete axis 0, discrete: 1
+[2024-01-24 19:34:07.087] [trace] on_axis, axis: 0, value: 3840
+*/
 
 static const wl_pointer_listener pointer_listener = {
     .enter = on_pointer_enter,
     .leave = on_pointer_leave,
     .motion = on_pointer_motion,
     .button = on_pointer_button,
-    .axis = nullptr,
+    .axis = on_axis,
     .frame = on_pointer_frame,
-    .axis_source = nullptr,
-    .axis_stop = nullptr,
-    .axis_discrete = nullptr,
+    .axis_source = on_axis_source,
+    .axis_stop = on_axis_stop,
+    .axis_discrete = on_axis_discrete,
     // Version > supported
     //.axis_value120 = nullptr,
     //.axis_relative_direction = nullptr,
@@ -61,6 +82,12 @@ void Pointer::Click() {
     if (!m_current) return;
     if (!m_clickHandler) return;
     m_clickHandler(m_current, wl_fixed_to_int(m_x), wl_fixed_to_int(m_y));
+}
+
+void Pointer::Wheel(wl_fixed_t value) {
+    if (!m_current) return;
+    if (!m_wheelHandler) return;
+    m_wheelHandler(m_current, wl_fixed_to_int(m_x), wl_fixed_to_int(m_y), wl_fixed_to_int(value));
 }
 
 static void on_keymap(void* data, struct wl_keyboard*, uint32_t format, int32_t fd, uint32_t size) {

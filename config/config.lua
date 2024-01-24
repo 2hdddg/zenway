@@ -117,7 +117,7 @@ local function render_workspaces(displayName)
 end
 
 local function click_workspace(tag)
-    os.execute("swaymsg workspace '" .. tag .. "'")
+    os.execute('swaymsg workspace "' .. tag .. '"')
 end
 
 local function render_time()
@@ -149,6 +149,16 @@ end
 
 local function click_audio()
   os.execute("pactl set-sink-mute @DEFAULT_SINK@ toggle")
+end
+
+local function wheel_audio(tag, value)
+  local prefix = ""
+  if value < 0 then
+    prefix = "+"
+  else
+    prefix = "-"
+  end
+  os.execute("pactl set-sink-volume @DEFAULT_SINK@ " .. prefix .. "10000")
 end
 
 local function click_keyboard()
@@ -211,7 +221,7 @@ return {
             anchor = "right",
             widgets = {
                 { sources = {'keyboard'}, padding = { right = 10 }, on_render = render_keyboard, on_click = click_keyboard },
-                { sources = {'audio'}, padding = { top = 10, right = 10 }, on_render = render_audio, on_click = click_audio },
+                { sources = {'audio'}, padding = { top = 10, right = 10 }, on_render = render_audio, on_click = click_audio, on_wheel = wheel_audio },
                 { sources = {'power'}, padding = { top = 10, right = 10 }, on_render = render_power },
                 { sources = {'networks'}, padding = { top = 10, right = 10 }, on_render = render_networks },
             },
