@@ -44,7 +44,7 @@ struct Border {
     int width;
 };
 
-enum class Anchor { Left, Right, Top, Bottom };
+enum class Anchor { Left, Right, Top, TopLeft, TopRight, Bottom, BottomLeft, BottomRight, Center };
 
 struct Target {
     Rect position;
@@ -145,6 +145,7 @@ struct AudioConfig {
 class Configuration {
    public:
     std::vector<PanelConfig> panels;
+    PanelConfig alertPanel;
     DisplaysConfig displays;
     AudioConfig audio;
     int bufferWidth;

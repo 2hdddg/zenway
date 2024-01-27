@@ -83,7 +83,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         }
     }
     if (source == "power") {
-        auto powerSource = PowerSource::Create(*mainLoop);
+        auto powerSource = PowerSource::Create(mainLoop);
         if (!powerSource) {
             spdlog::error("Failed to initialize battery source");
             return;
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
     // Initialize compositor
     switch (config->displays.compositor) {
         case Compositor::Sway: {
-            auto sway = SwayCompositor::Connect(*mainLoop, [manager](bool visible) {
+            auto sway = SwayCompositor::Connect(mainLoop, [manager](bool visible) {
                 if (visible) {
                     manager->Show();
                 } else {
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
     // Let over control to mainloop and manager
     manager->SetSources(std::move(sources));
     sources = nullptr;
-    mainLoop->RegisterBatchHandler(manager);
+    mainLoop->RegisterNotificationHandler(manager);
     mainLoop->Run();
     return 0;
 }

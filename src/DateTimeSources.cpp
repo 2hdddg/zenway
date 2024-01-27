@@ -41,7 +41,7 @@ std::shared_ptr<TimeSource> TimeSource::Create(MainLoop& mainLoop,
     }
 
     auto source = std::shared_ptr<TimeSource>(new TimeSource(fd, dateSource));
-    mainLoop.Register(fd, "TimeSource", source);
+    mainLoop.RegisterIoHandler(fd, "TimeSource", source);
     return source;
 }
 

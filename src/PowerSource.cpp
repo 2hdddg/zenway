@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop) {
+std::shared_ptr<PowerSource> PowerSource::Create(std::shared_ptr<MainLoop> mainloop) {
     // Use non blocking to make sure we never hang on read
     auto fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     if (fd == -1) {
@@ -22,14 +22,19 @@ std::shared_ptr<PowerSource> PowerSource::Create(MainLoop& mainLoop) {
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<PowerSource>(new PowerSource(fd));
-    mainLoop.Register(fd, "PowerSource", source);
+    auto source = std::shared_ptr<PowerSource>(new PowerSource(mainloop, fd));
+    mainloop->RegisterIoHandler(fd, "PowerSource", source);
     return source;
 }
 
 bool PowerSource::Initialize() {
     m_drawn = m_published = false;
-    m_sourceState = PowerState{.IsPluggedIn = false, .IsCharging = false, .Capacity = 0};
+    m_sourceState = PowerState{
+        .IsAlerted = false,
+        .IsPluggedIn = false,
+        .IsCharging = false,
+        .Capacity = 0,
+    };
     // TODO: Probe that these exists
     m_ac = "/sys/class/power_supply/AC/online";
     // TODO: Always BAT0?
@@ -89,9 +94,22 @@ void PowerSource::ReadState() {
     if (maybeString) {
         state.IsPluggedIn = std::stoi(*maybeString) != 0;
     }
+    state.IsAlerted =
+        state.Capacity < 25 /*TODO: From config*/ && !state.IsCharging && !state.IsPluggedIn;
     if (state != m_sourceState) {
-        spdlog::info("Power status changed, capacity {}, charging {}, plugged in {}",
-                     state.Capacity, state.IsCharging, state.IsPluggedIn);
+        spdlog::info("Power status changed, alert {}, capacity {}, charging {}, plugged in {}",
+                     state.IsAlerted, state.Capacity, state.IsCharging, state.IsPluggedIn);
+        // Alert state changed
+        if (state.IsAlerted != m_sourceState.IsAlerted) {
+            if (state.IsAlerted) {
+                // To alert
+                spdlog::info("Power source is triggering alert");
+                m_mainloop->AlertAndWakeup();
+            } else {
+                // From alert to non alert
+                // TODO:
+            }
+        }
         m_sourceState = state;
         m_drawn = m_published = false;
     }

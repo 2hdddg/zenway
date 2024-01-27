@@ -28,33 +28,41 @@ void Manager::WheelSurface(wl_surface* surface, int x, int y, int value) {
     m_registry->BorrowOutputs().WheelSurface(surface, x, y, value);
 }
 
-void Manager::OnBatchProcessed() {
-    // Always publish sources
+void Manager::OnChanged() {
     m_sources->PublishAll();
-    // No need to redraw when not visible and not in transition
-    if (!m_visibilityChanged && !m_isVisible) return;
-    spdlog::debug("Processing batch of dirty sources");
     if (m_visibilityChanged) {
         m_visibilityChanged = false;
         if (m_isVisible) {
             m_sources->ForceRedraw();
+            if (m_alerted) {
+                m_registry->BorrowOutputs().HideAlert(*m_registry);
+                m_alerted = false;
+            }
         } else {
             m_registry->BorrowOutputs().Hide(*m_registry);
-            return;
         }
     }
-    m_registry->BorrowOutputs().Draw(*m_registry, *m_sources);
-    m_sources->SetAllDrawn();
+    if (m_isVisible) {
+        m_registry->BorrowOutputs().Draw(*m_registry, *m_sources);
+        m_sources->SetAllDrawn();
+    } else if (m_alerted) {
+        m_registry->BorrowOutputs().DrawAlert(*m_registry);
+    }
+}
+
+void Manager::OnAlerted() {
+    m_alerted = true;
+    OnChanged();
 }
 
 void Manager::Hide() {
     m_isVisible = false;
     m_visibilityChanged = true;
-    OnBatchProcessed();
+    OnChanged();
 }
 
 void Manager::Show() {
     m_isVisible = true;
     m_visibilityChanged = true;
-    OnBatchProcessed();
+    OnChanged();
 }

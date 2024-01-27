@@ -14,7 +14,7 @@ std::unique_ptr<MainLoop> MainLoop::Create() {
 
 void MainLoop::Run() {
     // Register internal events
-    m_polls.push_back(pollfd{.fd = m_eventFd, .events = POLLIN, .revents = 0});
+    m_polls.push_back(pollfd{.fd = m_wakeupFd, .events = POLLIN, .revents = 0});
 
     do {
         // Should be ppoll
@@ -36,11 +36,11 @@ void MainLoop::Run() {
             if ((poll.events & poll.revents) != 0) {
                 // Special treatment on internal events. Empty events and
                 // rely on batch processing when all other events has been processed
-                if (poll.fd == m_eventFd) {
+                if (poll.fd == m_wakeupFd) {
                     uint64_t ignore;
                     spdlog::trace("Popping internal event");
                     m_wakupMutex.lock();
-                    read(m_eventFd, &ignore, sizeof(uint64_t));
+                    read(m_wakeupFd, &ignore, sizeof(uint64_t));
                     m_wakupMutex.unlock();
                     // For now internal events always means that a source is dirty
                     anyDirty = true;
@@ -52,28 +52,38 @@ void MainLoop::Run() {
                 }
             }
         }
-        if (anyDirty && m_batchHandler) {
-            m_batchHandler->OnBatchProcessed();
+        if (anyDirty && m_handler) {
+            m_handler->OnChanged();
+        }
+        if (m_alerted) {
+            m_handler->OnAlerted();
+            m_alerted = false;
         }
     } while (m_polls.size() > 0);
 }
 
-void MainLoop::Register(int fd, const std::string_view name, std::shared_ptr<IoHandler> ioHandler) {
+void MainLoop::RegisterIoHandler(int fd, const std::string_view name,
+                                 std::shared_ptr<IoHandler> ioHandler) {
     m_handlers[fd] = ioHandler;
     m_polls.push_back(pollfd{.fd = fd, .events = POLLIN, .revents = 0});
     spdlog::debug("Registering {} in main loop for fd {}", name, fd);
 }
 
-void MainLoop::RegisterBatchHandler(std::shared_ptr<IoBatchHandler> batchHandler) {
-    if (m_batchHandler) {
+void MainLoop::RegisterNotificationHandler(std::shared_ptr<NotificationHandler> batchHandler) {
+    if (m_handler) {
         spdlog::error("Only one batch handler supported");
     }
-    m_batchHandler = batchHandler;
+    m_handler = batchHandler;
 }
 
 void MainLoop::Wakeup() {
     m_wakupMutex.lock();
     uint64_t inc = 1;
-    write(m_eventFd, &inc, sizeof(uint64_t));
+    write(m_wakeupFd, &inc, sizeof(uint64_t));
     m_wakupMutex.unlock();
+}
+
+void MainLoop::AlertAndWakeup() {
+    m_alerted = true;
+    Wakeup();
 }

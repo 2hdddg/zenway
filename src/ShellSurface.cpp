@@ -151,6 +151,22 @@ void ShellSurface::Draw(const Registry &registry, BufferPool &bufferPool,
         case Anchor::Bottom:
             zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
             break;
+        case Anchor::TopLeft:
+            zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+            break;
+        case Anchor::TopRight:
+            zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+            break;
+        case Anchor::BottomLeft:
+            zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+            break;
+        case Anchor::BottomRight:
+            zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+            break;
+        case Anchor::Center:
+            zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT |
+                      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+            break;
     }
     zwlr_layer_surface_v1_set_anchor(m_layer, zanchor);
     wl_surface_attach(m_surface, m_drawn.buffer->Lock(), 0, 0);

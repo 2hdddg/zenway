@@ -48,7 +48,7 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop) {
         return nullptr;
     }
     auto source = std::shared_ptr<NetworkSource>(new NetworkSource(sock, fd));
-    mainLoop.Register(fd, "NetworkSource", source);
+    mainLoop.RegisterIoHandler(fd, "NetworkSource", source);
     return source;
 }
 

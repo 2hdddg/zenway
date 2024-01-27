@@ -23,6 +23,8 @@ class Outputs {
 
     void Draw(const Registry& registry, const Sources& sources);
     void Hide(const Registry& registry);
+    void DrawAlert(const Registry& registry);
+    void HideAlert(const Registry& registry);
 
     void ClickSurface(wl_surface* surface, int x, int y);
     void WheelSurface(wl_surface* surface, int x, int y, int value);

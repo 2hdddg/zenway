@@ -150,8 +150,8 @@ void Outputs::Draw(const Registry &registry, const Sources &sources) {
         }
         // This panel is dirty, redraw it on every output
         if (dirty) {
-            for (const auto &keyValue : m_map) {
-                keyValue.second->Draw(registry, panelConfig, *m_bufferPool);
+            for (const auto &nameAndOutput : m_map) {
+                nameAndOutput.second->Draw(registry, panelConfig, *m_bufferPool);
             }
         }
     }
@@ -160,6 +160,20 @@ void Outputs::Draw(const Registry &registry, const Sources &sources) {
 void Outputs::Hide(const Registry &registry) {
     for (auto &keyValue : m_map) {
         keyValue.second->Hide(registry);
+    }
+}
+
+void Outputs::DrawAlert(const Registry &registry) {
+    spdlog::info("Draw alert");
+    for (const auto &nameAndOutput : m_map) {
+        nameAndOutput.second->Draw(registry, m_config->alertPanel, *m_bufferPool);
+    }
+}
+
+void Outputs::HideAlert(const Registry &registry) {
+    spdlog::info("Hide alert");
+    for (const auto &nameAndOutput : m_map) {
+        nameAndOutput.second->Hide(registry);
     }
 }
 
