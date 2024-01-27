@@ -20,11 +20,13 @@ static void on_closed(void *data, struct zwlr_layer_surface_v1 *) {
 
 static void on_enter(void * /*data*/, struct wl_surface *, struct wl_output *) {}
 
+static void on_leave(void * /*data*/, struct wl_surface *, struct wl_output *) {}
+
 static const zwlr_layer_surface_v1_listener layer_listener = {.configure = on_configure,
                                                               .closed = on_closed};
 
 static const wl_surface_listener surface_listener = {
-    .enter = on_enter, .leave = nullptr,
+    .enter = on_enter, .leave = on_leave,
     //.preferred_buffer_scale = nullptr,
     //.preferred_buffer_transform = nullptr,
 };

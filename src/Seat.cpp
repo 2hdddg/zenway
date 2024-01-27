@@ -110,14 +110,20 @@ static void on_keymap(void* data, struct wl_keyboard*, uint32_t format, int32_t 
     xkb_context_unref(ctx);
 }
 
-void on_repeat_info(void* /*data*/, struct wl_keyboard*, int32_t /*rate*/, int32_t /*delay*/) {}
+static void on_enter(void*, struct wl_keyboard*, uint32_t, struct wl_surface*, struct wl_array*) {}
+
+static void on_leave(void*, struct wl_keyboard*, uint32_t, struct wl_surface*) {}
+static void on_key(void*, struct wl_keyboard*, uint32_t, uint32_t, uint32_t, uint32_t) {}
+static void on_modifiers(void*, struct wl_keyboard*, uint32_t, uint32_t, uint32_t, uint32_t,
+                         uint32_t) {}
+static void on_repeat_info(void*, struct wl_keyboard*, int32_t, int32_t) {}
 
 static const wl_keyboard_listener keyboard_listener = {
     .keymap = on_keymap,
-    .enter = nullptr,
-    .leave = nullptr,
-    .key = nullptr,
-    .modifiers = nullptr,
+    .enter = on_enter,
+    .leave = on_leave,
+    .key = on_key,
+    .modifiers = on_modifiers,
     .repeat_info = on_repeat_info,
 };
 
