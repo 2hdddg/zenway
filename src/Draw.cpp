@@ -183,7 +183,7 @@ bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
         cy += widget.computed.cy;
     }
     std::vector<Target> targets;
-    Align align;
+    Align align = Align::CenterX;
     int xfac = 0, yfac = 0;
     if (panelConfig.isColumn) {
         yfac = 1;

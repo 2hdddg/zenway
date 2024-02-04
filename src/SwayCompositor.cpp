@@ -94,18 +94,18 @@ static bool GetFocused(basic_json<> node) { return node["focused"].get<bool>(); 
 
 static bool GetUrgent(basic_json<> node) { return GetBool(node, "urgent", false); }
 
-static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleByModifier) {
+static bool ParseBarStateUpdateEvent(const std::string &payload) {
     auto rootNode = json::parse(payload, Filter, false /*ignore exceptions*/);
     if (rootNode.is_discarded()) {
         spdlog::error("Failed to parse Sway status update event");
-        return;
+        return false;
     }
     auto visible = rootNode["visible_by_modifier"];
     if (visible.is_null() || !visible.is_boolean()) {
         spdlog::error("Failed to get visible modifier from Sway status update event");
-        return;
+        return false;
     }
-    visibleByModifier = visible.get<bool>();
+    return visible.get<bool>();
 }
 
 static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applicationNode,
@@ -311,7 +311,7 @@ bool SwayCompositor::OnRead() {
             break;
         case Message::EVENT_BAR_STATE_UPDATE:
             bool visible;
-            ParseBarStateUpdateEvent(m_payload, visible);
+            visible = ParseBarStateUpdateEvent(m_payload);
             spdlog::debug("Sway bar state event, visible: {}", visible);
             m_visibility(visible);
             m_drawn = m_published = false;

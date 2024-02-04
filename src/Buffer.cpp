@@ -13,7 +13,14 @@ const struct wl_buffer_listener listener = {
 };
 
 Buffer::Buffer(wl_buffer *buffer, void *address, int cx, int cy, size_t sizeInBytes)
-    : m_wlbuffer(buffer), m_address(address), m_cx(cx), m_cy(cy), m_sizeInBytes(sizeInBytes) {}
+    : m_wlbuffer(buffer),
+      m_inUse(false),
+      m_address(address),
+      m_cx(cx),
+      m_cy(cy),
+      m_sizeInBytes(sizeInBytes),
+      m_cr_surface(nullptr),
+      m_cr(nullptr) {}
 
 std::unique_ptr<Buffer> Buffer::Create(wl_buffer *wlbuffer, void *address, int cx, int cy) {
     const int stride = cx * 4;
