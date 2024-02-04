@@ -96,13 +96,14 @@ void NetworkSource::ReadState() {
 }
 
 bool NetworkSource::OnRead() {
-    spdlog::info("Check power");
+    spdlog::info("Check network");
     uint64_t ignore;
     auto n = read(m_timerfd, &ignore, sizeof(ignore));
     if (n <= 0) {
         // Either block or no events
         return false;
     }
+    ReadState();
     return !m_published;
 }
 

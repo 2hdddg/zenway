@@ -15,7 +15,7 @@ using WheelHandler = std::function<void(wl_surface*, int, int, int)>;
 class Keyboard : public Source {
    public:
     Keyboard(std::shared_ptr<MainLoop> mainloop, wl_keyboard* wlkeyboard)
-        : m_mainloop(mainloop), m_wlkeyboard(wlkeyboard) {}
+        : Source(), m_mainloop(mainloop), m_wlkeyboard(wlkeyboard) {}
     virtual ~Keyboard() {
         wl_keyboard_destroy(m_wlkeyboard);
         m_wlkeyboard = nullptr;

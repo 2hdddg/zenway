@@ -16,7 +16,8 @@ class PowerSource : public Source, public IoHandler {
     virtual ~PowerSource();
 
    private:
-    PowerSource(std::shared_ptr<MainLoop> mainloop, int fd) : m_mainloop(mainloop), m_timerfd(fd) {}
+    PowerSource(std::shared_ptr<MainLoop> mainloop, int fd)
+        : Source(), m_mainloop(mainloop), m_timerfd(fd) {}
     std::shared_ptr<MainLoop> m_mainloop;
     std::filesystem::path m_batteryCapacity;
     std::filesystem::path m_batteryStatus;

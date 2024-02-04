@@ -11,7 +11,7 @@ class DateSource : public Source {
     void Publish(const std::string_view, ScriptContext&) override {}
 
    private:
-    DateSource() {}
+    DateSource() : Source() {}
 };
 
 class TimeSource : public Source, public IoHandler {
@@ -24,7 +24,7 @@ class TimeSource : public Source, public IoHandler {
 
    private:
     TimeSource(int fd, std::shared_ptr<DateSource> dateSource)
-        : m_fd(fd), m_dateSource(dateSource) {}
+        : Source(), m_fd(fd), m_dateSource(dateSource) {}
     int m_fd;
     std::shared_ptr<DateSource> m_dateSource;
 };
