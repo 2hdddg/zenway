@@ -137,7 +137,7 @@ void ShellSurface::Draw(const Registry &registry, BufferPool &bufferPool,
     spdlog::trace("Draw buffer: {}x{}, damaging {}x{}", size.cx, size.cy, damage.cx, damage.cy);
     zwlr_layer_surface_v1_set_size(m_layer, size.cx, size.cy);
     auto anchor = m_panelConfig.anchor;
-    uint32_t zanchor;
+    uint32_t zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
     switch (anchor) {
         case Anchor::Left:
             zanchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;

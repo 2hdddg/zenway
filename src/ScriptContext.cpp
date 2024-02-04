@@ -290,7 +290,11 @@ static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root
     if (alertPanelTable) {
         config->alertPanel = ParsePanelConfig(*alertPanelTable, -1);
     } else {
-        config->alertPanel = PanelConfig{.index = -1};
+        config->alertPanel = PanelConfig{.widgets = {},
+                                         .index = -1,
+                                         .anchor = Anchor::Center,
+                                         .isColumn = false,
+                                         .checkDisplay = nullptr};
     }
 
     // Buffers

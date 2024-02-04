@@ -4,7 +4,6 @@ project(
     'cpp_std=c++20',
     'default_library=static',
     'warning_level=3',
-    'b_sanitize=address',
   ],
 )
 
@@ -19,7 +18,7 @@ lua = dependency('lua')
 m_dep = meson.get_compiler('c').find_library('m')
 xkbcommon = dependency('xkbcommon')
 deps = [wayland_client, wayland_protocols, xkbcommon, cairo, dependency('pango'), dependency('pangocairo'), dependency('libpulse'), lua, m_dep]
-deps += subproject('spdlog').get_variable('spdlog_dep')
+deps += subproject('spdlog', default_options: 'tests=false').get_variable('spdlog_dep')
 deps += subproject('nlohmann_json').get_variable('nlohmann_json_dep')
 
 src = files(
