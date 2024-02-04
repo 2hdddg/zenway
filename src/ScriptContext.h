@@ -16,25 +16,29 @@ struct Application {
     std::string name;
     std::string appId;
     bool isFocused;
+    bool isAlerted;
 };
 
 struct Workspace {
-    Workspace(const std::string name_) : name(name_), isFocused(false) {}
+    Workspace(const std::string name_) : name(name_), isFocused(false), isAlerted(false) {}
     std::string name;
     bool isFocused;  // Has the focused application
+    bool isAlerted;  // Has an alerted application
     std::vector<Application> applications;
 };
 
 struct Display {
-    Display(const std::string& name_) : name(name_), isFocused(false) {}
+    Display(const std::string& name_) : name(name_), isFocused(false), isAlerted(false) {}
     std::string name;
     bool isFocused;  // Has the focused workspace
+    bool isAlerted;  // Has an alerted workspace (or application)
     std::vector<Workspace> workspaces;
 };
 
 using Displays = std::vector<Display>;
 
 struct PowerState {
+    bool IsAlerted;
     bool IsPluggedIn;
     bool IsCharging;
     uint8_t Capacity;

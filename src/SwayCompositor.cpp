@@ -81,9 +81,18 @@ static std::string GetString(basic_json<> node, const char *attr) {
     return v.get<std::string>();
 }
 
+static bool GetBool(basic_json<> node, const char *attr, bool whenMissing) {
+    auto x = node[attr];
+    if (x.is_null()) return whenMissing;
+    if (!x.is_boolean()) return whenMissing;  // TODO: Warn
+    return x.get<bool>();
+}
+
 static std::string GetName(basic_json<> node) { return GetString(node, "name"); }
 
 static bool GetFocused(basic_json<> node) { return node["focused"].get<bool>(); }
+
+static bool GetUrgent(basic_json<> node) { return GetBool(node, "urgent", false); }
 
 static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleByModifier) {
     auto rootNode = json::parse(payload, Filter, false /*ignore exceptions*/);
@@ -100,7 +109,7 @@ static void ParseBarStateUpdateEvent(const std::string &payload, bool &visibleBy
 }
 
 static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applicationNode,
-                             int nextFocusId) {
+                             int nextFocusId, std::set<int> &alerts, bool &newAlert) {
     if (!IsNodeType(applicationNode, "con") && !IsNodeType(applicationNode, "floating_con")) {
         spdlog::error("Expected app");
         return;
@@ -112,13 +121,14 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
     if (applicationname.is_null()) {
         auto applicationNodes = applicationNode["nodes"];
         for (auto &innerApplicationNode : applicationNodes) {
-            ParseApplication(workspace, innerApplicationNode, nextFocusId);
+            ParseApplication(workspace, innerApplicationNode, nextFocusId, alerts, newAlert);
         }
         return;
     }
     auto application = Application{.name = GetName(applicationNode),
                                    .appId = GetString(applicationNode, "app_id"),
-                                   .isFocused = false};
+                                   .isFocused = false,
+                                   .isAlerted = false};
     int applicationId = applicationNode["id"].get<int>();
     // In sway the only focused app is the one in the focused workspace. When that app is focused
     // the workspace is not. To simplify usage this considers the focused app in a non focused
@@ -129,10 +139,23 @@ static void ParseApplication(Workspace &workspace, nlohmann::basic_json<> applic
     } else {
         application.isFocused = applicationId == nextFocusId;
     }
+    application.isAlerted = GetUrgent(applicationNode);
+    workspace.isAlerted = workspace.isAlerted || application.isAlerted;
     workspace.applications.push_back(std::move(application));
+    // Maintain alert state
+    if (alerts.contains(applicationId)) {
+        if (!application.isAlerted) {
+            alerts.erase(applicationId);
+        }  // else, still alerted, already triggered alert.
+    } else if (application.isAlerted) {
+        // Should trigger new alert!
+        alerts.insert(applicationId);
+        newAlert = true;
+    }
 }
 
-static std::optional<Displays> ParseTree(const std::string &payload) {
+static std::optional<Displays> ParseTree(const std::string &payload, AlertStates &alertStates,
+                                         bool &newAlert) {
     auto rootNode = json::parse(payload, Filter, false /*ignoring exceptions*/);
     if (rootNode.is_discarded()) {
         spdlog::error("Failed to parse Sway tree");
@@ -160,6 +183,8 @@ static std::optional<Displays> ParseTree(const std::string &payload) {
         }
         // Retrieve name of output/display
         auto display = Display(GetName(outputNode));
+        // Retrieve alert state for display
+        auto &alerts = alertStates[display.name];
         // Iterate over workspaces
         auto workspaceNodes = outputNode["nodes"];
         if (!IsArray(workspaceNodes)) {
@@ -171,6 +196,7 @@ static std::optional<Displays> ParseTree(const std::string &payload) {
                 continue;
             }
             auto workspace = Workspace(GetName(workspaceNode));
+            workspace.isAlerted = GetUrgent(workspaceNode);
             //   Better way?
             auto focusNode = workspaceNode["focus"];
             int nextFocusId = -1;
@@ -184,9 +210,10 @@ static std::optional<Displays> ParseTree(const std::string &payload) {
                 continue;
             }
             for (auto applicationNode : applicationNodes) {
-                ParseApplication(workspace, applicationNode, nextFocusId);
+                ParseApplication(workspace, applicationNode, nextFocusId, alerts, newAlert);
             }
             display.isFocused = display.isFocused || workspace.isFocused;
+            display.isAlerted = display.isAlerted || workspace.isAlerted;
             display.workspaces.push_back(std::move(workspace));
         }
         displays.push_back(std::move(display));
@@ -194,11 +221,12 @@ static std::optional<Displays> ParseTree(const std::string &payload) {
     return displays;
 }
 
-std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop, Visibility visibility) {
+std::shared_ptr<SwayCompositor> SwayCompositor::Connect(std::shared_ptr<MainLoop> mainloop,
+                                                        Visibility visibility) {
     auto path = getenv("SWAYSOCK");
     if (path == nullptr) {
-      spdlog::error("SWAYSOCK not set");
-      return nullptr;
+        spdlog::error("SWAYSOCK not set");
+        return nullptr;
     }
     spdlog::debug("Connecting to sway at {}", path);
     auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -214,8 +242,8 @@ std::shared_ptr<SwayCompositor> SwayCompositor::Connect(MainLoop &mainLoop, Visi
         close(fd);
         return nullptr;
     }
-    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(fd, visibility));
-    mainLoop.Register(fd, "Sway", t);
+    auto t = std::shared_ptr<SwayCompositor>(new SwayCompositor(mainloop, fd, visibility));
+    mainloop->RegisterIoHandler(fd, "Sway", t);
     t->Initialize();
     return t;
 }
@@ -256,11 +284,16 @@ bool SwayCompositor::OnRead() {
     switch (msg) {
         case Message::GET_TREE: {
             spdlog::trace("Received sway tree");
-            auto maybeDisplays = ParseTree(m_payload);
+            bool newAlert = false;
+            auto maybeDisplays = ParseTree(m_payload, m_alertStates, newAlert);
             if (maybeDisplays) {
                 m_displays = std::move(*maybeDisplays);
                 m_drawn = m_published = false;
             }  // else, error!
+            if (newAlert) {
+                spdlog::debug("Alert in SwayCompositor");
+                m_mainloop->AlertAndWakeup();
+            }
             break;
         }
         case Message::SUBSCRIBE:

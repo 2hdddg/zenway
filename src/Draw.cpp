@@ -23,7 +23,7 @@ void Markup::Compute(cairo_t* cr) {
     LogComputed(computed, ("Markup " + string).c_str());
 }
 
-void Markup::Draw(cairo_t* cr, int x, int y, std::vector<Target>& targets) const {
+void Markup::Draw(cairo_t* cr, int x, int y, std::vector<Target>&) const {
     LogDraw("Markup", x, y);
     cairo_move_to(cr, x, y);
     pango_cairo_show_layout(cr, m_layout);
@@ -191,12 +191,17 @@ bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
         switch (panelConfig.anchor) {
             case Anchor::Top:
             case Anchor::Bottom:
+            case Anchor::Center:
                 align = Align::CenterX;
                 break;
             case Anchor::Left:
+            case Anchor::TopLeft:
+            case Anchor::BottomLeft:
                 align = Align::Left;
                 break;
             case Anchor::Right:
+            case Anchor::TopRight:
+            case Anchor::BottomRight:
                 align = Align::Right;
                 break;
         }
@@ -205,13 +210,18 @@ bool Draw::Panel(const PanelConfig& panelConfig, const std::string& outputName,
         cy = maxCy;
         switch (panelConfig.anchor) {
             case Anchor::Top:
+            case Anchor::TopLeft:
+            case Anchor::TopRight:
                 align = Align::Top;
                 break;
             case Anchor::Bottom:
+            case Anchor::BottomLeft:
+            case Anchor::BottomRight:
                 align = Align::Bottom;
                 break;
             case Anchor::Left:
             case Anchor::Right:
+            case Anchor::Center:
                 align = Align::CenterY;
                 break;
         }

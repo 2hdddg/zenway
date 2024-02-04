@@ -93,22 +93,35 @@ local function render_workspaces(displayName)
     local workspaces = {}
     for _, workspace in pairs(display.workspaces) do
         local app_name = ""
+        local app_alert = ""
         for _, app in pairs(workspace.applications) do
             if app.focus then app_name = app.name end
+            if app.alert then
+            end
+            if app.alert and app_alert == "" then 
+              app_alert = app.name
+            end
         end
         if #workspace.applications == 0 then app_name = "<desktop>" end
         boxcolor = BLACK_BR
+        if workspace.alert then
+            boxcolor = RED
+        end
         if workspace.focus then
             boxcolor = YELLOW
+        end
+        local items = {
+            wsbox(label{label=" " .. zen.u.html_escape(workspace.name) .. " "}, boxcolor),
+            wsbox(label{label=zen.u.html_escape(app_name)}, boxcolor),
+        }
+        if app_alert ~= "" and app_alert ~= app_name then
+            table.insert(items, wsbox(label{label=zen.u.html_escape(app_alert)}, RED))
         end
         local workspace = {
             type = "flex",
             direction = "row",
             padding = { right = 1 },
-            items = {
-                wsbox(label{label=" " .. zen.u.html_escape(workspace.name) .. " "}, boxcolor),
-                wsbox(label{label=zen.u.html_escape(app_name)}, boxcolor),
-            },
+            items = items,
             tag = workspace.name
         }
         table.insert(workspaces, workspace)
@@ -118,6 +131,21 @@ end
 
 local function click_workspace(tag)
     os.execute('swaymsg workspace "' .. tag .. '"')
+end
+
+local function render_alert()
+    local box = {
+      type = "box",
+      markup = icon{icon="󰭺", size=ICON_SIZE},
+      padding = { top = 0, left = 13, right = 13, bottom = 0 },
+      radius = 20,
+      color = RED,
+    }
+    return {
+      type = "flex",
+      padding = { top = 5, right = 20 },
+      items = { box },
+    }
 end
 
 local function render_time()
@@ -232,5 +260,12 @@ return {
     sources = {
       displays = {compositor = "sway"},
       audio = {server = "pulseaudio"},
-    }
+    },
+    alert = {
+        anchor = "topright",
+        widgets = {
+            { padding = { top = 10 }, on_render = render_alert },
+        },
+        on_display = is_focused_display,
+    },
 }

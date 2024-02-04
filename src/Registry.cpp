@@ -98,7 +98,7 @@ std::shared_ptr<Registry> Registry::Create(std::shared_ptr<MainLoop> mainLoop,
     // Two roundtrips, first to trigger registration, second to process binding requests.
     if (wl_display_roundtrip(display) < 0 || wl_display_roundtrip(display) < 0) return nullptr;
     // Register in mainloop
-    mainLoop->Register(wl_display_get_fd(display), "wayland", registry);
+    mainLoop->RegisterIoHandler(wl_display_get_fd(display), "wayland", registry);
     // Initialize buffers in outputs
     if (!registry->m_outputs->InitializeBuffers(*registry->m_shm)) {
         spdlog::error("Failed to initialize output buffers");

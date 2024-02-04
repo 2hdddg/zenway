@@ -8,7 +8,7 @@
 
 class PowerSource : public Source, public IoHandler {
    public:
-    static std::shared_ptr<PowerSource> Create(MainLoop& mainLoop);
+    static std::shared_ptr<PowerSource> Create(std::shared_ptr<MainLoop> mainloop);
     bool Initialize();
     void ReadState();
     virtual bool OnRead() override;
@@ -16,7 +16,8 @@ class PowerSource : public Source, public IoHandler {
     virtual ~PowerSource();
 
    private:
-    PowerSource(int fd) : m_timerfd(fd) {}
+    PowerSource(std::shared_ptr<MainLoop> mainloop, int fd) : m_mainloop(mainloop), m_timerfd(fd) {}
+    std::shared_ptr<MainLoop> m_mainloop;
     std::filesystem::path m_batteryCapacity;
     std::filesystem::path m_batteryStatus;
     std::filesystem::path m_ac;

@@ -168,8 +168,18 @@ static PanelConfig ParsePanelConfig(const sol::table panelTable, int index) {
             panel.anchor = Anchor::Right;
         } else if (*anchorString == "top") {
             panel.anchor = Anchor::Top;
+        } else if (*anchorString == "topleft") {
+            panel.anchor = Anchor::TopLeft;
+        } else if (*anchorString == "topright") {
+            panel.anchor = Anchor::TopRight;
         } else if (*anchorString == "bottom") {
             panel.anchor = Anchor::Bottom;
+        } else if (*anchorString == "bottomleft") {
+            panel.anchor = Anchor::BottomLeft;
+        } else if (*anchorString == "bottomright") {
+            panel.anchor = Anchor::BottomRight;
+        } else if (*anchorString == "center") {
+            panel.anchor = Anchor::Center;
         } else {
             spdlog::error("Invalid anchor: {}", *anchorString);
         }
@@ -275,6 +285,14 @@ static std::shared_ptr<Configuration> ParseConfig(sol::optional<sol::table> root
         auto panel = ParsePanelConfig(*panelTable, i);
         config->panels.push_back(panel);
     }
+    // Alert panel. Reserve index -1 for alert
+    std::optional<sol::table> alertPanelTable = (*root)["alert"];
+    if (alertPanelTable) {
+        config->alertPanel = ParsePanelConfig(*alertPanelTable, -1);
+    } else {
+        config->alertPanel = PanelConfig{.index = -1};
+    }
+
     // Buffers
     sol::optional<sol::table> buffersTable = (*root)["buffers"];
     config->numBuffers = 1;
@@ -314,17 +332,20 @@ void ScriptContextImpl::Publish(const std::string_view name, const Displays& dis
                 auto applicationTable = m_lua.create_table();
                 applicationTable["name"] = application.name;
                 applicationTable["focus"] = application.isFocused;
+                applicationTable["alert"] = application.isAlerted;
                 applicationTable["appid"] = application.appId;
                 applicationsTable.add(applicationTable);
             }
             workspaceTable["name"] = workspace.name;
             workspaceTable["focus"] = workspace.isFocused;
+            workspaceTable["alert"] = workspace.isAlerted;
             workspaceTable["applications"] = applicationsTable;
             workspacesTable.add(workspaceTable);
         }
         displayTable["workspaces"] = workspacesTable;
         spdlog::debug("Display {} focus: {}", display.name, display.isFocused);
         displayTable["focus"] = display.isFocused;
+        displayTable["alert"] = display.isAlerted;
         displaysTable[display.name] = displayTable;
     }
     m_lua["zen"][name] = displaysTable;
@@ -332,6 +353,7 @@ void ScriptContextImpl::Publish(const std::string_view name, const Displays& dis
 
 void ScriptContextImpl::Publish(const std::string_view name, const PowerState& power) {
     auto table = m_lua.create_table();
+    table["isAlerted"] = power.IsAlerted;
     table["isCharging"] = power.IsCharging;
     table["isPluggedIn"] = power.IsPluggedIn;
     table["capacity"] = (int)power.Capacity;
