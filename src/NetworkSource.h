@@ -16,7 +16,7 @@ class NetworkSource : public Source, public IoHandler {
     virtual ~NetworkSource() { close(m_timerfd); }
 
    private:
-    NetworkSource(int socket, int timerfd) : m_socket(socket), m_timerfd(timerfd) {}
+    NetworkSource(int socket, int timerfd) : Source(), m_socket(socket), m_timerfd(timerfd) {}
 
     int m_socket;
     int m_timerfd;

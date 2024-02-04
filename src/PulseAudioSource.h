@@ -25,7 +25,7 @@ class PulseAudioSource : public Source {
    private:
     PulseAudioSource(std::shared_ptr<MainLoop> mainloop, pa_threaded_mainloop* mainLoop,
                      pa_mainloop_api* api, pa_context* ctx)
-        : m_zenMainloop(mainloop), m_mainLoop(mainLoop), m_api(api), m_ctx(ctx) {}
+        : Source(), m_zenMainloop(mainloop), m_mainLoop(mainLoop), m_api(api), m_ctx(ctx) {}
     std::shared_ptr<MainLoop> m_zenMainloop;
     pa_threaded_mainloop* m_mainLoop;
     pa_mainloop_api* m_api;

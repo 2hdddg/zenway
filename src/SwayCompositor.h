@@ -20,7 +20,7 @@ class SwayCompositor : public IoHandler, public Source {
    private:
     void Initialize();
     SwayCompositor(std::shared_ptr<MainLoop> mainloop, int fd, Visibility visibility)
-        : m_mainloop(mainloop), m_fd(fd), m_visibility(visibility) {}
+        : Source(), m_mainloop(mainloop), m_fd(fd), m_visibility(visibility) {}
     std::shared_ptr<MainLoop> m_mainloop;
     int m_fd;
     std::string m_payload;

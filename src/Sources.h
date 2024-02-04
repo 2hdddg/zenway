@@ -9,6 +9,7 @@
 
 class Source {
    public:
+    Source() : m_drawn(false), m_published(false) {}
     void SetDrawn() { m_drawn = true; }
     void ClearDrawn() { m_drawn = false; }
     bool IsDrawn() { return m_drawn; }
