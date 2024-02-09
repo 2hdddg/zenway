@@ -379,10 +379,12 @@ void ScriptContextImpl::Publish(const std::string_view name, const KeyboardState
 }
 void ScriptContextImpl::Publish(const std::string_view name, const Networks& networks) {
     auto networksTable = m_lua.create_table();
-    for (const auto& network : networks) {
+    for (const auto& keyValue : networks) {
+        const auto& interface = keyValue.first;
+        const auto& network = keyValue.second;
         auto networkTable = m_lua.create_table();
         networkTable["up"] = network.isUp;
-        networkTable["interface"] = network.interface;
+        networkTable["interface"] = interface;
         networkTable["address"] = network.address;
         networksTable.add(networkTable);
     }

@@ -8,16 +8,18 @@
 
 class NetworkSource : public Source, public IoHandler {
    public:
-    static std::shared_ptr<NetworkSource> Create(MainLoop& mainLoop);
+    static std::shared_ptr<NetworkSource> Create(std::shared_ptr<MainLoop> mainloop);
     void Initialize();
-    void ReadState();
     virtual bool OnRead() override;
     void Publish(const std::string_view sourceName, ScriptContext& scriptContext) override;
     virtual ~NetworkSource() { close(m_timerfd); }
 
    private:
-    NetworkSource(int socket, int timerfd) : Source(), m_socket(socket), m_timerfd(timerfd) {}
+    NetworkSource(std::shared_ptr<MainLoop> mainloop, int socket, int timerfd)
+        : Source(), m_mainloop(mainloop), m_socket(socket), m_timerfd(timerfd) {}
+    void ReadState();
 
+    std::shared_ptr<MainLoop> m_mainloop;
     int m_socket;
     int m_timerfd;
     std::shared_ptr<ScriptContext> m_scriptContext;
