@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <memory>
 
 #include "src/Configuration.h"
@@ -61,15 +62,15 @@ struct KeyboardState {
 };
 
 struct NetworkState {
+    bool isAlerted;
     bool isUp;
-    std::string interface;
     std::string address;
     // type (eth, wifi)
     // wifi strength
 
     auto operator<=>(const NetworkState& other) const = default;
 };
-using Networks = std::vector<NetworkState>;
+using Networks = std::map<std::string, NetworkState>;
 
 class ScriptContext {
    public:

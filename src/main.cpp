@@ -57,7 +57,7 @@ static void InitializeSource(const std::string& source, Sources& sources,
         return;
     }
     if (source == "networks") {
-        auto networkSource = NetworkSource::Create(*mainLoop);
+        auto networkSource = NetworkSource::Create(mainLoop);
         if (!networkSource) {
             spdlog::error("Failed to initialize network source");
             return;

@@ -30,7 +30,7 @@ static char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen) {
 
     return s;
 }
-std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop) {
+std::shared_ptr<NetworkSource> NetworkSource::Create(std::shared_ptr<MainLoop> mainloop) {
     auto sock = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         return nullptr;
@@ -47,12 +47,15 @@ std::shared_ptr<NetworkSource> NetworkSource::Create(MainLoop &mainLoop) {
         spdlog::error("Failed to set timer: {}", strerror(errno));
         return nullptr;
     }
-    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(sock, fd));
-    mainLoop.RegisterIoHandler(fd, "NetworkSource", source);
+    auto source = std::shared_ptr<NetworkSource>(new NetworkSource(mainloop, sock, fd));
+    mainloop->RegisterIoHandler(fd, "NetworkSource", source);
     return source;
 }
 
-void NetworkSource::Initialize() { ReadState(); }
+void NetworkSource::Initialize() {
+    ReadState();
+    m_drawn = m_published = false;
+}
 
 void NetworkSource::ReadState() {
     char buf[8192] = {0};
@@ -65,7 +68,15 @@ void NetworkSource::ReadState() {
     }
     auto ifr = ifc.ifc_req;
     auto nInterfaces = ifc.ifc_len / sizeof(struct ifreq);
-    Networks networks;
+    bool alerted = false;
+    bool changed = false;
+    // Note that only interfaces that are up is iterated here
+    // so to detect interfaces that were up but now is down, clear
+    // all interfaces first
+    for (auto &keyValue : m_networks) {
+        auto &network = keyValue.second;
+        network.isUp = false;
+    }
     for (unsigned long i = 0; i < nInterfaces; i++) {
         auto item = &ifr[i];
         auto addr = &item->ifr_addr;
@@ -79,19 +90,44 @@ void NetworkSource::ReadState() {
         }
         // extended flags SIOCGIFPFLAGS
         // SIOCGIWSTATS
-        NetworkState network = {};
+        NetworkState network = {.isAlerted = false};
         network.isUp = (item->ifr_flags & IFF_UP) != 0;
         // Get interface address
         if (ioctl(m_socket, SIOCGIFADDR, item) < 0) {
             continue;
         }
-        network.interface = item->ifr_name;
         network.address = get_ip_str(addr, ip, sizeof(ip));
-        networks.push_back(std::move(network));
+        if (m_networks.contains(item->ifr_name)) {
+            // Existing network. Might have changed from down -> up
+            // or changed address.
+            auto &existing = m_networks[item->ifr_name];
+            if (existing != network) {
+                changed = true;
+                m_networks[item->ifr_name] = std::move(network);
+            } else {
+                existing.isUp = true;
+                existing.isAlerted = false;
+            }
+        } else {
+            // New network
+            m_networks[item->ifr_name] = std::move(network);
+            changed = true;
+            // Is this an alert? A positive one perhaps.
+        }
     }
-    if (m_networks != networks) {
-        m_drawn = m_published = false;
-        m_networks = networks;
+    // Check if there is any networks that has gone down
+    for (auto &keyValue : m_networks) {
+        auto &network = keyValue.second;
+        if (!network.isUp && !network.isAlerted) {
+            network.isAlerted = true;
+            alerted = true;
+            changed = true;
+        }
+    }
+    m_drawn = m_published = !changed;
+    if (alerted) {
+        spdlog::info("Network source is triggering alert");
+        m_mainloop->AlertAndWakeup();
     }
 }
 
