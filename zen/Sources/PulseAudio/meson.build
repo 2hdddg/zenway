@@ -1,0 +1,4 @@
+
+src += files(
+  'PulseAudioSource.cpp',
+)

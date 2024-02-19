@@ -1,0 +1,5 @@
+
+
+src += files(
+  'SwayCompositor.cpp',
+)
