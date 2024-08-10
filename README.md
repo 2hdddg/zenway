@@ -120,7 +120,7 @@ These packages are needed to build locally (exact name and version might vary):
 To build you need gcc, pkg-config, meson and ninja
 
 In repo root:
-meson build
+meson build, 
 ninja -C build
 
 Binary and config is currently not installed so invoke the binary from the build
