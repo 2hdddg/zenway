@@ -90,7 +90,7 @@ void NetworkSource::ReadState() {
         }
         // extended flags SIOCGIFPFLAGS
         // SIOCGIWSTATS
-        NetworkState network = {.isAlerted = false};
+        NetworkState network = {.isAlerted = false, .isUp = false, .address = ""};
         network.isUp = (item->ifr_flags & IFF_UP) != 0;
         // Get interface address
         if (ioctl(m_socket, SIOCGIFADDR, item) < 0) {

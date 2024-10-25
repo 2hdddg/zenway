@@ -60,8 +60,9 @@ void Registry::Register(struct wl_registry *registry, uint32_t name, const char 
         spdlog::trace("Ignored global interface: {} version {}", interface, version);
         return;
     }
-    spdlog::info("Bound to global interface {} version {}. Max version {}. Built with version {}.",
-                 interface, wanted_version, version, build_version);
+    spdlog::info(
+        "Bound to global interface {} wanted version {}. Given version {}. Built with version {}.",
+        interface, wanted_version, version, build_version);
 }
 
 void Registry::Unregister(struct wl_registry *, uint32_t /*name*/) {

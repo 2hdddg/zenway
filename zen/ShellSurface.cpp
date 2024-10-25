@@ -18,25 +18,14 @@ static void on_closed(void *data, struct zwlr_layer_surface_v1 *) {
     shellSurface->OnClosed();
 }
 
-static void on_enter(void * /*data*/, struct wl_surface *, struct wl_output *) {}
-
-static void on_leave(void * /*data*/, struct wl_surface *, struct wl_output *) {}
-
 static const zwlr_layer_surface_v1_listener layer_listener = {.configure = on_configure,
                                                               .closed = on_closed};
-
-static const wl_surface_listener surface_listener = {
-    .enter = on_enter, .leave = on_leave,
-    //.preferred_buffer_scale = nullptr,
-    //.preferred_buffer_transform = nullptr,
-};
 
 std::unique_ptr<ShellSurface> ShellSurface::Create(const Registry &registry, wl_output *output,
                                                    PanelConfig panelConfig) {
     auto surface = wl_compositor_create_surface(registry.compositor);
     auto shellSurface =
         std::unique_ptr<ShellSurface>(new ShellSurface(output, surface, std::move(panelConfig)));
-    wl_surface_add_listener(surface, &surface_listener, shellSurface.get());
     wl_surface_commit(surface);
     return shellSurface;
 }
