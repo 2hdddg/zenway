@@ -3,20 +3,21 @@
 #include <poll.h>
 
 #include <atomic>
-#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <string>
+#include <vector>
 
 class IoHandler {
    public:
+    virtual ~IoHandler() {}
     // Return true if read cases handler to be dirty
     virtual bool OnRead() = 0;
 };
 
 class NotificationHandler {
    public:
+    virtual ~NotificationHandler() {}
     virtual void OnChanged() = 0;
     virtual void OnAlerted() = 0;
 };
