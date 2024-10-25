@@ -43,33 +43,16 @@ static void on_axis(void* data, struct wl_pointer*, uint32_t /*time*/, uint32_t 
     }
 }
 
-static void on_pointer_frame(void* /*data*/, struct wl_pointer*) {}
-
-static void on_axis_source(void* /*data*/, struct wl_pointer*, uint32_t /*axis_source*/) {}
-static void on_axis_stop(void* /*data*/, struct wl_pointer*, uint32_t /*time*/, uint32_t /*axis*/) {
-}
-static void on_axis_discrete(void* /*data*/, struct wl_pointer*, uint32_t /*axis*/,
-                             int32_t /*discrete*/) {}
-/*
-[2024-01-24 19:34:07.087] [trace] on_axis_source: 0
-[2024-01-24 19:34:07.087] [trace] on_axis_discrete axis 0, discrete: 1
-[2024-01-24 19:34:07.087] [trace] on_axis, axis: 0, value: 3840
-*/
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static const wl_pointer_listener pointer_listener = {
     .enter = on_pointer_enter,
     .leave = on_pointer_leave,
     .motion = on_pointer_motion,
     .button = on_pointer_button,
     .axis = on_axis,
-    .frame = on_pointer_frame,
-    .axis_source = on_axis_source,
-    .axis_stop = on_axis_stop,
-    .axis_discrete = on_axis_discrete,
-    // Version > supported
-    //.axis_value120 = nullptr,
-    //.axis_relative_direction = nullptr,
 };
+#pragma GCC diagnostic pop
 
 std::unique_ptr<Pointer> Pointer::Create(wl_seat* seat) {
     auto wlpointer = wl_seat_get_pointer(seat);
