@@ -42,6 +42,12 @@ static void on_axis(void* data, struct wl_pointer*, uint32_t /*time*/, uint32_t 
         ((Pointer*)data)->Wheel(value);
     }
 }
+static void on_pointer_frame(void* /*data*/, struct wl_pointer*) {}
+static void on_axis_source(void* /*data*/, struct wl_pointer*, uint32_t /*axis_source*/) {}
+static void on_axis_stop(void* /*data*/, struct wl_pointer*, uint32_t /*time*/, uint32_t /*axis*/) {
+}
+static void on_axis_discrete(void* /*data*/, struct wl_pointer*, uint32_t /*axis*/,
+                             int32_t /*discrete*/) {}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -51,6 +57,10 @@ static const wl_pointer_listener pointer_listener = {
     .motion = on_pointer_motion,
     .button = on_pointer_button,
     .axis = on_axis,
+    .frame = on_pointer_frame,
+    .axis_source = on_axis_source,
+    .axis_stop = on_axis_stop,
+    .axis_discrete = on_axis_discrete,
 };
 #pragma GCC diagnostic pop
 
